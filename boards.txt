@@ -1,0 +1,228 @@
+# See: https://arduino.github.io/arduino-cli/latest/platform-specification/
+
+menu.pnum=Board part number
+
+menu.xserial=U(S)ART support
+menu.usb=USB support (if available)
+menu.xusb=USB speed (if available)
+menu.virtio=Virtual serial support
+
+menu.opt=Optimize
+menu.dbg=Debug symbols and core logs
+menu.rtlib=C Runtime Library
+menu.upload_method=Upload method
+
+################################################################################
+# Flight Controller boards
+
+Flight_ctrl.name=Flight Controllers
+
+Flight_ctrl.build.core=arduino
+Flight_ctrl.build.board=Flight_ctrl
+Flight_ctrl.build.variant_h=variant_{build.board}.h
+Flight_ctrl.build.st_extra_flags=-D{build.product_line} {build.enable_usb} {build.xSerial}
+Flight_ctrl.upload.maximum_size=0
+Flight_ctrl.upload.maximum_data_size=0
+
+# FC_MatekH743
+Flight_ctrl.menu.pnum.FC_MatekH743=Matek H743VI
+Flight_ctrl.menu.pnum.FC_MatekH743.node="NODE_H743VI,Matek"
+Flight_ctrl.menu.pnum.FC_MatekH743.upload.maximum_size=2097152
+Flight_ctrl.menu.pnum.FC_MatekH743.upload.maximum_data_size=524288
+Flight_ctrl.menu.pnum.FC_MatekH743.build.mcu=cortex-m7
+Flight_ctrl.menu.pnum.FC_MatekH743.build.fpu=-mfpu=fpv5-d16
+Flight_ctrl.menu.pnum.FC_MatekH743.build.float-abi=-mfloat-abi=hard
+Flight_ctrl.menu.pnum.FC_MatekH743.build.board=FC_MatekH743
+Flight_ctrl.menu.pnum.FC_MatekH743.build.series=STM32H7xx
+Flight_ctrl.menu.pnum.FC_MatekH743.build.product_line=STM32H743xx
+Flight_ctrl.menu.pnum.FC_MatekH743.build.variant=STM32H7xx/FC_MatekH743
+Flight_ctrl.menu.pnum.FC_MatekH743.build.cmsis_lib_gcc=arm_cortexM7lfsp_math
+Flight_ctrl.menu.pnum.FC_MatekH743.build.st_extra_flags=-DCORE_CM7 -D{build.product_line} {build.enable_usb} {build.xSerial} -DSTM32H743VI -DARM_MATH_CM7 -Dflash_layout -DHSE_VALUE=8000000 -DUSE_HAL_DRIVER -DUSE_FULL_LL_DRIVER -DDATA_IN_D2_SRAM
+
+# Upload menu
+Flight_ctrl.menu.upload_method.swdMethod=STM32CubeProgrammer (SWD)
+Flight_ctrl.menu.upload_method.swdMethod.upload.protocol=0
+Flight_ctrl.menu.upload_method.swdMethod.upload.options=-g
+Flight_ctrl.menu.upload_method.swdMethod.upload.tool=stm32CubeProg
+
+Flight_ctrl.menu.upload_method.serialMethod=STM32CubeProgrammer (Serial)
+Flight_ctrl.menu.upload_method.serialMethod.upload.protocol=1
+Flight_ctrl.menu.upload_method.serialMethod.upload.options={serial.port.file} -s
+Flight_ctrl.menu.upload_method.serialMethod.upload.tool=stm32CubeProg
+
+Flight_ctrl.menu.upload_method.dfuMethod=STM32CubeProgrammer (DFU)
+Flight_ctrl.menu.upload_method.dfuMethod.upload.protocol=2
+Flight_ctrl.menu.upload_method.dfuMethod.upload.options=-g
+Flight_ctrl.menu.upload_method.dfuMethod.upload.tool=stm32CubeProg
+
+Flight_ctrl.menu.upload_method.clipboard=Clipboard (Copy Path)
+Flight_ctrl.menu.upload_method.clipboard.upload.protocol=0
+Flight_ctrl.menu.upload_method.clipboard.upload.options=-g
+Flight_ctrl.menu.upload_method.clipboard.upload.tool=clipboard_upload
+
+################################################################################
+# Dev boards
+
+Dev_boards.name=Development Boards
+
+Dev_boards.build.core=arduino
+Dev_boards.build.board=Dev_boards
+Dev_boards.build.variant_h=variant_{build.board}.h
+Dev_boards.build.st_extra_flags=-D{build.product_line} {build.enable_usb} {build.xSerial}
+Dev_boards.upload.maximum_size=0
+Dev_boards.upload.maximum_data_size=0
+
+# DevEBoxH743VI
+Dev_boards.menu.pnum.DevEBoxH743VI=DevEBox H743VI
+Dev_boards.menu.pnum.DevEBoxH743VI.node="NODE_H743VI,DevEBox"
+Dev_boards.menu.pnum.DevEBoxH743VI.upload.maximum_size=2097152
+Dev_boards.menu.pnum.DevEBoxH743VI.upload.maximum_data_size=524288
+Dev_boards.menu.pnum.DevEBoxH743VI.build.mcu=cortex-m7
+Dev_boards.menu.pnum.DevEBoxH743VI.build.fpu=-mfpu=fpv5-d16
+Dev_boards.menu.pnum.DevEBoxH743VI.build.float-abi=-mfloat-abi=hard
+Dev_boards.menu.pnum.DevEBoxH743VI.build.board=DevEBoxH743VI
+Dev_boards.menu.pnum.DevEBoxH743VI.build.series=STM32H7xx
+Dev_boards.menu.pnum.DevEBoxH743VI.build.product_line=STM32H743xx
+Dev_boards.menu.pnum.DevEBoxH743VI.build.variant=STM32H7xx/Dev_DevEBoxH743VI
+Dev_boards.menu.pnum.DevEBoxH743VI.build.cmsis_lib_gcc=arm_cortexM7lfsp_math
+Dev_boards.menu.pnum.DevEBoxH743VI.build.st_extra_flags=-DCORE_CM7 -D{build.product_line} {build.enable_usb} {build.xSerial} -DSTM32H743VI -DARM_MATH_CM7 -Dflash_layout -DHSE_VALUE=25000000 -DUSE_HAL_DRIVER -DUSE_FULL_LL_DRIVER -DDATA_IN_D2_SRAM
+
+# Upload menu
+Dev_boards.menu.upload_method.swdMethod=STM32CubeProgrammer (SWD)
+Dev_boards.menu.upload_method.swdMethod.upload.protocol=0
+Dev_boards.menu.upload_method.swdMethod.upload.options=-g
+Dev_boards.menu.upload_method.swdMethod.upload.tool=stm32CubeProg
+
+Dev_boards.menu.upload_method.serialMethod=STM32CubeProgrammer (Serial)
+Dev_boards.menu.upload_method.serialMethod.upload.protocol=1
+Dev_boards.menu.upload_method.serialMethod.upload.options={serial.port.file} -s
+Dev_boards.menu.upload_method.serialMethod.upload.tool=stm32CubeProg
+
+Dev_boards.menu.upload_method.dfuMethod=STM32CubeProgrammer (DFU)
+Dev_boards.menu.upload_method.dfuMethod.upload.protocol=2
+Dev_boards.menu.upload_method.dfuMethod.upload.options=-g
+Dev_boards.menu.upload_method.dfuMethod.upload.tool=stm32CubeProg
+
+Dev_boards.menu.upload_method.clipboard=Clipboard (Copy Path)
+Dev_boards.menu.upload_method.clipboard.upload.protocol=0
+Dev_boards.menu.upload_method.clipboard.upload.options=-g
+Dev_boards.menu.upload_method.clipboard.upload.tool=clipboard_upload
+
+################################################################################
+# Serialx activation
+
+Flight_ctrl.menu.xserial.disabled=Disabled (No Serial support)
+Flight_ctrl.menu.xserial.disabled.build.xSerial=
+Flight_ctrl.menu.xserial.generic=Enabled (generic 'Serial')
+Flight_ctrl.menu.xserial.none=Enabled (no generic 'Serial')
+
+Dev_boards.menu.xserial.disabled=Disabled (No Serial support)
+Dev_boards.menu.xserial.disabled.build.xSerial=
+Dev_boards.menu.xserial.generic=Enabled (generic 'Serial')
+Dev_boards.menu.xserial.none=Enabled (no generic 'Serial')
+Dev_boards.menu.xserial.none.build.xSerial=-DHAL_UART_MODULE_ENABLED -DHWSERIAL_NONE
+
+# USB connectivity
+Flight_ctrl.menu.usb.none=None
+Flight_ctrl.menu.usb.CDCgen=CDC (generic 'Serial' supersede U(S)ART)
+Flight_ctrl.menu.usb.CDCgen.build.enable_usb={build.usb_flags} -DUSBD_USE_CDC
+Flight_ctrl.menu.usb.CDC=CDC (no generic 'Serial')
+Flight_ctrl.menu.usb.CDC.build.enable_usb={build.usb_flags} -DUSBD_USE_CDC -DDISABLE_GENERIC_SERIALUSB
+Flight_ctrl.menu.xusb.FS=Low/Full Speed
+Flight_ctrl.menu.xusb.HS=High Speed
+Flight_ctrl.menu.xusb.HS.build.usb_speed=-DUSE_USB_HS
+Flight_ctrl.menu.xusb.HSFS=High Speed in Full Speed mode
+Flight_ctrl.menu.xusb.HSFS.build.usb_speed=-DUSE_USB_HS -DUSE_USB_HS_IN_FS
+
+Dev_boards.menu.usb.none=None
+Dev_boards.menu.usb.CDCgen=CDC (generic 'Serial' supersede U(S)ART)
+Dev_boards.menu.usb.CDCgen.build.enable_usb={build.usb_flags} -DUSBD_USE_CDC
+Dev_boards.menu.usb.CDC=CDC (no generic 'Serial')
+Dev_boards.menu.usb.CDC.build.enable_usb={build.usb_flags} -DUSBD_USE_CDC -DDISABLE_GENERIC_SERIALUSB
+Dev_boards.menu.xusb.FS=Low/Full Speed
+Dev_boards.menu.xusb.HS=High Speed
+Dev_boards.menu.xusb.HS.build.usb_speed=-DUSE_USB_HS
+Dev_boards.menu.xusb.HSFS=High Speed in Full Speed mode
+Dev_boards.menu.xusb.HSFS.build.usb_speed=-DUSE_USB_HS -DUSE_USB_HS_IN_FS
+
+# Optimizations
+Flight_ctrl.menu.opt.ogstd=Debug (-Og)
+Flight_ctrl.menu.opt.ogstd.build.flags.optimize=-Og
+Flight_ctrl.menu.opt.osstd=Smallest (-Os default)
+Flight_ctrl.menu.opt.oslto=Smallest (-Os) with LTO
+Flight_ctrl.menu.opt.oslto.build.flags.optimize=-Os -flto
+Flight_ctrl.menu.opt.o1std=Fast (-O1)
+Flight_ctrl.menu.opt.o1std.build.flags.optimize=-O1
+Flight_ctrl.menu.opt.o1lto=Fast (-O1) with LTO
+Flight_ctrl.menu.opt.o1lto.build.flags.optimize=-O1 -flto
+Flight_ctrl.menu.opt.o2std=Faster (-O2)
+Flight_ctrl.menu.opt.o2std.build.flags.optimize=-O2
+Flight_ctrl.menu.opt.o2lto=Faster (-O2) with LTO
+Flight_ctrl.menu.opt.o2lto.build.flags.optimize=-O2 -flto
+Flight_ctrl.menu.opt.o3std=Fastest (-O3)
+Flight_ctrl.menu.opt.o3std.build.flags.optimize=-O3
+Flight_ctrl.menu.opt.o3lto=Fastest (-O3) with LTO
+Flight_ctrl.menu.opt.o3lto.build.flags.optimize=-O3 -flto
+Flight_ctrl.menu.opt.o0std=No Optimization (-O0)
+Flight_ctrl.menu.opt.o0std.build.flags.optimize=-O0
+
+Dev_boards.menu.opt.ogstd=Debug (-Og)
+Dev_boards.menu.opt.ogstd.build.flags.optimize=-Og
+Dev_boards.menu.opt.osstd=Smallest (-Os default)
+Dev_boards.menu.opt.oslto=Smallest (-Os) with LTO
+Dev_boards.menu.opt.oslto.build.flags.optimize=-Os -flto
+Dev_boards.menu.opt.o1std=Fast (-O1)
+Dev_boards.menu.opt.o1std.build.flags.optimize=-O1
+Dev_boards.menu.opt.o1lto=Fast (-O1) with LTO
+Dev_boards.menu.opt.o1lto.build.flags.optimize=-O1 -flto
+Dev_boards.menu.opt.o2std=Faster (-O2)
+Dev_boards.menu.opt.o2std.build.flags.optimize=-O2
+Dev_boards.menu.opt.o2lto=Faster (-O2) with LTO
+Dev_boards.menu.opt.o2lto.build.flags.optimize=-O2 -flto
+Dev_boards.menu.opt.o3std=Fastest (-O3)
+Dev_boards.menu.opt.o3std.build.flags.optimize=-O3
+Dev_boards.menu.opt.o3lto=Fastest (-O3) with LTO
+Dev_boards.menu.opt.o3lto.build.flags.optimize=-O3 -flto
+Dev_boards.menu.opt.o0std=No Optimization (-O0)
+Dev_boards.menu.opt.o0std.build.flags.optimize=-O0
+
+# Debug information
+Flight_ctrl.menu.dbg.enable_all=Core Logs and Symbols Enabled (-g)
+Flight_ctrl.menu.dbg.enable_all.build.flags.debug=-g
+Flight_ctrl.menu.dbg.none=None
+Flight_ctrl.menu.dbg.none.build.flags.debug=-DNDEBUG -DRELEASE
+Flight_ctrl.menu.dbg.enable_sym=Symbols Enabled (-g)
+Flight_ctrl.menu.dbg.enable_sym.build.flags.debug=-g
+Flight_ctrl.menu.dbg.enable_log=Core logs Enabled
+Flight_ctrl.menu.dbg.enable_log.build.flags.debug=
+
+Dev_boards.menu.dbg.enable_all=Core Logs and Symbols Enabled (-g)
+Dev_boards.menu.dbg.enable_all.build.flags.debug=-g
+Dev_boards.menu.dbg.none=None
+Dev_boards.menu.dbg.none.build.flags.debug=-DNDEBUG -DRELEASE
+Dev_boards.menu.dbg.enable_sym=Symbols Enabled (-g)
+Dev_boards.menu.dbg.enable_sym.build.flags.debug=-g
+Dev_boards.menu.dbg.enable_log=Core logs Enabled
+Dev_boards.menu.dbg.enable_log.build.flags.debug=
+
+# C Runtime Library
+Flight_ctrl.menu.rtlib.nano=Newlib Nano (default)
+Flight_ctrl.menu.rtlib.nanofp=Newlib Nano + Float Printf
+Flight_ctrl.menu.rtlib.nanofp.build.flags.ldspecs=--specs=nano.specs -u _printf_float
+Flight_ctrl.menu.rtlib.nanofs=Newlib Nano + Float Scanf
+Flight_ctrl.menu.rtlib.nanofs.build.flags.ldspecs=--specs=nano.specs -u _scanf_float
+Flight_ctrl.menu.rtlib.nanofps=Newlib Nano + Float Printf/Scanf
+Flight_ctrl.menu.rtlib.nanofps.build.flags.ldspecs=--specs=nano.specs -u _printf_float -u _scanf_float
+Flight_ctrl.menu.rtlib.full=Newlib Standard
+Flight_ctrl.menu.rtlib.full.build.flags.ldspecs=
+
+Dev_boards.menu.rtlib.nano=Newlib Nano (default)
+Dev_boards.menu.rtlib.nano.build.flags.ldspecs=--specs=nano.specs --specs=nosys.specs
+Dev_boards.menu.rtlib.nanofp=Newlib Nano + Float Printf
+Dev_boards.menu.rtlib.nanofp.build.flags.ldspecs=--specs=nano.specs -u _printf_float
+Dev_boards.menu.rtlib.nanofs=Newlib Nano + Float Scanf
+Dev_boards.menu.rtlib.nanofs.build.flags.ldspecs=--specs=nano.specs -u _scanf_float
+Dev_boards.menu.rtlib.nanofps=Newlib Nano + Float Printf/Scanf
+Dev_boards.menu.rtlib.nanofps.build.flags.ldspecs=--specs=nano.specs -u _printf_float -u _scanf_float
+Dev_boards.menu.rtlib.full=Newlib Standard
+Dev_boards.menu.rtlib.full.build.flags.ldspecs=
