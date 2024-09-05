@@ -217,7 +217,7 @@ Flight_ctrl.menu.rtlib.full=Newlib Standard
 Flight_ctrl.menu.rtlib.full.build.flags.ldspecs=
 
 Dev_boards.menu.rtlib.nano=Newlib Nano (default)
-Dev_boards.menu.rtlib.nano.build.flags.ldspecs=--specs=nano.specs --specs=nosys.specs
+# Dev_boards.menu.rtlib.nano.build.flags.ldspecs=--specs=nano.specs --specs=nosys.specs
 Dev_boards.menu.rtlib.nanofp=Newlib Nano + Float Printf
 Dev_boards.menu.rtlib.nanofp.build.flags.ldspecs=--specs=nano.specs -u _printf_float
 Dev_boards.menu.rtlib.nanofs=Newlib Nano + Float Scanf
