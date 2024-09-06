@@ -1,6 +1,6 @@
-#pragma once
-#ifndef DSY_CORE_HW_H
-#define DSY_CORE_HW_H /**< & */
+#ifndef UVS_CORE_HW_H
+#define UVS_CORE_HW_H
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -309,5 +309,5 @@ struct Pin
 
 #endif // __cplusplus
 
-#endif
-/** @} */
+#endif /* UVS_CORE_HW_H */
+

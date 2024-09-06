@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "daisy_seed.h"
+#include "uvos_brd.h"
 
 using namespace daisy;
 

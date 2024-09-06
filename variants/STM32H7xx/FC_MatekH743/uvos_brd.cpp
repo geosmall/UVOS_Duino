@@ -1,12 +1,12 @@
-#include "daisy_seed.h"
+#include "uvos_brd.h"
 
 using namespace daisy;
 
-#define SEED_LED_PORT DSY_GPIOA
-#define SEED_LED_PIN 1
+#define SEED_LED_PORT DSY_GPIOE
+#define SEED_LED_PIN 3
 
-#define SEED_TEST_POINT_PORT DSY_GPIOC
-#define SEED_TEST_POINT_PIN 1
+#define SEED_TEST_POINT_PORT DSY_GPIOE
+#define SEED_TEST_POINT_PIN 4
 
 #ifndef SEED_REV2
 const dsy_gpio_pin seedgpio[33] = {

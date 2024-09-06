@@ -2,7 +2,7 @@
 #ifndef DSY_SEED_H
 #define DSY_SEED_H
 
-#include "daisy.h"
+#include "uvos.h"
 
 //Uncomment this out if you're still using the rev2 hardware
 //#define SEED_REV2
@@ -116,7 +116,7 @@ class DaisySeed
      */
     void SetTestPoint(bool state);
 
-#if 0 // gls
+#if 1 // gls
 
     /** Print formatted debug log message
      */

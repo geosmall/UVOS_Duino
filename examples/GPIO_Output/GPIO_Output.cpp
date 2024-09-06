@@ -6,7 +6,7 @@
 // * Connect the ANODE (positive leg, usually longer) of the LED to one side of a resistor (1K)
 // * Connect other end of resistor to pin D1 on the daisy.
 //
-#include "daisy_seed.h"
+#include "uvos_brd.h"
 
 using namespace daisy;
 using namespace daisy::seed;

@@ -1,8 +1,8 @@
-#ifndef DSY_LIBDAISY_H
-#define DSY_LIBDAISY_H
+#ifndef UVS_LIBUVOS_H
+#define UVS_LIBUVOS_H
 
 #include <stdint.h>
-#include "daisy_core.h"
+#include "uvos_core.h"
 #include "version.h"
 
 #include "sys/system.h"
@@ -72,5 +72,6 @@
 // #include "util/VoctCalibration.h"
 // #include "util/WaveTableLoader.h"
 // #include "util/WavWriter.h"
-#endif
-#endif
+#endif /* __cplusplus */
+
+#endif /* UVS_LIBUVOS_H */
