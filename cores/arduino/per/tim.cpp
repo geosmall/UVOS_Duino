@@ -14,7 +14,7 @@
 // - HRTIM
 //
 
-namespace daisy
+namespace uvos
 {
 /** Private Implementation for TimerHandle */
 class TimerHandle::Impl
@@ -447,7 +447,7 @@ void TimerHandle::SetCallback(PeriodElapsedCallback cb, void* data)
 }
 
 
-} // namespace daisy
+} // namespace uvos
 
 
 //////////////////////////////////////////////////////////////////
@@ -468,51 +468,51 @@ typedef struct
 {
     uint32_t          scale[SCALE_LAST];
     TIM_HandleTypeDef htim2;
-} dsy_tim;
+} uvs_tim;
 
 static void sthal_tim_init();
 
-static dsy_tim tim;
+static uvs_tim tim;
 
-void dsy_tim_init()
+void uvs_tim_init()
 {
     tim.scale[SCALE_MS] = 200000;
     tim.scale[SCALE_US] = 200;
     tim.scale[SCALE_NS] = 2;
     sthal_tim_init();
 }
-void dsy_tim_start()
+void uvs_tim_start()
 {
     HAL_TIM_Base_Start(&tim.htim2);
 }
 
-uint32_t dsy_tim_get_tick()
+uint32_t uvs_tim_get_tick()
 {
     return tim.htim2.Instance->CNT;
 }
 
-void dsy_tim_delay_tick(uint32_t cnt)
+void uvs_tim_delay_tick(uint32_t cnt)
 {
     uint32_t now;
-    now = dsy_tim_get_tick();
-    while(dsy_tim_get_tick() - now < cnt) {}
+    now = uvs_tim_get_tick();
+    while(uvs_tim_get_tick() - now < cnt) {}
 }
-uint32_t dsy_tim_get_ms()
+uint32_t uvs_tim_get_ms()
 {
     return tim.htim2.Instance->CNT / tim.scale[SCALE_MS];
 }
-void dsy_tim_delay_ms(uint32_t cnt)
+void uvs_tim_delay_ms(uint32_t cnt)
 {
-    dsy_tim_delay_tick(cnt * tim.scale[SCALE_MS]);
+    uvs_tim_delay_tick(cnt * tim.scale[SCALE_MS]);
 }
-uint32_t dsy_tim_get_us()
+uint32_t uvs_tim_get_us()
 {
     return tim.htim2.Instance->CNT / tim.scale[SCALE_US];
 }
 
-void dsy_tim_delay_us(uint32_t cnt)
+void uvs_tim_delay_us(uint32_t cnt)
 {
-    dsy_tim_delay_tick(cnt * tim.scale[SCALE_US]);
+    uvs_tim_delay_tick(cnt * tim.scale[SCALE_US]);
 }
 
 // STM32 HAL Stuff below

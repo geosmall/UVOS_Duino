@@ -1,10 +1,10 @@
 #pragma once
-#ifndef DSY_RINGBUFFER_H
-#define DSY_RINGBUFFER_H
+#ifndef UVS_RINGBUFFER_H
+#define UVS_RINGBUFFER_H
 
 #include <algorithm>
 
-namespace daisy
+namespace uvos
 {
 /** @addtogroup utility
     @{
@@ -195,6 +195,6 @@ class RingBuffer<T, 0>
 };
 
 /** @} */
-} // namespace daisy
+} // namespace uvos
 
 #endif

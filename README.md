@@ -12,3 +12,6 @@ daisy:: -> uvos::
 dsy_ -> uvs_
 DaisySeed -> UVOSboard
 seed -> DevEBoxH743VI_board, MatekH743_board
+libdaisy -> libuvos
+DAISY -> UVOS
+DAISY_SEED -> UVOS_BOARD

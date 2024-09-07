@@ -5,7 +5,7 @@
 #include "logger.h"
 #include "sys/system.h"
 
-namespace daisy
+namespace uvos
 {
 template <LoggerDestination dest>
 void Logger<dest>::Print(const char* format, ...)
@@ -53,7 +53,7 @@ void Logger<dest>::StartLog(bool wait_for_pc)
     /** transmit something to stall the UART until a terminal is connected
      * at least two separate calls are required
      */
-    PrintLine("Daisy is online");
+    PrintLine("UVOS is online");
     PrintLine("===============");
     System::Delay(10);
 }
@@ -123,4 +123,4 @@ template class Logger<LOGGER_EXTERNAL>;
 /** LoggerImpl static member variables */
 UsbHandle LoggerImpl<LOGGER_INTERNAL>::usb_handle_;
 UsbHandle LoggerImpl<LOGGER_EXTERNAL>::usb_handle_;
-} // namespace daisy
+} // namespace uvos

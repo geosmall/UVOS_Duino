@@ -14,7 +14,7 @@ extern "C" {
 }
 #endif
 
-namespace daisy
+namespace uvos
 {
 /** Tempoaraily disables IRQ handlers with RAII techniques. */
 class ScopedIrqBlocker
@@ -35,11 +35,11 @@ class ScopedIrqBlocker
   private:
     uint32_t prim_;
 };
-} // namespace daisy
+} // namespace uvos
 
 #else // ifndef UNIT_TEST
 
-namespace daisy
+namespace uvos
 {
 /** A dummy implementation for unit tests */
 class ScopedIrqBlocker
@@ -48,6 +48,6 @@ class ScopedIrqBlocker
     ScopedIrqBlocker(){};
     ~ScopedIrqBlocker() = default;
 };
-} // namespace daisy
+} // namespace uvos
 
 #endif

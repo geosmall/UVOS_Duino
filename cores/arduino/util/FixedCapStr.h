@@ -7,7 +7,7 @@
 #include <string_view>
 #include <algorithm>
 
-namespace daisy
+namespace uvos
 {
 template <class CharType = char>
 class FixedCapStrBase
@@ -540,4 +540,4 @@ inline constexpr void Swap(const FixedCapStr<capacity, CharType>& lhs,
     rhs.Swap(lhs);
 }
 
-} // namespace daisy
+} // namespace uvos

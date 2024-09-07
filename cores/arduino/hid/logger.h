@@ -1,21 +1,21 @@
 #pragma once
-#ifndef __DSY_LOGGER_H__
-#define __DSY_LOGGER_H__
+#ifndef __UVS_LOGGER_H__
+#define __UVS_LOGGER_H__
 
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
 #include "logger_impl.h"
 
-namespace daisy
+namespace uvos
 {
 /** 
  *  @addtogroup hid_logging LOGGING
  *  @brief Intefaces for Logging over USB, etc.
  *  @ingroup human_interface
- *  @ingroup libdaisy
+ *  @ingroup libuvos
  * 
- *  The following is a short example of using the DaisySeed::Logger
+ *  The following is a short example of using the UVOSboard::Logger
  *  to print to a serial port.
  *  @include SerialPrint.cpp
  *  @{
@@ -185,6 +185,6 @@ class Logger<LOGGER_NONE>
 };
 
 /** @} */
-} // namespace daisy
+} // namespace uvos
 
-#endif // __DSY_LOGGER_H__
+#endif // __UVS_LOGGER_H__

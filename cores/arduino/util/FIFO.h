@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <initializer_list>
 
-namespace daisy
+namespace uvos
 {
 /** Capacity-independent base class for FIFO. Use FIFO instead. */
 template <typename T>
@@ -326,4 +326,4 @@ class FIFO : public FIFOBase<T>
     T buffer_[capacity + 1];
 };
 
-} // namespace daisy
+} // namespace uvos

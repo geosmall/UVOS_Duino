@@ -1,25 +1,25 @@
 #pragma once
-#ifndef DSY_SEED_H
-#define DSY_SEED_H
+#ifndef UVS_SEED_H
+#define UVS_SEED_H
 
 #include "uvos.h"
 
 //Uncomment this out if you're still using the rev2 hardware
 //#define SEED_REV2
 
-namespace daisy
+namespace uvos
 {
 /**
-   @brief This is the higher-level interface for the Daisy board. \n 
+   @brief This is the higher-level interface for the UVOS board. \n 
     All basic peripheral configuration/initialization is setup here. \n
 
    @ingroup boards
 */
-class DaisySeed
+class UVOSboard
 {
   public:
-    DaisySeed() {}
-    ~DaisySeed() {}
+    UVOSboard() {}
+    ~UVOSboard() {}
 
     /** This function used to provide a pre-initialization configuraiton 
      *  it has since been deprecated, and does nothing.
@@ -27,12 +27,12 @@ class DaisySeed
     void Configure();
 
     /** 
-    Initializes the Daisy Seed and the following peripherals:
+    Initializes the UVOS board and the following peripherals:
     SDRAM, QSPI, 24-bit 48kHz Audio via AK4556, Internal USB,
     as well as the built-in LED and Testpoint.
 
     ADCs, DACs, and other special peripherals (such as I2C, SPI, etc.)
-    can be initialized using their specific initializers within libdaisy
+    can be initialized using their specific initializers within libuvos
     for a specific application.
     */
     void Init(bool boost = false);
@@ -50,63 +50,9 @@ class DaisySeed
 
     /** 
     Returns the gpio_pin corresponding to the index 0-31.
-    For the given GPIO on the Daisy Seed (labeled 1-32 in docs).
+    For the given GPIO on the UVOS board (labeled 1-32 in docs).
     */
-    static dsy_gpio_pin GetPin(uint8_t pin_idx);
-
-#if 0 // gls
-
-    /** Begins the audio for the seeds builtin audio.
-    the specified callback will get called whenever
-    new data is ready to be prepared.
-    */
-    void StartAudio(AudioHandle::InterleavingAudioCallback cb);
-
-    /** Begins the audio for the seeds builtin audio.
-    the specified callback will get called whenever
-    new data is ready to be prepared.
-    This will use the newer non-interleaved callback.
-    */
-    void StartAudio(AudioHandle::AudioCallback cb);
-
-    /** Changes to a new interleaved callback
-     */
-    void ChangeAudioCallback(AudioHandle::InterleavingAudioCallback cb);
-
-    /** Changes to a new multichannel callback
-     */
-    void ChangeAudioCallback(AudioHandle::AudioCallback cb);
-
-    /** Stops the audio if it is running. */
-    void StopAudio();
-
-    /** Updates the Audio Sample Rate, and reinitializes.
-     ** Audio must be stopped for this to work.
-     */
-    void SetAudioSampleRate(SaiHandle::Config::SampleRate samplerate);
-
-    /** Returns the audio sample rate in Hz as a floating point number.
-     */
-    float AudioSampleRate();
-
-    /** Sets the number of samples processed per channel by the audio callback.
-     */
-    void SetAudioBlockSize(size_t blocksize);
-
-    /** Returns the number of samples per channel in a block of audio. */
-    size_t AudioBlockSize();
-
-    /** Returns the rate in Hz that the Audio callback is called */
-    float AudioCallbackRate() const;
-
-    /** Returns the SAI Handle for the Daisy Seed 
-     *  This can be useful when adding a secondary codec,
-     *  the result of this function can be passed to the audio reinit 
-     *  with an SAI2 configuration
-     */
-    const SaiHandle& AudioSaiHandle() const;
-
-#endif // gls
+    static uvs_gpio_pin GetPin(uint8_t pin_idx);
 
     /** Sets the state of the built in LED
      */
@@ -152,28 +98,28 @@ class DaisySeed
     // AdcHandle          adc;          /**< & */
     // DacHandle          dac;
     UsbHandle          usb_handle; /**< & */
-    dsy_gpio           led, testpoint;
+    uvs_gpio           led, testpoint;
     System             system;
 
-    /** Internal indices for DaisySeed-equivalent devices 
+    /** Internal indices for UVOSboard-equivalent devices 
      *  This shouldn't have any effect on user-facing code,
      *  and only needs to be checked to properly initialize
      *  the onboard-circuits.
     */
     enum class BoardVersion
     {
-        /** Daisy Seed Rev4
-         *  This is the original Daisy Seed */
-        DAISY_SEED,
-        /** Daisy Seed 1.1 (aka Daisy Seed Rev5)
-         *  This is a pin-compatible version of the Daisy Seed
+        /** UVOS board Rev4
+         *  This is the original UVOS board */
+        UVOS_BOARD,
+        /** UVOS board 1.1 (aka UVOS board Rev5)
+         *  This is a pin-compatible version of the UVOS board
          *  that uses the WM8731 codec instead of the AK4430 */
-        DAISY_SEED_1_1,
-        /** Daisy Seed 2 DFM is a software compatible version of the
-         *  original Daisy Seed that has improvements for manufacturing,
+        UVOS_BOARD_1_1,
+        /** UVOS board 2 DFM is a software compatible version of the
+         *  original UVOS board that has improvements for manufacturing,
          *  as well as an improved audio codec (PCM3060)
          */
-        DAISY_SEED_2_DFM,
+        UVOS_BOARD_2_DFM,
     };
 
     /** Returns the BoardVersion detected during intiialization */
@@ -196,7 +142,7 @@ class DaisySeed
 };
 
 /** seed namespace contains pinout constants for addressing 
- * the pins on the Daisy Seed SOM.
+ * the pins on the UVOS board SOM.
  */
 namespace seed
 {
@@ -247,7 +193,7 @@ namespace seed
     constexpr Pin A10 = D25;
     constexpr Pin A11 = D28;
 
-    /** Pins unique to Daisy Seed 2 DFM */
+    /** Pins unique to UVOS board 2 DFM */
     constexpr Pin D31 = Pin(PORTC, 2);
     constexpr Pin D32 = Pin(PORTC, 3);
 
@@ -256,6 +202,6 @@ namespace seed
     constexpr Pin A13 = D32;
 } // namespace seed
 
-} // namespace daisy
+} // namespace uvos
 
 #endif

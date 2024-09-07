@@ -1,17 +1,17 @@
 #pragma once
-#ifndef DSY_HID_USB_H
-#define DSY_HID_USB_H
+#ifndef UVS_HID_USB_H
+#define UVS_HID_USB_H
 #include <stdint.h>
 #include <stdlib.h>
 
-namespace daisy
+namespace uvos
 /** @addtogroup human_interface
     @{
 */
 
 {
 /** 
-    @brief Interface for initializing and using the USB Peripherals on the daisy
+    @brief Interface for initializing and using the USB Peripherals
     @author Stephen Hensley
     @date December 2019
 */
@@ -57,7 +57,7 @@ class UsbHandle
      */
     Result TransmitInternal(uint8_t* buff, size_t size);
     /** Transmits a buffer of 'size' bytes from a USB port connected to the
-    external USB Pins of the daisy seed.
+    external USB Pins of the uvos board.
     \param buff Buffer to transmit
     \param size Buffer size
     */
@@ -72,7 +72,7 @@ class UsbHandle
   private:
 };
 
-} // namespace daisy
+} // namespace uvos
 #endif
 
 /* - Add support for other USB classes (currently only CDC is supported)

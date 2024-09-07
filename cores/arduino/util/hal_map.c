@@ -2,12 +2,12 @@
 
 #include "stm32h7xx_hal.h"
 
-// Maps Daisy interface to STM32 HAL --
+// Maps UVOS interface to STM32 HAL --
 // I'd like to get all of this stuff tucked away somewhere inbetween the HAL, and User level
 // So that I can start to slowly replace HAL stuff over time.
 // Also I don't like that this throws a warning for every library file that doesn't use it...
 
-const static GPIO_TypeDef* gpio_hal_port_map[DSY_GPIO_LAST] = {
+const static GPIO_TypeDef* gpio_hal_port_map[UVS_GPIO_LAST] = {
     GPIOA,
     GPIOB,
     GPIOC,
@@ -43,30 +43,30 @@ const static uint16_t gpio_hal_pin_map[16] = {
 
 // GPIO FUNCTIONS
 
-GPIO_TypeDef* dsy_hal_map_get_port(const dsy_gpio_pin* p)
+GPIO_TypeDef* uvs_hal_map_get_port(const uvs_gpio_pin* p)
 {
     return (GPIO_TypeDef*)gpio_hal_port_map[p->port];
 }
-uint16_t dsy_hal_map_get_pin(const dsy_gpio_pin* p)
+uint16_t uvs_hal_map_get_pin(const uvs_gpio_pin* p)
 {
     return (uint16_t)gpio_hal_pin_map[p->pin];
 }
 
-void dsy_hal_map_gpio_clk_enable(dsy_gpio_port port)
+void uvs_hal_map_gpio_clk_enable(uvs_gpio_port port)
 {
     switch(port)
     {
-        case DSY_GPIOA: __HAL_RCC_GPIOA_CLK_ENABLE(); return;
-        case DSY_GPIOB: __HAL_RCC_GPIOB_CLK_ENABLE(); return;
-        case DSY_GPIOC: __HAL_RCC_GPIOC_CLK_ENABLE(); return;
-        case DSY_GPIOD: __HAL_RCC_GPIOD_CLK_ENABLE(); return;
-        case DSY_GPIOE: __HAL_RCC_GPIOE_CLK_ENABLE(); return;
-        case DSY_GPIOF: __HAL_RCC_GPIOF_CLK_ENABLE(); return;
-        case DSY_GPIOG: __HAL_RCC_GPIOG_CLK_ENABLE(); return;
-        case DSY_GPIOH: __HAL_RCC_GPIOH_CLK_ENABLE(); return;
-        case DSY_GPIOI: __HAL_RCC_GPIOI_CLK_ENABLE(); return;
-        case DSY_GPIOJ: __HAL_RCC_GPIOJ_CLK_ENABLE(); return;
-        case DSY_GPIOK: __HAL_RCC_GPIOK_CLK_ENABLE(); return;
+        case UVS_GPIOA: __HAL_RCC_GPIOA_CLK_ENABLE(); return;
+        case UVS_GPIOB: __HAL_RCC_GPIOB_CLK_ENABLE(); return;
+        case UVS_GPIOC: __HAL_RCC_GPIOC_CLK_ENABLE(); return;
+        case UVS_GPIOD: __HAL_RCC_GPIOD_CLK_ENABLE(); return;
+        case UVS_GPIOE: __HAL_RCC_GPIOE_CLK_ENABLE(); return;
+        case UVS_GPIOF: __HAL_RCC_GPIOF_CLK_ENABLE(); return;
+        case UVS_GPIOG: __HAL_RCC_GPIOG_CLK_ENABLE(); return;
+        case UVS_GPIOH: __HAL_RCC_GPIOH_CLK_ENABLE(); return;
+        case UVS_GPIOI: __HAL_RCC_GPIOI_CLK_ENABLE(); return;
+        case UVS_GPIOJ: __HAL_RCC_GPIOJ_CLK_ENABLE(); return;
+        case UVS_GPIOK: __HAL_RCC_GPIOK_CLK_ENABLE(); return;
         default: return;
     }
 }

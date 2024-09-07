@@ -4,7 +4,7 @@
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 
-using namespace daisy;
+using namespace uvos;
 
 static void UsbErrorHandler();
 

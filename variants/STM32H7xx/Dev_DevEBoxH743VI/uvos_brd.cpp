@@ -1,63 +1,63 @@
 #include "uvos_brd.h"
 
-using namespace daisy;
+using namespace uvos;
 
-#define SEED_LED_PORT DSY_GPIOA
+#define SEED_LED_PORT UVS_GPIOA
 #define SEED_LED_PIN 1
 
-#define SEED_TEST_POINT_PORT DSY_GPIOC
+#define SEED_TEST_POINT_PORT UVS_GPIOC
 #define SEED_TEST_POINT_PIN 1
 
 #ifndef SEED_REV2
-const dsy_gpio_pin seedgpio[33] = {
+const uvs_gpio_pin seedgpio[33] = {
     // GPIO 1-8
-    //{DSY_GPIOA, 8}, // removed on Rev4
-    {DSY_GPIOB, 12},
-    {DSY_GPIOC, 11},
-    {DSY_GPIOC, 10},
-    {DSY_GPIOC, 9},
-    {DSY_GPIOC, 8},
-    {DSY_GPIOD, 2},
-    {DSY_GPIOC, 12},
+    //{UVS_GPIOA, 8}, // removed on Rev4
+    {UVS_GPIOB, 12},
+    {UVS_GPIOC, 11},
+    {UVS_GPIOC, 10},
+    {UVS_GPIOC, 9},
+    {UVS_GPIOC, 8},
+    {UVS_GPIOD, 2},
+    {UVS_GPIOC, 12},
     // GPIO 9-16
-    {DSY_GPIOG, 10},
-    {DSY_GPIOG, 11},
-    {DSY_GPIOB, 4},
-    {DSY_GPIOB, 5},
-    {DSY_GPIOB, 8},
-    {DSY_GPIOB, 9},
-    {DSY_GPIOB, 6},
-    {DSY_GPIOB, 7},
+    {UVS_GPIOG, 10},
+    {UVS_GPIOG, 11},
+    {UVS_GPIOB, 4},
+    {UVS_GPIOB, 5},
+    {UVS_GPIOB, 8},
+    {UVS_GPIOB, 9},
+    {UVS_GPIOB, 6},
+    {UVS_GPIOB, 7},
     // GPIO 17-24
-    {DSY_GPIOC, 0},
-    {DSY_GPIOA, 3},
-    {DSY_GPIOB, 1},
-    {DSY_GPIOA, 7},
-    {DSY_GPIOA, 6},
-    {DSY_GPIOC, 1},
-    {DSY_GPIOC, 4},
-    {DSY_GPIOA, 5},
+    {UVS_GPIOC, 0},
+    {UVS_GPIOA, 3},
+    {UVS_GPIOB, 1},
+    {UVS_GPIOA, 7},
+    {UVS_GPIOA, 6},
+    {UVS_GPIOC, 1},
+    {UVS_GPIOC, 4},
+    {UVS_GPIOA, 5},
     // GPIO 25-31
-    {DSY_GPIOA, 4},
-    {DSY_GPIOA, 1},
-    {DSY_GPIOA, 0},
-    {DSY_GPIOD, 11},
-    {DSY_GPIOG, 9},
-    {DSY_GPIOA, 2},
-    {DSY_GPIOB, 14},
-    {DSY_GPIOB, 15},
+    {UVS_GPIOA, 4},
+    {UVS_GPIOA, 1},
+    {UVS_GPIOA, 0},
+    {UVS_GPIOD, 11},
+    {UVS_GPIOG, 9},
+    {UVS_GPIOA, 2},
+    {UVS_GPIOB, 14},
+    {UVS_GPIOB, 15},
 
     // Seed2DFM exclusive pins
-    {DSY_GPIOC, 2},
-    {DSY_GPIOC, 3},
+    {UVS_GPIOC, 2},
+    {UVS_GPIOC, 3},
 };
 #else
-const dsy_gpio_port seed_ports[32] = {
-    DSY_GPIOA, DSY_GPIOB, DSY_GPIOC, DSY_GPIOC, DSY_GPIOC, DSY_GPIOC, DSY_GPIOD,
-    DSY_GPIOC, DSY_GPIOG, DSY_GPIOG, DSY_GPIOB, DSY_GPIOB, DSY_GPIOB, DSY_GPIOB,
-    DSY_GPIOB, DSY_GPIOB, DSY_GPIOC, DSY_GPIOA, DSY_GPIOA, DSY_GPIOB, DSY_GPIOA,
-    DSY_GPIOA, DSY_GPIOC, DSY_GPIOC, DSY_GPIOA, DSY_GPIOA, DSY_GPIOA, DSY_GPIOD,
-    DSY_GPIOG, DSY_GPIOA, DSY_GPIOB, DSY_GPIOB,
+const uvs_gpio_port seed_ports[32] = {
+    UVS_GPIOA, UVS_GPIOB, UVS_GPIOC, UVS_GPIOC, UVS_GPIOC, UVS_GPIOC, UVS_GPIOD,
+    UVS_GPIOC, UVS_GPIOG, UVS_GPIOG, UVS_GPIOB, UVS_GPIOB, UVS_GPIOB, UVS_GPIOB,
+    UVS_GPIOB, UVS_GPIOB, UVS_GPIOC, UVS_GPIOA, UVS_GPIOA, UVS_GPIOB, UVS_GPIOA,
+    UVS_GPIOA, UVS_GPIOC, UVS_GPIOC, UVS_GPIOA, UVS_GPIOA, UVS_GPIOA, UVS_GPIOD,
+    UVS_GPIOG, UVS_GPIOA, UVS_GPIOB, UVS_GPIOB,
 };
 
 const uint8_t seed_pins[32] = {
@@ -65,7 +65,7 @@ const uint8_t seed_pins[32] = {
     0, 1,  3,  1,  7, 6, 1, 5,  5,  4,  0, 11, 9, 2, 14, 15,
 };
 
-const dsy_gpio_pin seedgpio[32] = {
+const uvs_gpio_pin seedgpio[32] = {
     {seed_ports[0], seed_pins[0]},   {seed_ports[1], seed_pins[1]},
     {seed_ports[2], seed_pins[2]},   {seed_ports[3], seed_pins[3]},
     {seed_ports[4], seed_pins[4]},   {seed_ports[5], seed_pins[5]},
@@ -90,11 +90,11 @@ const dsy_gpio_pin seedgpio[32] = {
 /** Vestigial function body for old function
  *  This is no longer in use.
  */
-void DaisySeed::Configure() {}
+void UVOSboard::Configure() {}
 
-void DaisySeed::Init(bool boost)
+void UVOSboard::Init(bool boost)
 {
-    //dsy_system_init();
+    //uvs_system_init();
     System::Config syscfg;
     boost ? syscfg.Boost() : syscfg.Defaults();
 
@@ -104,10 +104,10 @@ void DaisySeed::Init(bool boost)
     // Configure the built-in GPIOs.
     led.pin.port       = SEED_LED_PORT;
     led.pin.pin        = SEED_LED_PIN;
-    led.mode           = DSY_GPIO_MODE_OUTPUT_PP;
+    led.mode           = UVS_GPIO_MODE_OUTPUT_PP;
     testpoint.pin.port = SEED_TEST_POINT_PORT;
     testpoint.pin.pin  = SEED_TEST_POINT_PIN;
-    testpoint.mode     = DSY_GPIO_MODE_OUTPUT_PP;
+    testpoint.mode     = UVS_GPIO_MODE_OUTPUT_PP;
 
 
     auto memory       = System::GetProgramMemoryRegion();
@@ -130,8 +130,8 @@ void DaisySeed::Init(bool boost)
        || (boot_version == System::BootInfo::Version::LT_v6_0
            && memory == System::MemoryRegion::INTERNAL_FLASH))
     {
-        dsy_gpio_init(&led);
-        dsy_gpio_init(&testpoint);
+        uvs_gpio_init(&led);
+        uvs_gpio_init(&testpoint);
 #if 0 // gls
         sdram_handle.Init();
 #endif // gls
@@ -149,18 +149,18 @@ void DaisySeed::Init(bool boost)
 #endif // gls
 }
 
-void DaisySeed::DeInit()
+void UVOSboard::DeInit()
 {
     // This is intended to be used by the bootloader, but
     // we don't want to reinitialize pretty much anything in the
     // target application, so...
     // qspi.DeInit();
     // sdram_handle.DeInit();
-    // dsy_gpio_deinit(&led);
-    // dsy_gpio_deinit(&testpoint);
+    // uvs_gpio_deinit(&led);
+    // uvs_gpio_deinit(&testpoint);
 
-    // dsy_gpio_pin codec_reset_pin;
-    // codec_reset_pin = {DSY_GPIOB, 11};
+    // uvs_gpio_pin codec_reset_pin;
+    // codec_reset_pin = {UVS_GPIOB, 11};
     // // Perhaps a bit unnecessary, but maybe we'll make
     // // this non-static at some point
     // Ak4556::DeInit(codec_reset_pin);
@@ -169,9 +169,9 @@ void DaisySeed::DeInit()
     system.DeInit();
 }
 
-dsy_gpio_pin DaisySeed::GetPin(uint8_t pin_idx)
+uvs_gpio_pin UVOSboard::GetPin(uint8_t pin_idx)
 {
-    dsy_gpio_pin p;
+    uvs_gpio_pin p;
     pin_idx = pin_idx < sizeof(seedgpio) / sizeof(seedgpio[0]) ? pin_idx : 0;
 #ifndef SEED_REV2
     p = seedgpio[pin_idx];
@@ -181,195 +181,26 @@ dsy_gpio_pin DaisySeed::GetPin(uint8_t pin_idx)
     return p;
 }
 
-void DaisySeed::DelayMs(size_t del)
+void UVOSboard::DelayMs(size_t del)
 {
     system.Delay(del);
 }
 
-#if 0 // gls
-
-void DaisySeed::StartAudio(AudioHandle::InterleavingAudioCallback cb)
+void UVOSboard::SetLed(bool state)
 {
-    audio_handle.Start(cb);
+    uvs_gpio_write(&led, state);
 }
 
-void DaisySeed::StartAudio(AudioHandle::AudioCallback cb)
+void UVOSboard::SetTestPoint(bool state)
 {
-    audio_handle.Start(cb);
+    uvs_gpio_write(&testpoint, state);
 }
 
-void DaisySeed::ChangeAudioCallback(AudioHandle::InterleavingAudioCallback cb)
-{
-    audio_handle.ChangeCallback(cb);
-}
-
-void DaisySeed::ChangeAudioCallback(AudioHandle::AudioCallback cb)
-{
-    audio_handle.ChangeCallback(cb);
-}
-
-void DaisySeed::StopAudio()
-{
-    audio_handle.Stop();
-}
-
-void DaisySeed::SetAudioSampleRate(SaiHandle::Config::SampleRate samplerate)
-{
-    audio_handle.SetSampleRate(samplerate);
-    callback_rate_ = AudioSampleRate() / AudioBlockSize();
-}
-
-float DaisySeed::AudioSampleRate()
-{
-    return audio_handle.GetSampleRate();
-}
-
-void DaisySeed::SetAudioBlockSize(size_t blocksize)
-{
-    audio_handle.SetBlockSize(blocksize);
-    callback_rate_ = AudioSampleRate() / AudioBlockSize();
-}
-
-size_t DaisySeed::AudioBlockSize()
-{
-    return audio_handle.GetConfig().blocksize;
-}
-
-float DaisySeed::AudioCallbackRate() const
-{
-    return callback_rate_;
-}
-
-#endif // gls
-
-void DaisySeed::SetLed(bool state)
-{
-    dsy_gpio_write(&led, state);
-}
-
-void DaisySeed::SetTestPoint(bool state)
-{
-    dsy_gpio_write(&testpoint, state);
-}
-
-#if 0 // gls
-
-const SaiHandle& DaisySeed::AudioSaiHandle() const
-{
-    return sai_1_handle_;
-}
-
-// Private Implementation
-
-void DaisySeed::ConfigureQspi()
-{
-    qspi_config.device = QSPIHandle::Config::Device::IS25LP064A;
-    qspi_config.mode   = QSPIHandle::Config::Mode::MEMORY_MAPPED;
-
-    qspi_config.pin_config.io0 = dsy_pin(DSY_GPIOD, 11);
-    qspi_config.pin_config.io1 = dsy_pin(DSY_GPIOD, 12);
-    qspi_config.pin_config.io2 = dsy_pin(DSY_GPIOE, 2);
-    qspi_config.pin_config.io3 = dsy_pin(DSY_GPIOD, 13);
-    qspi_config.pin_config.clk = dsy_pin(DSY_GPIOB, 2);
-    qspi_config.pin_config.ncs = dsy_pin(DSY_GPIOB, 6);
-}
-
-void DaisySeed::ConfigureAudio()
-{
-    // SAI1 -- Peripheral
-    // Configure
-    SaiHandle::Config sai_config;
-    sai_config.periph          = SaiHandle::Config::Peripheral::SAI_1;
-    sai_config.sr              = SaiHandle::Config::SampleRate::SAI_48KHZ;
-    sai_config.bit_depth       = SaiHandle::Config::BitDepth::SAI_24BIT;
-    sai_config.a_sync          = SaiHandle::Config::Sync::MASTER;
-    sai_config.b_sync          = SaiHandle::Config::Sync::SLAVE;
-    sai_config.pin_config.fs   = {DSY_GPIOE, 4};
-    sai_config.pin_config.mclk = {DSY_GPIOE, 2};
-    sai_config.pin_config.sck  = {DSY_GPIOE, 5};
-
-    // Device-based Init
-    switch(CheckBoardVersion())
-    {
-        case BoardVersion::DAISY_SEED_1_1:
-        {
-            // Data Line Directions
-            sai_config.a_dir         = SaiHandle::Config::Direction::RECEIVE;
-            sai_config.pin_config.sa = {DSY_GPIOE, 6};
-            sai_config.b_dir         = SaiHandle::Config::Direction::TRANSMIT;
-            sai_config.pin_config.sb = {DSY_GPIOE, 3};
-            I2CHandle::Config i2c_config;
-            i2c_config.mode           = I2CHandle::Config::Mode::I2C_MASTER;
-            i2c_config.periph         = I2CHandle::Config::Peripheral::I2C_2;
-            i2c_config.speed          = I2CHandle::Config::Speed::I2C_400KHZ;
-            i2c_config.pin_config.scl = {DSY_GPIOH, 4};
-            i2c_config.pin_config.sda = {DSY_GPIOB, 11};
-            I2CHandle i2c_handle;
-            i2c_handle.Init(i2c_config);
-            Wm8731::Config codec_cfg;
-            codec_cfg.Defaults();
-            Wm8731 codec;
-            codec.Init(codec_cfg, i2c_handle);
-        }
-        break;
-        case BoardVersion::DAISY_SEED_2_DFM:
-        {
-            // Data Line Directions
-            sai_config.a_dir         = SaiHandle::Config::Direction::TRANSMIT;
-            sai_config.pin_config.sa = {DSY_GPIOE, 6};
-            sai_config.b_dir         = SaiHandle::Config::Direction::RECEIVE;
-            sai_config.pin_config.sb = {DSY_GPIOE, 3};
-            /** PCM3060 disable deemphasis pin */
-            GPIO deemp;
-            deemp.Init(Pin(PORTB, 11), GPIO::Mode::OUTPUT);
-            deemp.Write(0);
-        }
-        break;
-        case BoardVersion::DAISY_SEED:
-        default:
-        {
-            // Data Line Directions
-            sai_config.a_dir         = SaiHandle::Config::Direction::TRANSMIT;
-            sai_config.pin_config.sa = {DSY_GPIOE, 6};
-            sai_config.b_dir         = SaiHandle::Config::Direction::RECEIVE;
-            sai_config.pin_config.sb = {DSY_GPIOE, 3};
-            dsy_gpio_pin codec_reset_pin;
-            codec_reset_pin = {DSY_GPIOB, 11};
-            Ak4556::Init(codec_reset_pin);
-        }
-        break;
-    }
-
-    // Then Initialize
-    sai_1_handle_.Init(sai_config);
-
-    // Audio
-    AudioHandle::Config audio_config;
-    audio_config.blocksize  = 48;
-    audio_config.samplerate = SaiHandle::Config::SampleRate::SAI_48KHZ;
-    audio_config.postgain   = 1.f;
-    audio_handle.Init(audio_config, sai_1_handle_);
-}
-void DaisySeed::ConfigureDac()
-{
-    // This would be the equivalent initialization as previously existed.
-    // However, not all platforms have the DAC, and many use those pins
-    // for other things.
-    //    DacHandle::Config cfg;
-    //    cfg.bitdepth   = DacHandle::Config::BitDepth::BITS_12;
-    //    cfg.buff_state = DacHandle::Config::BufferState::ENABLED;
-    //    cfg.mode       = DacHandle::Config::Mode::POLLING;
-    //    cfg.chn        = DacHandle::Config::Channel::BOTH;
-    //    dac.Init(cfg);
-}
-
-#endif // gls
-
-DaisySeed::BoardVersion DaisySeed::CheckBoardVersion()
+UVOSboard::BoardVersion UVOSboard::CheckBoardVersion()
 {
     /** Version Checks:
-     *  * Fall through is Daisy Seed v1 (aka Daisy Seed rev4)
-     *  * PD3 tied to gnd is Daisy Seed v1.1 (aka Daisy Seed rev5)
+     *  * Fall through is UVOS board v1 (aka UVOS board rev4)
+     *  * PD3 tied to gnd is UVOS board v1.1 (aka UVOS board rev5)
      *  * PD4 tied to gnd reserved for future hardware
      */
 
@@ -382,9 +213,9 @@ DaisySeed::BoardVersion DaisySeed::CheckBoardVersion()
 
     /** Perform Check */
     if(!seed_1_1_gpio.Read())
-        return BoardVersion::DAISY_SEED_1_1;
+        return BoardVersion::UVOS_BOARD_1_1;
     else if(!s2dfm_gpio.Read())
-        return BoardVersion::DAISY_SEED_2_DFM;
+        return BoardVersion::UVOS_BOARD_2_DFM;
     else
-        return BoardVersion::DAISY_SEED;
+        return BoardVersion::UVOS_BOARD;
 }

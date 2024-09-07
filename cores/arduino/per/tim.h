@@ -1,17 +1,17 @@
 #pragma once
-#ifndef DSY_TIM_H
-#define DSY_TIM_H
+#ifndef UVS_TIM_H
+#define UVS_TIM_H
 
 #include <cstdint>
 
-namespace daisy
+namespace uvos
 {
 /** @brief Hardare timer peripheral support.
  ** 
  ** Supports general-function TIM peripherals:
  ** - TIM2, TIM3, TIM4, TIM5
  **
- ** DaisySeed, and many internal peripherals utilize TIM2 for timing/delay purposes.
+ ** UVOSboard, and many internal peripherals utilize TIM2 for timing/delay purposes.
  ** It is configured to be at the maximum frequency: typically 200MHz or 240MHz (boost) 
  ** for measuring/delaying for very short periods. 
  **
@@ -180,6 +180,6 @@ class TimerHandle
     Impl* pimpl_;
 };
 
-} // namespace daisy
+} // namespace uvos
 
 #endif

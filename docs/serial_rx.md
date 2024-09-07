@@ -90,7 +90,7 @@ private:
 #include "sys/system.h"
 #include "IProtocol.h"
 
-namespace daisy
+namespace uvos
 {
 class SerRxUartTransport
 {
@@ -103,8 +103,8 @@ public:
     struct Config
     {
         UartHandler::Config::Peripheral periph;
-        dsy_gpio_pin rx;
-        dsy_gpio_pin tx;
+        uvs_gpio_pin rx;
+        uvs_gpio_pin tx;
         uint8_t* rx_buffer;
         size_t rx_buffer_size;
 
@@ -137,7 +137,7 @@ public:
     {
         parse_context_ = context;
         parse_callback_ = parse_callback;
-        dsy_dma_clear_cache_for_buffer((uint8_t*)this, sizeof(SerRxUartTransport));
+        uvs_dma_clear_cache_for_buffer((uint8_t*)this, sizeof(SerRxUartTransport));
         uart_.DmaListenStart(rx_buffer, rx_buffer_size, SerRxUartTransport::rxCallback, this);
     }
 
@@ -168,7 +168,7 @@ private:
         }
     }
 };
-} // namespace daisy
+} // namespace uvos
 ```
 
 ### Usage Example
@@ -179,11 +179,11 @@ private:
 
 int main()
 {
-    daisy::SerRxUartTransport::Config config;
+    uvos::SerRxUartTransport::Config config;
     // Initialize config with appropriate values
 
     IBusProtocol ibus_protocol;
-    daisy::SerRxUartTransport transport(&ibus_protocol);
+    uvos::SerRxUartTransport transport(&ibus_protocol);
 
     transport.Init(config);
     transport.StartRx(nullptr, nullptr);
@@ -335,7 +335,7 @@ private:
 #include "sys/system.h"
 #include "IProtocol.h"
 
-namespace daisy
+namespace uvos
 {
 class SerRxUartTransport
 {
@@ -348,8 +348,8 @@ public:
     struct Config
     {
         UartHandler::Config::Peripheral periph;
-        dsy_gpio_pin rx;
-        dsy_gpio_pin tx;
+        uvs_gpio_pin rx;
+        uvs_gpio_pin tx;
         uint8_t* rx_buffer;
         size_t rx_buffer_size;
 
@@ -382,7 +382,7 @@ public:
     {
         parse_context_ = context;
         parse_callback_ = parse_callback;
-        dsy_dma_clear_cache_for_buffer((uint8_t*)this, sizeof(SerRxUartTransport));
+        uvs_dma_clear_cache_for_buffer((uint8_t*)this, sizeof(SerRxUartTransport));
         uart_.DmaListenStart(rx_buffer, rx_buffer_size, SerRxUartTransport::rxCallback, this);
     }
 
@@ -413,7 +413,7 @@ private:
         }
     }
 };
-} // namespace daisy
+} // namespace uvos
 ```
 
 ### Step 4: Update IBusHandlerto use the new SerRxUartTransport
@@ -424,7 +424,7 @@ private:
 #include "serial_rx.h"
 #include "IProtocol.h"
 
-namespace daisy
+namespace uvos
 {
 template <typename Protocol>
 class IBusHandler
@@ -491,7 +491,7 @@ private:
 
 using IBusRxHandler = IBusHandler<IBusProtocol>;
 using SBusRxHandler = IBusHandler<SBusProtocol>;
-} // namespace daisy
+} // namespace uvos
 ```
 
 ### Usage Example
@@ -503,14 +503,14 @@ using SBusRxHandler = IBusHandler<SBusProtocol>;
 
 int main()
 {
-    daisy::SerRxUartTransport::Config config;
+    uvos::SerRxUartTransport::Config config;
     // Initialize config with appropriate values
 
-    daisy::IBusRxHandler ibus_handler;
+    uvos::IBusRxHandler ibus_handler;
     ibus_handler.Init({config});
     ibus_handler.StartReceive();
 
-    daisy::SBusRxHandler sbus_handler;
+    uvos::SBusRxHandler sbus_handler;
     sbus_handler.Init({config});
     sbus_handler.StartReceive();
 

@@ -6,7 +6,7 @@ extern "C"
 {
 #endif
 
-    void dsy_dma_init(void)
+    void uvs_dma_init(void)
     {
         // DMA controller clock enable
         __HAL_RCC_DMA1_CLK_ENABLE();
@@ -50,7 +50,7 @@ extern "C"
         HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
     }
 
-    void dsy_dma_deinit(void)
+    void uvs_dma_deinit(void)
     {
         // DMA controller clock enable
         __HAL_RCC_DMA1_CLK_DISABLE();
@@ -82,7 +82,7 @@ extern "C"
         HAL_NVIC_DisableIRQ(DMA2_Stream3_IRQn);
     }
 
-    void dsy_dma_clear_cache_for_buffer(uint8_t* buffer, size_t size)
+    void uvs_dma_clear_cache_for_buffer(uint8_t* buffer, size_t size)
     {
         // clear all cache lines (32bytes each) that span the memory section
         // of our transmit buffer. This makes sure that the SRAM contains the
@@ -91,7 +91,7 @@ extern "C"
             (uint32_t*)((uint32_t)(buffer) & ~(uint32_t)0x1F), size + 32);
     }
 
-    void dsy_dma_invalidate_cache_for_buffer(uint8_t* buffer, size_t size)
+    void uvs_dma_invalidate_cache_for_buffer(uint8_t* buffer, size_t size)
     {
         // invalidate all cache lines (32bytes each) that span the memory section
         // of our transmit buffer. This makes sure that the cache contains the

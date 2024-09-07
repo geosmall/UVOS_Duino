@@ -1,13 +1,13 @@
 #pragma once
-#ifndef __DSY_LOGGER_IMPL_H
-#define __DSY_LOGGER_IMPL_H
+#ifndef __UVS_LOGGER_IMPL_H
+#define __UVS_LOGGER_IMPL_H
 #include <unistd.h>
 #include <cassert>
 #include "hid/usb.h"
 #include "sys/system.h"
 
 
-namespace daisy
+namespace uvos
 {
 /** Enumeration of destination ports for debug logging
  */
@@ -123,6 +123,6 @@ class LoggerImpl<LOGGER_SEMIHOST>
 
 #endif // gls
 
-} /* namespace daisy */
+} /* namespace uvos */
 
-#endif //__DSY_LOGGER_IMPL_H
+#endif //__UVS_LOGGER_IMPL_H

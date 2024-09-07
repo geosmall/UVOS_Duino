@@ -10,14 +10,14 @@
 extern "C"
 {
     extern void SystemClock_Config(uint32_t plln_val, uint32_t FLatency); // in Variant folder 
-    extern void dsy_i2c_global_init();
-    extern void dsy_spi_global_init();
-    extern void dsy_uart_global_init();
+    extern void uvs_i2c_global_init();
+    extern void uvs_spi_global_init();
+    extern void uvs_uart_global_init();
 }
 
 // boot info struct declared in persistent backup RAM
-volatile daisy::System::BootInfo __attribute__((section(".backup_ram")))
-daisy::boot_info;
+volatile uvos::System::BootInfo __attribute__((section(".backup_ram")))
+uvos::boot_info;
 
 // Jump related stuff
 #define u32 uint32_t
@@ -197,7 +197,7 @@ extern "C"
     }
 }
 
-namespace daisy
+namespace uvos
 {
 // Define static tim_
 TimerHandle System::tim_;
@@ -219,10 +219,10 @@ void System::Init(const System::Config& config)
         ConfigureClocks();
         ConfigureMpu();
     }
-    dsy_dma_init();
-    // dsy_i2c_global_init();
-    // dsy_spi_global_init();
-    // dsy_uart_global_init();
+    uvs_dma_init();
+    // uvs_i2c_global_init();
+    // uvs_spi_global_init();
+    // uvs_uart_global_init();
 
     // Initialize Caches
     if(config.use_dcache)
@@ -241,7 +241,7 @@ void System::Init(const System::Config& config)
 
 void System::DeInit()
 {
-    dsy_dma_deinit();
+    uvs_dma_deinit();
     // HAL_MPU_Disable();
     // The I2C global init doesn't actually initialize the periph,
     // so no need to deinitialize
@@ -297,35 +297,35 @@ void System::ResetToBootloader(BootloaderMode mode)
     if(mode == BootloaderMode::STM)
     {
         // Initialize Boot Pin
-        dsy_gpio_pin bootpin = {DSY_GPIOG, 3};
-        dsy_gpio     pin;
-        pin.mode = DSY_GPIO_MODE_OUTPUT_PP;
+        uvs_gpio_pin bootpin = {UVS_GPIOG, 3};
+        uvs_gpio     pin;
+        pin.mode = UVS_GPIO_MODE_OUTPUT_PP;
         pin.pin  = bootpin;
-        dsy_gpio_init(&pin);
+        uvs_gpio_init(&pin);
 
         // Pull Pin HIGH
-        dsy_gpio_write(&pin, 1);
+        uvs_gpio_write(&pin, 1);
 
         // wait a few ms for cap to charge
         HAL_Delay(10);
     }
-    else if(mode == BootloaderMode::DAISY
-            || mode == BootloaderMode::DAISY_SKIP_TIMEOUT
-            || mode == BootloaderMode::DAISY_INFINITE_TIMEOUT)
+    else if(mode == BootloaderMode::UVOS
+            || mode == BootloaderMode::UVOS_SKIP_TIMEOUT
+            || mode == BootloaderMode::UVOS_INFINITE_TIMEOUT)
     {
         auto region = GetProgramMemoryRegion();
         if(region == MemoryRegion::INTERNAL_FLASH)
-            return; // Cannot return to Daisy bootloader if it's not present!
+            return; // Cannot return to UVOS bootloader if it's not present!
 
         // Coming from a bootloaded program, the backup SRAM will already
         // be initialized. If the bootloader is <= v5, then it will not
         // be initialized, but a failed write will not cause a fault.
         switch(mode)
         {
-            case BootloaderMode::DAISY_SKIP_TIMEOUT:
+            case BootloaderMode::UVOS_SKIP_TIMEOUT:
                 boot_info.status = BootInfo::Type::SKIP_TIMEOUT;
                 break;
-            case BootloaderMode::DAISY_INFINITE_TIMEOUT:
+            case BootloaderMode::UVOS_INFINITE_TIMEOUT:
                 boot_info.status = BootInfo::Type::INF_TIMEOUT;
                 break;
             default:
@@ -524,12 +524,12 @@ System::MemoryRegion System::GetMemoryRegion(uint32_t addr)
 }
 
 
-} // namespace daisy
+} // namespace uvos
 
 #else // ifndef UNIT_TEST
 
 #include "system.h"
 // this is part of the dummy version used in unit tests
-TestIsolator<daisy::System::SystemState> daisy::System::testIsolator_;
+TestIsolator<uvos::System::SystemState> uvos::System::testIsolator_;
 
 #endif

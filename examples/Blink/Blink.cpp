@@ -1,11 +1,11 @@
 #include "uvos_brd.h"
 
-// Use the daisy namespace to prevent having to type
-// daisy:: before all libdaisy functions
-using namespace daisy;
+// Use the uvos namespace to prevent having to type
+// uvos:: before all libuvos functions
+using namespace uvos;
 
-// Declare a DaisySeed object called hardware
-DaisySeed hardware;
+// Declare a UVOSboard object called hardware
+UVOSboard hardware;
 
 int main(void)
 {
@@ -13,7 +13,7 @@ int main(void)
     bool led_state;
     led_state = true;
 
-    // Configure and Initialize the Daisy Seed
+    // Configure and Initialize the UVOS board
     // These are separate to allow reconfiguration of any of the internal
     // components before initialization.
     hardware.Configure();

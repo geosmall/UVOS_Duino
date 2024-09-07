@@ -1,11 +1,11 @@
 #pragma once
-#ifndef DSY_GPIO_H
-#define DSY_GPIO_H
+#ifndef UVS_GPIO_H
+#define UVS_GPIO_H
 #include "uvos_core.h"
 
 #ifdef __cplusplus
 
-namespace daisy
+namespace uvos
 {
 /** @brief General Purpose I/O control 
  *  @details peripheral control over a single GPIO
@@ -135,7 +135,7 @@ class GPIO
     uint32_t *port_base_addr_;
 };
 
-} // namespace daisy
+} // namespace uvos
 
 
 /** @ingroup peripheral
@@ -155,44 +155,44 @@ extern "C"
     /** Sets the mode of the GPIO */
     typedef enum
     {
-        DSY_GPIO_MODE_INPUT,     /**< & */
-        DSY_GPIO_MODE_OUTPUT_PP, /**< Push-Pull */
-        DSY_GPIO_MODE_OUTPUT_OD, /**< Open-Drain */
-        DSY_GPIO_MODE_ANALOG,    /**< & */
-        DSY_GPIO_MODE_LAST,      /**< & */
-    } dsy_gpio_mode;
+        UVS_GPIO_MODE_INPUT,     /**< & */
+        UVS_GPIO_MODE_OUTPUT_PP, /**< Push-Pull */
+        UVS_GPIO_MODE_OUTPUT_OD, /**< Open-Drain */
+        UVS_GPIO_MODE_ANALOG,    /**< & */
+        UVS_GPIO_MODE_LAST,      /**< & */
+    } uvs_gpio_mode;
 
     /** Configures whether an internal Pull up or Pull down resistor is used */
     typedef enum
     {
-        DSY_GPIO_NOPULL,   /**< & */
-        DSY_GPIO_PULLUP,   /**< & */
-        DSY_GPIO_PULLDOWN, /**< & */
-    } dsy_gpio_pull;
+        UVS_GPIO_NOPULL,   /**< & */
+        UVS_GPIO_PULLUP,   /**< & */
+        UVS_GPIO_PULLDOWN, /**< & */
+    } uvs_gpio_pull;
 
     /** Struct for holding the pin, and configuration */
     typedef struct
     {
-        dsy_gpio_pin  pin;  /**< & */
-        dsy_gpio_mode mode; /**< & */
-        dsy_gpio_pull pull; /**< & */
-    } dsy_gpio;
+        uvs_gpio_pin  pin;  /**< & */
+        uvs_gpio_mode mode; /**< & */
+        uvs_gpio_pull pull; /**< & */
+    } uvs_gpio;
 
     /** Initializes the gpio with the settings configured. 
     \param *p Pin pointer
     */
-    void dsy_gpio_init(const dsy_gpio *p);
+    void uvs_gpio_init(const uvs_gpio *p);
 
     /** Deinitializes the gpio pin 
     \param *p Pin pointer
      */
-    void dsy_gpio_deinit(const dsy_gpio *p);
+    void uvs_gpio_deinit(const uvs_gpio *p);
 
     /** 
     Reads the state of the gpio pin
     \param *p Pin pointer 
     \return 1 if the pin is HIGH, and 0 if the pin is LOW */
-    uint8_t dsy_gpio_read(const dsy_gpio *p);
+    uint8_t uvs_gpio_read(const uvs_gpio *p);
 
     /** 
     Writes the state to the gpio pin
@@ -200,12 +200,12 @@ extern "C"
     \param *p Pin pointer
     \param state State to write
     */
-    void dsy_gpio_write(const dsy_gpio *p, uint8_t state);
+    void uvs_gpio_write(const uvs_gpio *p, uint8_t state);
 
     /** Toggles the state of the pin so that it is not at the same state as it was previously.
     \param *p Pin pointer
      */
-    void dsy_gpio_toggle(const dsy_gpio *p);
+    void uvs_gpio_toggle(const uvs_gpio *p);
     /**@} */
 }
 #endif

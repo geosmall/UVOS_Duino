@@ -1,12 +1,12 @@
-#ifndef DSY_SYSTEM_H
-#define DSY_SYSTEM_H
+#ifndef UVS_SYSTEM_H
+#define UVS_SYSTEM_H
 
 #ifndef UNIT_TEST // for unit tests, a dummy implementation is provided below
 
 #include <cstdint>
 #include "per/tim.h"
 
-namespace daisy
+namespace uvos
 {
 /** A handle for interacting with the Core System.
  ** This includes the Clock tree, MPU, global DMA initialization,
@@ -58,7 +58,7 @@ class System
         bool       skip_clocks;
     };
 
-    /** Describes the different regions of memory available to the Daisy */
+    /** Describes the different regions of memory available to the UVOS */
     enum MemoryRegion
     {
         INTERNAL_FLASH = 0,
@@ -146,31 +146,31 @@ class System
      ** \param delay_ticks Time to ddelay in microseconds */
     static void DelayTicks(uint32_t delay_ticks);
 
-    /** Specify how the Daisy should return to the bootloader
+    /** Specify how the board should return to the bootloader
      * \param STM return to the STM32-provided
      * bootloader to program internal flash
-     * \param DAISY if the Daisy bootloader is used,
+     * \param UVOS if the UVOS bootloader is used,
      * this will return to it
-     * \param DAISY_NO_TIMEOUT if the Daisy bootloader
+     * \param UVOS_NO_TIMEOUT if the UVOS bootloader
      * is used, this will return to it and skip the
      * timeout window
     */
     enum BootloaderMode
     {
         STM = 0,
-        DAISY,
-        DAISY_SKIP_TIMEOUT,
-        DAISY_INFINITE_TIMEOUT
+        UVOS,
+        UVOS_SKIP_TIMEOUT,
+        UVOS_INFINITE_TIMEOUT
     };
 
-    /** Triggers a reset of the seed and starts in bootloader
+    /** Triggers a reset of the board and starts in bootloader
      ** mode to allow firmware update. */
     static void ResetToBootloader(BootloaderMode mode = BootloaderMode::STM);
 
     /** Initializes the backup SRAM */
     static void InitBackupSram();
 
-    /** Checks Daisy Bootloader version, if present. */
+    /** Checks UVOS Bootloader version, if present. */
     static BootInfo::Version GetBootloaderVersion();
 
     /** Returns the tick rate in Hz with which GetTick() is incremented. */
@@ -219,10 +219,10 @@ class System
      */
     static MemoryRegion GetMemoryRegion(uint32_t address);
 
-    /** This constant indicates the Daisy bootloader's offset from
+    /** This constant indicates the UVOS bootloader's offset from
      *  the beginning of QSPI's address space.
      *  Data written within the first 256K will remain
-     *  untouched by the Daisy bootloader.
+     *  untouched by the UVOS bootloader.
      */
     static constexpr uint32_t kQspiBootloaderOffset = 0x40000U;
 
@@ -236,15 +236,15 @@ class System
     static TimerHandle tim_;
 };
 
-extern volatile daisy::System::BootInfo boot_info;
+extern volatile uvos::System::BootInfo boot_info;
 
-} // namespace daisy
+} // namespace uvos
 
 #else // ifndef UNIT_TEST
 
 #include <cstdint>
 #include "../tests/TestIsolator.h"
-namespace daisy
+namespace uvos
 {
 /** This is a dummy implementation for use in unit tests.
  *  In your test, you can set the current system time to
@@ -302,7 +302,7 @@ class System
     static TestIsolator<SystemState> testIsolator_;
 };
 
-} // namespace daisy
+} // namespace uvos
 
 #endif // ifndef UNIT_TEST
 #endif

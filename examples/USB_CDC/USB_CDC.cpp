@@ -2,9 +2,9 @@
 #include <string.h>
 #include "uvos_brd.h"
 
-using namespace daisy;
+using namespace uvos;
 
-static DaisySeed hw;
+static UVOSboard hw;
 
 uint8_t sumbuff[1024];
 
