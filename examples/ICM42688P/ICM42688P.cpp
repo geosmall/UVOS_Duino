@@ -1,6 +1,5 @@
 #include "uvos_brd.h"
 #include "dev/icm42688p.h"
-#include "stm32h7xx_hal.h"
 
 static void Error_Handler()
 {
