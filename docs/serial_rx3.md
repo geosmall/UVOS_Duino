@@ -15,27 +15,27 @@ Organize your project with clear separation between the main receiver and indivi
 ``` scss
 /serial_rx
 ├── include
-│   ├── SerialReceiver.hpp
-│   ├── ProtocolParser.hpp
-│   ├── IBusParser.hpp
-│   ├── SBusParser.hpp
+│   ├── SerialReceiver.h
+│   ├── ProtocolParser.h
+│   ├── IBusParser.h
+│   ├── SBusParser.h
 │   └── ... (other protocol parsers)
-├── src
-│   ├── SerialReceiver.cpp
-│   ├── IBusParser.cpp
-│   ├── SBusParser.cpp
-│   └── ... (other protocol parsers)
-└── CMakeLists.txt (or your build system configuration)
+└── src
+    ├── SerialReceiver.cpp
+    ├── IBusParser.cpp
+    ├── SBusParser.cpp
+    └── ... (other protocol parsers)
 ```
 
 ## 2. Define the Protocol Parser Interface
 Create an abstract base class ProtocolParser that defines the interface for all protocol-specific parsers. This allows the SerialReceiver to interact with any protocol parser polymorphically.
 
+### ProtocolParser.h
 ``` cpp
-// include/ProtocolParser.hpp
+// include/ProtocolParser.h
 
-#ifndef PROTOCOL_PARSER_HPP
-#define PROTOCOL_PARSER_HPP
+#ifndef PROTOCOL_PARSER_H
+#define PROTOCOL_PARSER_H
 
 #include <cstdint>
 #include <functional>
@@ -76,20 +76,20 @@ private:
     SerRxParseCallback parse_callback_;
 };
 
-#endif // PROTOCOL_PARSER_HPP
+#endif // PROTOCOL_PARSER_H
 ```
 
 ## 3. Implement Protocol-Specific Parsers
 Each protocol parser inherits from ProtocolParser and implements the parse_byte method. Here's an example for IBusParser and SBusParser.
 
-IBusParser
+### IBusParser.h
 ``` cpp
-// include/IBusParser.hpp
+// include/IBusParser.h
 
-#ifndef IBUS_PARSER_HPP
-#define IBUS_PARSER_HPP
+#ifndef IBUS_PARSER_H
+#define IBUS_PARSER_H
 
-#include "ProtocolParser.hpp"
+#include "ProtocolParser.h"
 
 class IBusParser : public ProtocolParser {
 public:
@@ -111,13 +111,14 @@ private:
     // Additional members like buffer, counters, etc.
 };
 
-#endif // IBUS_PARSER_HPP
+#endif // IBUS_PARSER_H
 ```
 
+### IBusParser.cpp
 ``` cpp
 // src/IBusParser.cpp
 
-#include "IBusParser.hpp"
+#include "IBusParser.h"
 
 IBusParser::IBusParser()
     : current_state_(State::WaitingForHeader) {
@@ -154,14 +155,14 @@ bool IBusParser::parse_byte(uint8_t byte) {
 }
 ```
 
-SBusParser
+### SBusParser.h
 ``` cpp
-// include/SBusParser.hpp
+// include/SBusParser.h
 
-#ifndef SBUS_PARSER_HPP
-#define SBUS_PARSER_HPP
+#ifndef SBUS_PARSER_H
+#define SBUS_PARSER_H
 
-#include "ProtocolParser.hpp"
+#include "ProtocolParser.h"
 
 class SBusParser : public ProtocolParser {
 public:
@@ -183,13 +184,14 @@ private:
     // Additional members like buffer, counters, etc.
 };
 
-#endif // SBUS_PARSER_HPP
+#endif // SBUS_PARSER_H
 ```
 
+### SBusParser.cpp
 ``` cpp
 // src/SBusParser.cpp
 
-#include "SBusParser.hpp"
+#include "SBusParser.h"
 
 SBusParser::SBusParser()
     : current_state_(State::WaitingForHeader) {
@@ -229,16 +231,17 @@ bool SBusParser::parse_byte(uint8_t byte) {
 ## 4. Implement the SerialReceiver Class
 The SerialReceiver manages DMA buffer handling, registers multiple protocol parsers, and dispatches incoming bytes to each parser.
 
+### SerialReceiver.h
 ``` cpp
-// include/SerialReceiver.hpp
+// include/SerialReceiver.h
 
-#ifndef SERIAL_RECEIVER_HPP
-#define SERIAL_RECEIVER_HPP
+#ifndef SERIAL_RECEIVER_H
+#define SERIAL_RECEIVER_H
 
 #include <vector>
 #include <memory>
 #include <cstdint>
-#include "ProtocolParser.hpp"
+#include "ProtocolParser.h"
 
 // Define DMA_BUFFER_MEM_SECTION as per your MCU's memory attributes
 #ifndef DMA_BUFFER_MEM_SECTION
@@ -285,15 +288,16 @@ private:
     // void dma_irq_handler();
 };
 
-#endif // SERIAL_RECEIVER_HPP
+#endif // SERIAL_RECEIVER_H
 ```
 
+### SerialReceiver.cpp
 ``` cpp
 // src/SerialReceiver.cpp
 
-#include "SerialReceiver.hpp"
-#include "IBusParser.hpp"
-#include "SBusParser.hpp"
+#include "SerialReceiver.h"
+#include "IBusParser.h"
+#include "SBusParser.h"
 // Include other protocol parsers as needed
 #include "stm32h7xx_hal.h" // Include HAL headers as per your project
 
@@ -408,12 +412,13 @@ ParsedMessage Structure: Customize the ParsedMessage struct to include all neces
 ## 5. Using the SerialReceiver
 Here's how you might set up the SerialReceiver in your main application code.
 
+### main.cpp
 ``` cpp
 // main.cpp
 
-#include "SerialReceiver.hpp"
-#include "IBusParser.hpp"
-#include "SBusParser.hpp"
+#include "SerialReceiver.h"
+#include "IBusParser.h"
+#include "SBusParser.h"
 #include <iostream> // For demonstration; in embedded, use appropriate logging
 
 // Example callback function to handle parsed messages
@@ -492,13 +497,14 @@ To add another protocol, say FlexiParser, follow these steps:
 
 Create Header and Source Files:
 
+### FlexiParser.h
 ``` cpp
-// include/FlexiParser.hpp
+// include/FlexiParser.h
 
-#ifndef FLEXI_PARSER_HPP
-#define FLEXI_PARSER_HPP
+#ifndef FLEXI_PARSER_H
+#define FLEXI_PARSER_H
 
-#include "ProtocolParser.hpp"
+#include "ProtocolParser.h"
 
 class FlexiParser : public ProtocolParser {
 public:
@@ -511,13 +517,14 @@ private:
     // Define state variables and parsing logic
 };
 
-#endif // FLEXI_PARSER_HPP
+#endif // FLEXI_PARSER_H
 ```
 
+### FlexiParser.cpp
 ``` cpp
 // src/FlexiParser.cpp
 
-#include "FlexiParser.hpp"
+#include "FlexiParser.h"
 
 FlexiParser::FlexiParser()
     : current_state_(State::WaitingForHeader) {
@@ -534,7 +541,7 @@ Register the New Parser:
 In your main.cpp or wherever you initialize the SerialReceiver:
 
 ``` cpp
-#include "FlexiParser.hpp"
+#include "FlexiParser.h"
 
 // ...
 
