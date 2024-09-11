@@ -14,7 +14,8 @@ public:
     explicit SerialReceiver(SerRxParseCallback parse_callback);
     ~SerialReceiver();
 
-    // Delete copy and move semantics if not needed
+    // Delete copy and move semantics of the class instance,
+    // due to the DMA buffer being shared resource with uart
     SerialReceiver(const SerialReceiver&) = delete;
     SerialReceiver& operator=(const SerialReceiver&) = delete;
 

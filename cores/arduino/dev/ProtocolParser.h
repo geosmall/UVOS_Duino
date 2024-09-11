@@ -3,16 +3,20 @@
 #include <cstdint>
 #include <functional>
 
+// Number of channels in the data frame
+constexpr size_t NUM_CHANNELS = 10;
+
 namespace uvos
 {
 
 // Forward declaration for parsed message structure
 struct ParsedMessage {
-    // Define fields common to all protocols or use a variant/union if necessary
-    // Example:
-    // enum class ProtocolType { IBus, SBus, ... };
-    // ProtocolType protocol;
-    // std::vector<uint8_t> data;
+    uint32_t timestamp; // Timestamp of frame in microseconds
+    std::vector<uint16_t> channels; // Channel data (1000-2000 us full range) 
+    uint32_t error_flags; // Error flags (bitmask)
+
+    // Constructor to initialize the fields, including timestamp and channels
+    ParsedMessage() : timestamp(0), channels(NUM_CHANNELS, 0) {}
 };
 
 // Type alias for the parse callback
