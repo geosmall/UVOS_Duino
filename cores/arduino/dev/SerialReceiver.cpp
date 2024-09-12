@@ -4,9 +4,31 @@
 
 namespace uvos
 {
+static constexpr size_t kDefaultSerRxRxBufferSize = 256;
 
-// Define the DMA buffer
-DMA_BUFFER_MEM_SECTION uint8_t SerialReceiver::default_serial_rx_buffer[SerialReceiver::BUFFER_SIZE] = {0};
+/** @brief Shared buffer in DMA_BUFFER_MEM_SECTION
+ *  @details DMA UART rx byte transfer in background. Can only
+ *           be utilized for a single UART peripheral. To use
+ *           multiple serial_rx (w/ multiple UART periphs), you
+ *           must provide your own buffer which is allocated
+ *           within a DMA-capable memory section.
+ */
+static uint8_t DMA_BUFFER_MEM_SECTION
+    default_serial_rx_buffer[kDefaultSerRxRxBufferSize] = {0};
+
+/** @brief Default constructor for SerialReceiver::Config
+ *  @details Initializes the configuration struct with default values
+ *           for the UART peripheral, rx and tx pins, rx_buffer,
+ *           and rx_buffer_size.
+ */
+SerialReceiver::Config::Config()
+{
+    periph         = UartHandler::Config::Peripheral::USART_1;
+    rx             = {UVS_GPIOB, 7};
+    tx             = {UVS_GPIOB, 6};
+    rx_buffer      = default_serial_rx_buffer;
+    rx_buffer_size = kDefaultSerRxRxBufferSize;
+}
 
 SerialReceiver::SerialReceiver(SerRxParseCallback parse_callback)
     : parse_callback_(parse_callback) {
@@ -16,6 +38,31 @@ SerialReceiver::SerialReceiver(SerRxParseCallback parse_callback)
 
 SerialReceiver::~SerialReceiver() {
     // Deinitialize DMA and UART peripherals if necessary
+}
+
+void SerialReceiver::Init(const Config config)
+{
+    UartHandler::Config uart_config;
+
+    // defaults
+    uart_config.baudrate   = 115200;
+    uart_config.stopbits   = UartHandler::Config::StopBits::BITS_1;
+    uart_config.parity     = UartHandler::Config::Parity::NONE;
+    uart_config.mode       = UartHandler::Config::Mode::TX_RX;
+    uart_config.wordlength = UartHandler::Config::WordLength::BITS_8;
+
+    // user settings
+    uart_config.periph        = config.periph;
+    uart_config.pin_config.rx = config.rx;
+    uart_config.pin_config.tx = config.tx;
+
+    rx_buffer_      = config.rx_buffer;
+    rx_buffer_size_ = config.rx_buffer_size;
+
+    /** zero the buffer to ensure emptiness regardless of source memory */
+    std::fill(rx_buffer_, rx_buffer_ + rx_buffer_size_, 0);
+
+    uart_.Init(uart_config);
 }
 
 void SerialReceiver::register_parser(std::unique_ptr<ProtocolParser> parser) {
