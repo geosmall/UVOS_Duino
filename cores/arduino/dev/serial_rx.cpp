@@ -14,12 +14,12 @@ static constexpr size_t kDefaultSerRxRxBufferSize = 256;
 static uint8_t DMA_BUFFER_MEM_SECTION
     default_serial_rx_buffer[kDefaultSerRxRxBufferSize] = {0};
 
-/** @brief Default constructor for SerRxUartTransport::Config
+/** @brief Default constructor for SerialReceiver::Config
  *  @details Initializes the configuration struct with default values
  *           for the UART peripheral, rx and tx pins, rx_buffer,
  *           and rx_buffer_size.
  */
-SerRxUartTransport::Config::Config()
+SerialReceiver::Config::Config()
 {
     periph         = UartHandler::Config::Peripheral::USART_1;
     rx             = {UVS_GPIOB, 7};

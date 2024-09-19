@@ -4,10 +4,9 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "per/uart.h"
-#include "util/FIFO.h"
 #include "sys/dma.h"
 #include "sys/system.h"
-#include "serial_rx/ibus_parser.h"
+#include "ProtocolParser.h"
 
 namespace uvos
 {
@@ -17,15 +16,15 @@ namespace uvos
  *           for processing bulk data from the UART peripheral
  *  @ingroup ibus
  */
-class SerRxUartTransport
+class SerialReceiver
 {
   public:
     typedef void (*SerRxParseCallback)(uint8_t* data,
                                         size_t   size,
                                         void*    context);
 
-    SerRxUartTransport() {}
-    ~SerRxUartTransport() {}
+    SerialReceiver() {}
+    ~SerialReceiver() {}
 
     /** @brief Configuration structure for UART IBUS */
     struct Config
@@ -87,9 +86,9 @@ class SerRxUartTransport
         parse_context_  = context;
         parse_callback_ = parse_callback;
         uvs_dma_clear_cache_for_buffer((uint8_t*)this,
-                                       sizeof(SerRxUartTransport));
+                                       sizeof(SerialReceiver));
         uart_.DmaListenStart(
-            rx_buffer, rx_buffer_size, SerRxUartTransport::rxCallback, this);
+            rx_buffer, rx_buffer_size, SerialReceiver::rxCallback, this);
     }
 
     /** @brief returns whether the UART peripheral is actively listening in the background or not */
@@ -126,8 +125,8 @@ class SerRxUartTransport
                            UartHandler::Result res)
     {
         /** Read context as transport type */
-        SerRxUartTransport* transport
-            = reinterpret_cast<SerRxUartTransport*>(context);
+        SerialReceiver* transport
+            = reinterpret_cast<SerialReceiver*>(context);
         if(res == UartHandler::Result::OK)
         {
             if(transport->parse_callback_)
@@ -139,114 +138,4 @@ class SerRxUartTransport
     }
 };
 
-/**
-    @brief Simple IBUS Handler \n
-    Parses bytes from an input into valid IBusEvents. \n
-    The IBusEvents fill a FIFO queue that the user can pop messages from.
-*/
-class IBusHandler
-{
-  public:
-    IBusHandler() {}
-    ~IBusHandler() {}
-
-    struct Config
-    {
-        SerRxUartTransport::Config transport_config;
-    };
-
-    /** Initializes the IBusHandler
-     *  \param config Configuration structure used to define specifics to the IBUS Handler.
-     */
-    void Init(Config config)
-    {
-        config_ = config;
-        transport_.Init(config_.transport_config);
-        parser_.Init();
-    }
-
-    /** Starts listening on the selected input mode(s).
-     * IBusEvent Queue will begin to fill, and can be checked with HasEvents() */
-    void StartReceive()
-    {
-        transport_.StartRx(IBusHandler::ParseCallback, this);
-    }
-
-    /** \return the result of uart CheckError() to the user. */
-    uint32_t GetError()
-    {
-        return transport_.GetError();
-    }
-
-    /** Start listening */
-    void Listen()
-    {
-        // In case of UART Error, (particularly
-        //  overrun error), UART disables itself.
-        // Flush the buff, and restart.
-        if(!transport_.RxActive())
-        {
-            parser_.Reset();
-            transport_.FlushRx();
-            StartReceive();
-        }
-    }
-
-    /** Checks if there are unhandled messages in the queue
-    \return True if there are events to be handled, else false.
-     */
-    bool HasEvents() const { return event_q_.GetNumElements() > 0; }
-
-
-    /** Pops the oldest unhandled SerRxEvent from the internal queue
-    \return The event to be handled
-     */
-    SerRxEvent PopEvent() { return event_q_.PopFront(); }
-
-    /** SendMessage
-    Send raw bytes as message
-    */
-    void SendMessage(uint8_t* bytes, size_t size)
-    {
-        transport_.Tx(bytes, size);
-    }
-
-    /** Feed in bytes to parser state machine from an external source.
-        Populates internal FIFO queue with IBUS Messages.
-
-        \note  Normally application code won't need to use this method directly.
-        \param byte IBUS byte to be parsed
-    */
-    void Parse(uint8_t byte)
-    {
-        SerRxEvent event;
-        if(parser_.Parse(byte, &event))
-        {
-            event_q_.PushBack(event);
-        }
-    }
-
-  private:
-    Config                config_;
-    SerRxUartTransport    transport_;
-    IBusParser            parser_;
-    FIFO<SerRxEvent, 256> event_q_;
-
-    static void ParseCallback(uint8_t* data, size_t size, void* context)
-    {
-        IBusHandler* handler = reinterpret_cast<IBusHandler*>(context);
-        for(size_t i = 0; i < size; i++)
-        {
-            handler->Parse(data[i]);
-        }
-    }
-};
-
-/**
- *  @{
- *  @ingroup ibus
- *  @brief shorthand accessors for IBUS Handlers
- * */
-using IBusRxHandler = IBusHandler;
-/** @} */
 } // namespace uvos

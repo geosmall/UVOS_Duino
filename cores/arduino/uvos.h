@@ -51,7 +51,6 @@
 // #include "dev/max11300.h"
 // #include "dev/internal_flash.h"
 #include "dev/serial_rx.h"
-#include "dev/SerialReceiver.h"
 // #include "dev/tlv493d.h"
 // #include "dev/dotstar.h"
 // #include "dev/neopixel.h"
