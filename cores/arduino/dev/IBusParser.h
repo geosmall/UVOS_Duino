@@ -11,7 +11,7 @@ public:
     ~IBusParser() override = default;
 
     // Implement the byte parsing logic for IBus
-    bool parse_byte(uint8_t byte) override;
+    bool parse_byte(uint8_t byte, ParsedMessage* msg) override;
 
 private:
     // Define state variables for IBus parsing

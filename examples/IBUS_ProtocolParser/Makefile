@@ -1,8 +1,8 @@
 # Project Name
-TARGET = MIDI_UART_Input
+TARGET = IBUS_ProtocolParser
 
 # Sources
-CPP_SOURCES = MIDI_UART_Input.cpp
+CPP_SOURCES = IBUS_ProtocolParser.cpp
 
 # Library Locations
 LIBDAISY_DIR = ../..

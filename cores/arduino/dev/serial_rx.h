@@ -1,11 +1,13 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <algorithm>
+// #include <stdint.h>
+// #include <stdlib.h>
+// #include <vector>
+#include <memory>
+// #include <algorithm>
 #include "per/uart.h"
 #include "sys/dma.h"
-#include "sys/system.h"
+// #include "sys/system.h"
 #include "ProtocolParser.h"
 
 namespace uvos
@@ -19,19 +21,23 @@ namespace uvos
 class SerialReceiver
 {
   public:
-    typedef void (*SerRxParseCallback)(uint8_t* data,
-                                        size_t   size,
-                                        void*    context);
+    // Constructor takes a callback to handle parsed messages
+    explicit SerialReceiver(SerRxParseCallback parse_callback) : parse_callback_(parse_callback)
+    {
+    }
 
-    SerialReceiver() {}
-    ~SerialReceiver() {}
+    ~SerialReceiver();
+
+    // Delete copy and move semantics if not needed
+    SerialReceiver(const SerialReceiver&) = delete;
+    SerialReceiver& operator=(const SerialReceiver&) = delete;
 
     /** @brief Configuration structure for UART IBUS */
     struct Config
     {
         UartHandler::Config::Peripheral periph;
-        uvs_gpio_pin                    rx;
-        uvs_gpio_pin                    tx;
+        uvs_gpio_pin rx;
+        uvs_gpio_pin tx;
 
         /** Pointer to buffer for DMA UART rx byte transfer in background.
          *
@@ -59,80 +65,109 @@ class SerialReceiver
         UartHandler::Config uart_config;
 
         // defaults
-        uart_config.baudrate   = 115200;
-        uart_config.stopbits   = UartHandler::Config::StopBits::BITS_1;
-        uart_config.parity     = UartHandler::Config::Parity::NONE;
-        uart_config.mode       = UartHandler::Config::Mode::TX_RX;
+        uart_config.baudrate = 115200;
+        uart_config.stopbits = UartHandler::Config::StopBits::BITS_1;
+        uart_config.parity = UartHandler::Config::Parity::NONE;
+        uart_config.mode = UartHandler::Config::Mode::TX_RX;
         uart_config.wordlength = UartHandler::Config::WordLength::BITS_8;
 
         // user settings
-        uart_config.periph        = config.periph;
+        uart_config.periph = config.periph;
         uart_config.pin_config.rx = config.rx;
         uart_config.pin_config.tx = config.tx;
 
-        rx_buffer      = config.rx_buffer;
-        rx_buffer_size = config.rx_buffer_size;
+        rx_buffer_ = config.rx_buffer;
+        rx_buffer_size_ = config.rx_buffer_size;
 
         /** zero the buffer to ensure emptiness regardless of source memory */
-        std::fill(rx_buffer, rx_buffer + rx_buffer_size, 0);
+        std::fill(rx_buffer_, rx_buffer_ + rx_buffer_size_, 0);
 
         uart_.Init(uart_config);
     }
 
-    /** @brief Start the UART peripheral in listening mode.
-     *  This will fill an internal data structure in the background */
-    inline void StartRx(SerRxParseCallback parse_callback, void* context)
+    inline void RegisterParser(std::unique_ptr<ProtocolParser> parser)
     {
-        parse_context_  = context;
-        parse_callback_ = parse_callback;
-        uvs_dma_clear_cache_for_buffer((uint8_t*)this,
-                                       sizeof(SerialReceiver));
-        uart_.DmaListenStart(
-            rx_buffer, rx_buffer_size, SerialReceiver::rxCallback, this);
+        // Set the parse callback for the parser
+        parser->set_parse_callback(parse_callback_);
+        // Save away the ProtocolParser interface implementation
+        parser_ = std::move(parser);
+    }
+
+    /** @brief Start the UART peripheral in listening mode */
+    inline void StartRx()
+    {
+        // Verify that rx_buffer_ and rx_buffer_size_ are set
+        if (rx_buffer_ == nullptr || rx_buffer_size_ == 0) return;
+
+        uvs_dma_clear_cache_for_buffer(rx_buffer_, rx_buffer_size_);
+        uart_.DmaListenStart(rx_buffer_, rx_buffer_size_, SerialReceiver::RxCallbackDMA, this);
     }
 
     /** @brief returns whether the UART peripheral is actively listening in the background or not */
-    inline bool RxActive() const { return uart_.IsListening(); }
+    inline bool RxActive() const
+    {
+        return uart_.IsListening();
+    }
 
     /** @brief This is a no-op for UART transport - Rx is via DMA callback with circular buffer */
-    inline void FlushRx() {}
+    inline void FlushRx()
+    {
+    }
 
     /** @brief Returns UART HAL UART Error Code */
-    inline uint32_t GetError() { return uart_.CheckError();}
+    inline uint32_t GetError()
+    {
+        return uart_.CheckError();
+    }
 
     /** @brief sends the buffer of bytes out of the UART peripheral */
-    inline void Tx(uint8_t* buff, size_t size) { uart_.PollTx(buff, size); }
+    inline void Tx(uint8_t* buff, size_t size)
+    {
+        uart_.PollTx(buff, size);
+    }
 
   private:
-    UartHandler        uart_;
-    uint8_t*           rx_buffer;
-    size_t             rx_buffer_size;
-    void*              parse_context_;
+    UartHandler uart_;
+    uint8_t* rx_buffer_;
+    size_t rx_buffer_size_;
+    // void*              parse_context_;
+
+    // Registered protocol parser
+    std::unique_ptr<ProtocolParser> parser_;
+
+    // Callback to notify when a message is parsed
     SerRxParseCallback parse_callback_;
 
-    /** Static callback for Uart IBUS that occurs when
-     *  new data is available from the peripheral.
-     *  The new data is transferred from the peripheral to the
-     *  IBUS instance's byte FIFO that feeds the IBUS parser.
+    // Parsed message structure
+    ParsedMessage msg;
+
+    /** Static callback for Uart that occurs when new data
+     *  is available from the peripheral.
      *
      *  TODO: Handle UartHandler errors better/at all.
      *  (If there is a UART error, there's not really any recovery
      *  option at the moment)
      */
-    static void rxCallback(uint8_t*            data,
-                           size_t              size,
-                           void*               context,
-                           UartHandler::Result res)
+    static void RxCallbackDMA(uint8_t* data, size_t size, void* context, UartHandler::Result res)
     {
-        /** Read context as transport type */
-        SerialReceiver* transport
-            = reinterpret_cast<SerialReceiver*>(context);
-        if(res == UartHandler::Result::OK)
+        if (res != UartHandler::Result::OK)
         {
-            if(transport->parse_callback_)
+            return; // Handle error
+        }
+
+        /** Read context as transport type */
+        SerialReceiver* rx = reinterpret_cast<SerialReceiver*>(context);
+
+        // Iterate over each received byte and pass to all registered parsers
+        for (size_t i = 0; i < size; ++i)
+        {
+            uint8_t byte = data[i];
+            if (rx->parser_->parse_byte(byte, &rx->msg))
             {
-                transport->parse_callback_(
-                    data, size, transport->parse_context_);
+                if (rx->parse_callback_)
+                {
+                    rx->parse_callback_(rx->msg);
+                }
             }
         }
     }

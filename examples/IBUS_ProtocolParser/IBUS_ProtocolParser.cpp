@@ -1,0 +1,63 @@
+#include "uvos_brd.h"
+#include "dev/serial_rx.h"
+#include "dev/IBusParser.h"
+
+/** This prevents us from having to type "uvos::" in front of a lot of things. */
+using namespace uvos;
+
+/** Global Hardware access */
+UVOSboard         hw;
+// IBusRxHandler     ibus_rx;
+
+// Example callback function to handle parsed messages
+void handle_parsed_message(const ParsedMessage& msg) {
+    // Process the parsed message
+    // For example, dispatch to different handlers based on protocol
+    /*
+    switch (msg.protocol) {
+        case ProtocolType::IBus:
+            // Handle IBus message
+            break;
+        case ProtocolType::SBus:
+            // Handle SBus message
+            break;
+        // ...
+    }
+    */
+    
+ }
+
+int main(void)
+{
+    /** Initialize our hardware */
+    hw.Init();
+
+    System::Delay(50);
+
+    hw.StartLog();
+
+    // Create SerialReceiver and provide a parse callback
+    SerialReceiver ibus_rx(handle_parsed_message);
+
+    // Register IBus protocol parser
+    ibus_rx.RegisterParser(std::make_unique<IBusParser>());
+
+    SerialReceiver::Config ser_rx_config;
+    ibus_rx.Init(ser_rx_config);
+
+    ibus_rx.StartRx();
+
+    // uint32_t now = System::GetNow();
+
+    /** Infinite Loop */
+    while(1)
+    {
+        // now = System::GetNow();
+
+        /** Process Serial Rx in the background */
+        // ibus_rx.Listen();
+
+        // Wait 500ms
+        System::Delay(100);
+    }
+}

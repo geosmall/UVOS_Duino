@@ -19,7 +19,7 @@ struct ParsedMessage {
     ParsedMessage() : timestamp(0), channels(NUM_CHANNELS, 0) {}
 };
 
-// Type alias for the parse callback
+// Type alias for the parse callback, called when a message is parsed
 using SerRxParseCallback = std::function<void(const ParsedMessage&)>;
 
 class ProtocolParser {
@@ -27,20 +27,20 @@ public:
     virtual ~ProtocolParser() = default;
 
     // Process a single byte. Return true if a complete message is parsed.
-    virtual bool parse_byte(uint8_t byte) = 0;
+    virtual bool parse_byte(uint8_t byte, ParsedMessage* msg) = 0;
 
     // Set the callback to notify when a message is parsed
     void set_parse_callback(SerRxParseCallback callback) {
         parse_callback_ = callback;
     }
 
-protected:
-    // Invoke this when a message is successfully parsed
-    void notify_parse(const ParsedMessage& msg) {
-        if (parse_callback_) {
-            parse_callback_(msg);
-        }
-    }
+// protected:
+//     // Invoke this when a message is successfully parsed
+//     void notify_parse(const ParsedMessage& msg) {
+//         if (parse_callback_) {
+//             parse_callback_(msg);
+//         }
+//     }
 
 private:
     SerRxParseCallback parse_callback_;

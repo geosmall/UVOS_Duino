@@ -8,7 +8,7 @@ IBusParser::IBusParser()
     // Initialize parser state
 }
 
-bool IBusParser::parse_byte(uint8_t byte) {
+bool IBusParser::parse_byte(uint8_t byte, ParsedMessage* msg) {
     // Implement the state machine for IBus parsing
     switch (current_state_) {
         case State::WaitingForHeader:
