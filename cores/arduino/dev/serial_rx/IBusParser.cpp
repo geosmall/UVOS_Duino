@@ -4,21 +4,21 @@ namespace uvos
 {
 
 IBusParser::IBusParser()
-    : current_state_(State::WaitingForHeader) {
+    : pstate_(WaitingForHeader0) {
     // Initialize parser state
 }
 
 bool IBusParser::parse_byte(uint8_t byte, ParsedMessage* msg) {
     // Implement the state machine for IBus parsing
-    switch (current_state_) {
-        case State::WaitingForHeader:
+    switch (pstate_) {
+        case WaitingForHeader0:
             if (byte == 0x20) { // Example header byte for IBus
-                current_state_ = State::ReceivingData;
+                pstate_ = ParserHasHeader0;
                 // Initialize buffer, counters, etc.
             }
             break;
 
-        case State::ReceivingData:
+        case ParserHasHeader0:
             // Collect bytes into buffer
             // If complete message received:
             // ParsedMessage msg = ...; // Populate with IBus-specific data
@@ -29,7 +29,7 @@ bool IBusParser::parse_byte(uint8_t byte, ParsedMessage* msg) {
         // Handle other states
 
         default:
-            current_state_ = State::WaitingForHeader;
+            pstate_ = WaitingForHeader0;
             break;
     }
 
