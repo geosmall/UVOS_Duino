@@ -45,6 +45,8 @@ public:
     // Implement the byte parsing logic for IBus
     bool parse_byte(uint8_t byte, ParsedMessage* msg) override;
 
+    void reset() override;
+
 private:
     // Define state variables for IBus parsing
     enum ParserState {

@@ -37,4 +37,9 @@ bool IBusParser::parse_byte(uint8_t byte, ParsedMessage* msg) {
     return false; // Update based on parsing logic
 }
 
+void IBusParser::reset() {
+    // Reset the parser state
+    // For example, clear buffers, reset counters, etc.
+}
+
 } // namespace uvos
