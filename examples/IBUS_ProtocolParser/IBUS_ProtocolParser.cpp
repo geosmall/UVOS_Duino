@@ -1,6 +1,6 @@
 #include "uvos_brd.h"
 #include "dev/serial_rx.h"
-#include "dev/IBusParser.h"
+#include "dev/ProtocolParser.h"
 
 /** This prevents us from having to type "uvos::" in front of a lot of things. */
 using namespace uvos;
@@ -36,15 +36,14 @@ int main(void)
 
     hw.StartLog();
 
-    // Create SerialReceiver and provide a parse callback
-    SerialReceiver ibus_rx(handle_parsed_message);
+    // Create SerialReceiver of type IBUS, provide a parse = TRUE callback
+    SerialReceiver ibus_rx(SerialReceiver::IBUS, handle_parsed_message);
 
-    // Register IBus protocol parser
-    ibus_rx.RegisterParser(std::make_unique<IBusParser>());
-
+    // Config SerialReceiver UART and initialize it
     SerialReceiver::Config ser_rx_config;
     ibus_rx.Init(ser_rx_config);
 
+    // Start the SerialReceiver
     ibus_rx.StartRx();
 
     // uint32_t now = System::GetNow();

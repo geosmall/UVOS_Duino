@@ -1,7 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
+#include <cstddef>
+#include <vector>
 
 // Number of channels in the data frame
 constexpr size_t NUM_CHANNELS = 10;
@@ -20,7 +21,8 @@ struct ParsedMessage {
 };
 
 // Type alias for the parse callback, called when a message is parsed
-using SerRxParseCallback = std::function<void(const ParsedMessage&)>;
+// using SerRxParseCallback = std::function<void(const ParsedMessage&)>;
+typedef void (*SerRxParseCallback)(const ParsedMessage&);
 
 class ProtocolParser {
 public:

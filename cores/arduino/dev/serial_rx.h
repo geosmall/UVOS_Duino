@@ -3,12 +3,14 @@
 // #include <stdint.h>
 // #include <stdlib.h>
 // #include <vector>
-#include <memory>
+// #include <memory>
 // #include <algorithm>
+#include <cassert>
 #include "per/uart.h"
 #include "sys/dma.h"
 // #include "sys/system.h"
 #include "ProtocolParser.h"
+#include "IBusParser.h"
 
 namespace uvos
 {
@@ -21,12 +23,33 @@ namespace uvos
 class SerialReceiver
 {
   public:
-    // Constructor takes a callback to handle parsed messages
-    explicit SerialReceiver(SerRxParseCallback parse_callback) : parse_callback_(parse_callback)
+    // Enum to define the receiver protocol type
+    enum ProtocolType
     {
+        NONE = 0,
+        IBUS,
+        SBUS
+    };
+
+    /** @brief Constructor for SerialReceiver object
+     * @param parse_callback Callback function to handle parsed messages
+     * @param protocol_type  Protocol type of the receiver
+     */
+    explicit SerialReceiver(ProtocolType protocol_type, SerRxParseCallback parse_callback)
+        : protocol_type_(protocol_type), parse_callback_(parse_callback)
+    {
+        if(protocol_type == IBUS)
+        {
+            parser_ = new IBusParser();
+        }
+        // Set the parse callback for the parser
+        parser_->set_parse_callback(parse_callback_);
     }
 
-    ~SerialReceiver();
+    ~SerialReceiver()
+    {
+        delete parser_;
+    }
 
     // Delete copy and move semantics if not needed
     SerialReceiver(const SerialReceiver&) = delete;
@@ -85,13 +108,13 @@ class SerialReceiver
         uart_.Init(uart_config);
     }
 
-    inline void RegisterParser(std::unique_ptr<ProtocolParser> parser)
-    {
-        // Set the parse callback for the parser
-        parser->set_parse_callback(parse_callback_);
-        // Save away the ProtocolParser interface implementation
-        parser_ = std::move(parser);
-    }
+    // inline void RegisterParser(ProtocolParser* parser)
+    // {
+    //     // Set the parse callback for the parser
+    //     parser->set_parse_callback(parse_callback_);
+    //     // Save away the ProtocolParser interface implementation
+    //     parser_ = parser;
+    // }
 
     /** @brief Start the UART peripheral in listening mode */
     inline void StartRx()
@@ -133,7 +156,11 @@ class SerialReceiver
     // void*              parse_context_;
 
     // Registered protocol parser
-    std::unique_ptr<ProtocolParser> parser_;
+    // std::unique_ptr<ProtocolParser> parser_;
+    ProtocolParser* parser_;
+
+    // Protocol type
+    ProtocolType protocol_type_;
 
     // Callback to notify when a message is parsed
     SerRxParseCallback parse_callback_;
