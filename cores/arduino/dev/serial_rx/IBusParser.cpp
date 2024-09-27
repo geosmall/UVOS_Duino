@@ -4,42 +4,98 @@ namespace uvos
 {
 
 IBusParser::IBusParser()
-    : pstate_(WaitingForHeader0) {
-    // Initialize parser state
+{
+    ResetParser();
 }
 
-bool IBusParser::parse_byte(uint8_t byte, ParsedMessage* msg) {
-    // Implement the state machine for IBus parsing
-    switch (pstate_) {
-        case WaitingForHeader0:
-            if (byte == 0x20) { // Example header byte for IBus
-                pstate_ = ParserHasHeader0;
-                // Initialize buffer, counters, etc.
-            }
-            break;
+bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* msg)
+{
+    bool did_parse = false;
+    uint8_t i;
 
-        case ParserHasHeader0:
-            // Collect bytes into buffer
-            // If complete message received:
-            // ParsedMessage msg = ...; // Populate with IBus-specific data
-            // notify_parse(msg);
-            // Reset state
-            break;
-
-        // Handle other states
-
-        default:
+    switch (pstate_)
+    {
+    case WaitingForHeader0:
+        // check byte for valid first header byte
+        if (byte == 0x20)
+        {
+            char_count_ = 1;
+            running_checksum_ = 0xFFFF - byte;
+            pstate_ = ParserHasHeader0; // we need to get the 2nd byte yet
+        }
+        break;
+    case ParserHasHeader0:
+        if (byte == 0x40)
+        {
+            char_count_ = 2;
+            running_checksum_ -= byte;
+            pstate_ = ParserHasHeader1; // we need to get the 2nd byte yet
+        }
+        else
+        {
+            // invalid message go back to start
+            char_count_ = 0;
             pstate_ = WaitingForHeader0;
-            break;
+        }
+        break;
+    case ParserHasHeader1:
+        char_count_++;
+        // Store the byte in the channel array
+        // odd bytes are high byte, even bytes are low
+        // channels array index is char_count_ / 2 - 1
+        i = (char_count_ - 3u) / 2u;
+        if (i < SERRX_NUM_CHAN)
+        {
+            if (char_count_ % 2u)
+            {
+                temp_msg_.channels[i] = byte; // odd = low byte
+            }
+            else
+            {
+                temp_msg_.channels[i] |= byte << 8u; // even = high bytr
+            }
+        }
+        running_checksum_ -= byte;
+        if (char_count_ >= IBUS_FRAME_LEN_MINUS_CHECKSUM)
+        {
+            pstate_ = ParserHasFrame;
+        }
+        break;
+    case ParserHasFrame:
+        frame_checksum_ = byte;
+        pstate_ = ParserHasCheckSum0;
+        break;
+    case ParserHasCheckSum0:
+        frame_checksum_ = (byte << 8) | frame_checksum_;
+        if (frame_checksum_ == running_checksum_)
+        {
+            // temp_msg_.type = RxValidPacket;
+
+            // if (event_out != nullptr)
+            // {
+            //     *event_out = temp_msg_;
+            // }
+            notify_parse(temp_msg_);
+
+            did_parse = true;
+        }
+        // Go back to start
+        ResetParser();
+        break;
+    default:
+        break;
     }
 
-    // Return true if a complete message was parsed
-    return false; // Update based on parsing logic
+    return did_parse;
 }
 
-void IBusParser::reset() {
+void IBusParser::ResetParser()
+{
     // Reset the parser state
-    // For example, clear buffers, reset counters, etc.
+    pstate_ = WaitingForHeader0;
+    char_count_ = 0;
+    running_checksum_ = 0;
+    frame_checksum_ = 0;
 }
 
 } // namespace uvos

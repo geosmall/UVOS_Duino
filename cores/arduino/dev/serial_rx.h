@@ -1,13 +1,8 @@
 #pragma once
 
-// #include <stdint.h>
-// #include <stdlib.h>
-// #include <vector>
-// #include <memory>
-// #include <algorithm>
+#include <algorithm>
 #include "per/uart.h"
 #include "sys/dma.h"
-// #include "sys/system.h"
 #include "ProtocolParser.h"
 #include "serial_rx/IBusParser.h"
 
@@ -107,14 +102,6 @@ class SerialReceiver
         uart_.Init(uart_config);
     }
 
-    // inline void RegisterParser(ProtocolParser* parser)
-    // {
-    //     // Set the parse callback for the parser
-    //     parser->set_parse_callback(parse_callback_);
-    //     // Save away the ProtocolParser interface implementation
-    //     parser_ = parser;
-    // }
-
     /** @brief Start the UART peripheral in listening mode */
     inline void StartRx()
     {
@@ -188,7 +175,7 @@ class SerialReceiver
         for (size_t i = 0; i < size; ++i)
         {
             uint8_t byte = data[i];
-            if (rx->parser_->parse_byte(byte, &rx->msg))
+            if (rx->parser_->ParseByte(byte, &rx->msg))
             {
                 if (rx->parse_callback_)
                 {

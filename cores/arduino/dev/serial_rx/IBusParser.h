@@ -37,28 +37,34 @@ struct IBusFrame
     uint16_t           checksum;
 };
 
+// Length of IBus data frame minus checksum
+constexpr size_t IBUS_FRAME_LEN_MINUS_CHECKSUM = 30;
+
 class IBusParser : public ProtocolParser {
 public:
     IBusParser();
     ~IBusParser() override = default;
 
     // Implement the byte parsing logic for IBus
-    bool parse_byte(uint8_t byte, ParsedMessage* msg) override;
+    bool ParseByte(uint8_t byte, ParsedMessage* msg) override;
 
-    void reset() override;
+    void ResetParser() override;
 
 private:
     // Define state variables for IBus parsing
     enum ParserState {
-        WaitingForHeader0,    // Start, looking for header byte
-        ParserHasHeader0,     // Found first header byte
-        ParserHasHeader1,     // Found second header byte
-        ParserHasFrame,       // Have received a full frame
-        ParserHasCheckSum0,   // Has first checksum byte
+        WaitingForHeader0,      // Start, looking for header byte
+        ParserHasHeader0,       // Found first header byte
+        ParserHasHeader1,       // Found second header byte
+        ParserHasFrame,         // Have received a full frame
+        ParserHasCheckSum0,     // Has first checksum byte
     };
 
-    ParserState     pstate_ = WaitingForHeader0;
-
+    ParserState pstate_;
+    uint32_t char_count_;       // Move char_count here
+    uint16_t running_checksum_; // Move running_checksum here
+    uint16_t frame_checksum_;   // Move frame_checksum here
+    ParsedMessage temp_msg_;
 };
 
 } // namespace uvos
