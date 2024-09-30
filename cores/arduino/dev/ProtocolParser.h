@@ -30,20 +30,20 @@ public:
     virtual bool ParseByte(uint8_t byte, ParsedMessage* msg) = 0;
 
     // Set the callback to notify when a message is parsed
-    void set_parse_callback(SerRxParseCallback callback) {
+    void SetParseCallback(SerRxParseCallback callback) {
         parse_callback_ = callback;
     }
 
     // Reset the parser state
     virtual void ResetParser() = 0;
 
-protected:
-    // Invoke this when a message is successfully parsed
-    void notify_parse(const ParsedMessage& msg) {
-        if (parse_callback_) {
-            parse_callback_(msg);
-        }
-    }
+// protected:
+//     // Invoke this when a message is successfully parsed
+//     void notify_parse(const ParsedMessage& msg) {
+//         if (parse_callback_) {
+//             parse_callback_(msg);
+//         }
+//     }
 
 private:
     SerRxParseCallback parse_callback_;

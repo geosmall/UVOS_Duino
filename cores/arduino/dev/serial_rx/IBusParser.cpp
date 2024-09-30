@@ -69,13 +69,13 @@ bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* msg)
         frame_checksum_ = (byte << 8) | frame_checksum_;
         if (frame_checksum_ == running_checksum_)
         {
-            // temp_msg_.type = RxValidPacket;
+            temp_msg_.timestamp = 0;
 
             // if (event_out != nullptr)
             // {
             //     *event_out = temp_msg_;
             // }
-            notify_parse(temp_msg_);
+            // notify_parse(temp_msg_);
 
             did_parse = true;
         }

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "per/uart.h"
 #include "sys/dma.h"
+#include "util/FIFO.h"
+#include "util/circular_buffer.h"
 #include "ProtocolParser.h"
 #include "serial_rx/IBusParser.h"
 
@@ -37,7 +39,7 @@ class SerialReceiver
             parser_ = new IBusParser();
         }
         // Set the parse callback for the parser
-        parser_->set_parse_callback(parse_callback_);
+        parser_->SetParseCallback(parse_callback_);
     }
 
     ~SerialReceiver()
@@ -139,7 +141,8 @@ class SerialReceiver
     UartHandler uart_;
     uint8_t* rx_buffer_;
     size_t rx_buffer_size_;
-    // void*              parse_context_;
+    // FIFO<ParsedMessage, 32> msg_q_;
+    circular_buffer<ParsedMessage, 32> msg_q_;
 
     // Registered protocol parser
     // std::unique_ptr<ProtocolParser> parser_;
