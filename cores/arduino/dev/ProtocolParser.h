@@ -37,13 +37,13 @@ public:
     // Reset the parser state
     virtual void ResetParser() = 0;
 
-// protected:
-//     // Invoke this when a message is successfully parsed
-//     void notify_parse(const ParsedMessage& msg) {
-//         if (parse_callback_) {
-//             parse_callback_(msg);
-//         }
-//     }
+protected:
+    // Invoke this when a message is successfully parsed
+    void NotifyParse(const ParsedMessage& msg) {
+        if (parse_callback_) {
+            parse_callback_(msg);
+        }
+    }
 
 private:
     SerRxParseCallback parse_callback_;

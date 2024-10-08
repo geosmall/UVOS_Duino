@@ -2,7 +2,6 @@
 #include "stm32h7xx_ll_dma.h"
 #include "per/uart.h"
 #include "sys/dma.h"
-#include "util/ringbuffer.h"
 #include "util/scopedirqblocker.h"
 
 extern "C"
@@ -13,10 +12,6 @@ extern "C"
 using namespace uvos;
 
 #define UART_RX_BUFF_SIZE 256
-
-// the fifo buffer to be DMA read into
-// typedef RingBuffer<uint8_t, UART_RX_BUFF_SIZE> UartRingBuffer;
-// static UartRingBuffer DMA_BUFFER_MEM_SECTION   uart_dma_fifo;
 
 static void Error_Handler()
 {

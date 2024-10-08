@@ -3,9 +3,6 @@
 #include <algorithm>
 #include "per/uart.h"
 #include "sys/dma.h"
-#include "util/FIFO.h"
-#include "util/circular_buffer.h"
-#include "util/ring_buf.h"
 #include "ProtocolParser.h"
 #include "serial_rx/IBusParser.h"
 
@@ -142,12 +139,8 @@ class SerialReceiver
     UartHandler uart_;
     uint8_t* rx_buffer_;
     size_t rx_buffer_size_;
-    // FIFO<ParsedMessage, 32> msg_q_;
-    // circular_buffer<ParsedMessage, 32> msg_q_;
-    RingBuf<uint8_t, 512U> rb;
 
     // Registered protocol parser
-    // std::unique_ptr<ProtocolParser> parser_;
     ProtocolParser* parser_;
 
     // Protocol type
