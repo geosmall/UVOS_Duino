@@ -10,12 +10,6 @@ UVOSboard         hw;
 // IBusRxHandler     ibus_rx;
 uint32_t time_stamp;
 
-// Example callback function to handle parsed messages
-void handle_parsed_message(const ParsedMessage& msg) {
-    // Process the parsed message
-    time_stamp = msg.timestamp;
- }
-
 int main(void)
 {
     /** Initialize our hardware */
@@ -25,8 +19,8 @@ int main(void)
 
     hw.StartLog();
 
-    // Create SerialReceiver of type IBUS, provide a parse = TRUE callback
-    SerialReceiver ibus_rx(SerialReceiver::IBUS, &handle_parsed_message);
+    // Create SerialReceiver of type IBUS
+    SerialReceiver ibus_rx(SerialReceiver::IBUS);
 
     // Config SerialReceiver UART and initialize it
     SerialReceiver::Config ser_rx_config;

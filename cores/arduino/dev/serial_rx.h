@@ -26,18 +26,14 @@ class SerialReceiver
     };
 
     /** @brief Constructor for SerialReceiver object
-     * @param parse_callback Callback function to handle parsed messages
      * @param protocol_type  Protocol type of the receiver
      */
-    explicit SerialReceiver(ProtocolType protocol_type, SerRxParseCallback parse_callback)
-        : protocol_type_(protocol_type), parse_callback_(parse_callback)
+    SerialReceiver(ProtocolType protocol_type) : protocol_type_(protocol_type)
     {
-        if(protocol_type == IBUS)
+        if (protocol_type == IBUS)
         {
             parser_ = new IBusParser();
         }
-        // Set the parse callback for the parser
-        parser_->SetParseCallback(parse_callback_);
     }
 
     ~SerialReceiver()
@@ -146,9 +142,6 @@ class SerialReceiver
     // Protocol type
     ProtocolType protocol_type_;
 
-    // Callback to notify when a message is parsed
-    SerRxParseCallback parse_callback_;
-
     // Parsed message structure
     ParsedMessage msg;
 
@@ -175,10 +168,7 @@ class SerialReceiver
             uint8_t byte = data[i];
             if (rx->parser_->ParseByte(byte, &rx->msg))
             {
-                if (rx->parse_callback_)
-                {
-                    rx->parse_callback_(rx->msg);
-                }
+
             }
         }
     }
