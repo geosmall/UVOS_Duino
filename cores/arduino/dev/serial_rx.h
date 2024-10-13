@@ -4,6 +4,7 @@
 #include "per/uart.h"
 #include "sys/dma.h"
 #include "ProtocolParser.h"
+#include "util/FIFO.h"
 #include "serial_rx/IBusParser.h"
 
 namespace uvos
@@ -139,6 +140,7 @@ class SerialReceiver
     UartHandler uart_;
     uint8_t* rx_buffer_;
     size_t rx_buffer_size_;
+    FIFO<ParsedMessage, 32> msg_q_;
 
     // Registered protocol parser
     ProtocolParser* parser_;

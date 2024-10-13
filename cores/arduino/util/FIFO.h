@@ -51,22 +51,6 @@ template <typename T> class FIFOBase
         tail_.store(0, std::memory_order_relaxed);
     }
 
-    /** Returns the number of free elements in the buffer */
-    size_t NumFree() const {
-        size_t h = head_.load(std::memory_order_acquire);
-        size_t t = tail_.load(std::memory_order_relaxed);
-        
-        if (h == t) {
-            return end_ - 1;
-        }
-        else if (h < t) {
-            return t - h - 1;
-        }
-        else {
-            return end_ + t - h - 1;
-        }
-    }
-
     /* Adds an element to the buffer if not already full */
     bool PutIfNotFull(T const el) {
         size_t h = head_.load(std::memory_order_relaxed);
@@ -147,10 +131,9 @@ template <typename T> class FIFOBase
         return nextIn == tail_.load(std::memory_order_acquire);
     }
 
-    /** Returns the number of elements in the buffer */
     size_t GetNumElements() const {
-        size_t in = head_.load(std::memory_order_relaxed);
-        size_t out = tail_.load(std::memory_order_relaxed);
+        size_t in = head_.load(std::memory_order_acquire);  // Ensure visibility of the latest head_ update
+        size_t out = tail_.load(std::memory_order_acquire); // Ensure visibility of the latest tail_ update
         return (in >= out) ? (in - out) : (end_ - out + in);
     }
 
