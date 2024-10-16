@@ -8,7 +8,7 @@ IBusParser::IBusParser()
     ResetParser();
 }
 
-bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* msg)
+bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* pMsg)
 {
     bool did_parse = false;
     uint8_t i;
@@ -34,8 +34,7 @@ bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* msg)
         else
         {
             // invalid message go back to start
-            char_count_ = 0;
-            pstate_ = WaitingForHeader0;
+            ResetParser();
         }
         break;
     case ParserHasHeader1:
@@ -44,15 +43,15 @@ bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* msg)
         // odd bytes are high byte, even bytes are low
         // channels array index is char_count_ / 2 - 1
         i = (char_count_ - 3u) / 2u;
-        if (i < SERRX_NUM_CHAN)
+        if ((i < SERRX_NUM_CHAN) && (pMsg != nullptr))
         {
             if (char_count_ % 2u)
             {
-                temp_msg_.channels[i] = byte; // odd = low byte
+                pMsg->channels[i] = byte; // odd = low byte
             }
             else
             {
-                temp_msg_.channels[i] |= byte << 8u; // even = high bytr
+                pMsg->channels[i] |= byte << 8u; // even = high bytr
             }
         }
         running_checksum_ -= byte;
@@ -69,14 +68,11 @@ bool IBusParser::ParseByte(uint8_t byte, ParsedMessage* msg)
         frame_checksum_ = (byte << 8) | frame_checksum_;
         if (frame_checksum_ == running_checksum_)
         {
-            temp_msg_.timestamp = 0;
-
-            // if (event_out != nullptr)
-            // {
-            //     *event_out = temp_msg_;
-            // }
-            // notify_parse(temp_msg_);
-
+            if (pMsg != nullptr)
+            {
+                pMsg->error_flags = 0;
+                ParserNotify(pMsg);
+            }
             did_parse = true;
         }
         // Go back to start

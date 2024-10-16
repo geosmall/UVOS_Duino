@@ -119,8 +119,7 @@ class System
      */
     void JumpToQspi();
 
-    /** \return a uint32_t value of milliseconds since the SysTick started
-    */
+    /** \return a uint32_t value of milliseconds since the SysTick started */
     static uint32_t GetNow();
 
     /** \return a uint32_t of microseconds within the internal timer. */

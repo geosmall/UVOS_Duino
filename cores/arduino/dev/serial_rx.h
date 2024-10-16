@@ -1,10 +1,10 @@
 #pragma once
 
-#include <algorithm>
+#include <algorithm> // std::fill
 #include "per/uart.h"
 #include "sys/dma.h"
 #include "ProtocolParser.h"
-#include "util/FIFO.h"
+// #include "util/FIFO.h"
 #include "serial_rx/IBusParser.h"
 
 namespace uvos
@@ -27,23 +27,31 @@ class SerialReceiver
     };
 
     /** @brief Constructor for SerialReceiver object
-     * @param parse_callback Callback function to handle parsed messages
      * @param protocol_type  Protocol type of the receiver
      */
-    explicit SerialReceiver(ProtocolType protocol_type, SerRxParseCallback parse_callback)
-        : protocol_type_(protocol_type), parse_callback_(parse_callback)
+    explicit SerialReceiver(ProtocolType protocol_type) : protocol_type_(protocol_type)
     {
-        if(protocol_type == IBUS)
+        switch (protocol_type_)
         {
+        case IBUS:
             parser_ = new IBusParser();
+            break;
+        case SBUS:
+            // Initialize SBUS parser when implemented
+            break;
+        default:
+            parser_ = nullptr;
+            break;
         }
-        // Set the parse callback for the parser
-        parser_->SetParseCallback(parse_callback_);
     }
 
     ~SerialReceiver()
     {
-        delete parser_;
+        if (parser_ != nullptr)
+        {
+            delete parser_;
+            parser_ = nullptr;
+        }
     }
 
     // Delete copy and move semantics if not needed
@@ -119,11 +127,6 @@ class SerialReceiver
         return uart_.IsListening();
     }
 
-    /** @brief This is a no-op for UART transport - Rx is via DMA callback with circular buffer */
-    inline void FlushRx()
-    {
-    }
-
     /** @brief Returns UART HAL UART Error Code */
     inline uint32_t GetError()
     {
@@ -136,20 +139,37 @@ class SerialReceiver
         uart_.PollTx(buff, size);
     }
 
+    // This function should be called in the main loop
+    inline bool Listener() const
+    {
+        if (parser_ != nullptr)
+        {
+            return parser_->Listener();
+        }
+        return false;
+    }
+
+    // Retrieve a message from the receiver
+    inline bool GetMessage(ParsedMessage& msg)
+    {
+        if (parser_ != nullptr)
+        {
+            return parser_->GetMessage(msg);
+        }
+        return false;
+    }
+
   private:
     UartHandler uart_;
     uint8_t* rx_buffer_;
     size_t rx_buffer_size_;
-    FIFO<ParsedMessage, 32> msg_q_;
+    uint32_t lastGoodMessageMsec_;
 
     // Registered protocol parser
     ProtocolParser* parser_;
 
     // Protocol type
     ProtocolType protocol_type_;
-
-    // Callback to notify when a message is parsed
-    SerRxParseCallback parse_callback_;
 
     // Parsed message structure
     ParsedMessage msg;
@@ -163,23 +183,16 @@ class SerialReceiver
      */
     static void RxCallbackDMA(uint8_t* data, size_t size, void* context, UartHandler::Result res)
     {
-        if (res != UartHandler::Result::OK)
-        {
-            return; // Handle error
-        }
+        if (res != UartHandler::Result::OK) return; // Handle error
 
-        /** Read context as transport type */
-        SerialReceiver* rx = reinterpret_cast<SerialReceiver*>(context);
-
-        // Iterate over each received byte and pass to all registered parsers
-        for (size_t i = 0; i < size; ++i)
+        SerialReceiver* self = static_cast<SerialReceiver*>(context);
+        if (self->parser_)
         {
-            uint8_t byte = data[i];
-            if (rx->parser_->ParseByte(byte, &rx->msg))
+            for (size_t i = 0; i < size; ++i)
             {
-                if (rx->parse_callback_)
+                if (self->parser_->ParseByte(data[i], &self->msg))
                 {
-                    rx->parse_callback_(rx->msg);
+                    // Message enqueued in parser's FIFO
                 }
             }
         }
