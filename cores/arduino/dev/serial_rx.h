@@ -164,16 +164,26 @@ class SerialReceiver
 
     /** @brief Check if the message timeout has been exceeded
      *  @param timeout_msec: Timeout duration in milliseconds
-     *  @returns True if the timeout has been exceeded, otherwise false */
+     *  @returns True if the timeout has been exceeded for the defined persistence threshold, otherwise false */
     inline bool MessageTimeout(uint32_t timeout_msec) const
     {
-        return (System::GetNow() - last_message_timestamp_) > timeout_msec;
+        if ((System::GetNow() - last_message_timestamp_) > timeout_msec) {
+            if (++timeout_persistence_count_ >= kTimeoutPersistenceThreshold) {
+                return true;
+            }
+        } else {
+            timeout_persistence_count_ = 0;
+        }
+        return false;
     }
 
   private:
     UartHandler uart_;
     uint8_t* rx_buffer_;
     size_t rx_buffer_size_;
+
+    static constexpr uint32_t kTimeoutPersistenceThreshold = 3;
+    mutable uint32_t timeout_persistence_count_ = 0;
     uint32_t last_message_timestamp_;
 
     // Registered protocol parser
