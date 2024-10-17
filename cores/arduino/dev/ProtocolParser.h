@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <cstddef>
 #include "util/FIFO.h"
-#include "sys/system.h"
 
 namespace uvos
 {
@@ -12,12 +11,11 @@ constexpr size_t SERRX_NUM_CHAN = 10;
 
 // Forward declaration for parsed message structure
 struct ParsedMessage {
-    uint32_t timestamp; // Timestamp of frame in milliseconds
     uint16_t channels[SERRX_NUM_CHAN]; // Channel data (1000-2000 us full range)
     uint32_t error_flags; // Error flags (bitmask)
 
     // Constructor to initialize the fields
-    ParsedMessage() : timestamp(0), channels{0}, error_flags(0) {}
+    ParsedMessage() : channels{0}, error_flags(0) {}
 };
 
 // Abstract base class for protocol parsers
@@ -27,9 +25,8 @@ public:
 
     // Process a single byte. Return true if a complete message is parsed.
     // @param byte: The byte to parse
-    // @param pMsg: Pointer to the parsed message structure
     // @return: True if a complete message is parsed
-    virtual bool ParseByte(uint8_t byte, ParsedMessage* pMsg) = 0;
+    virtual bool ParseByte(uint8_t byte) = 0;
 
     // Reset the parser state
     virtual void ResetParser() = 0;
@@ -47,18 +44,16 @@ public:
     }
 
 protected:
+    // Working message buffer
+    ParsedMessage msg_;
+
     // Message queue
     uvos::FIFO<ParsedMessage, 16> msg_q_;
 
     // Invoke this callback from Parser subclass when a message is successfully parsed
-    inline void ParserNotify(const ParsedMessage* pMsg)
+    inline void ParserNotify()
     {
-        if (pMsg != nullptr)
-        {
-            ParsedMessage msg = *pMsg; // Dereference the message pointer
-            msg.timestamp = System::GetNow(); // Give it a timestamp
-            msg_q_.PutWithOverwrite(msg); // Put the message in the queue
-        }
+        msg_q_.PutWithOverwrite(msg_);
     }
 };
 

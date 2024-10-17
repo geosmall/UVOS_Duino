@@ -46,7 +46,7 @@ public:
     ~IBusParser() override = default;
 
     // Implement the byte parsing logic for IBus
-    bool ParseByte(uint8_t byte, ParsedMessage* pMsg) override;
+    bool ParseByte(uint8_t byte) override;
 
     void ResetParser() override;
 
@@ -61,7 +61,7 @@ private:
     };
 
     ParserState pstate_;        // State variable for parser
-    uint32_t char_count_;       // Move char_count here
+    uint32_t byte_count_;       // Move char_count here
     uint16_t running_checksum_; // Move running_checksum here
     uint16_t frame_checksum_;   // Move frame_checksum here
 };

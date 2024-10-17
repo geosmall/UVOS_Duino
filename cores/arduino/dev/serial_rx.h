@@ -3,8 +3,8 @@
 #include <algorithm> // std::fill
 #include "per/uart.h"
 #include "sys/dma.h"
+#include "sys/system.h"
 #include "ProtocolParser.h"
-// #include "util/FIFO.h"
 #include "serial_rx/IBusParser.h"
 
 namespace uvos
@@ -128,7 +128,7 @@ class SerialReceiver
     }
 
     /** @brief Returns UART HAL UART Error Code */
-    inline uint32_t GetError()
+    inline uint32_t GetRxUartError()
     {
         return uart_.CheckError();
     }
@@ -139,7 +139,8 @@ class SerialReceiver
         uart_.PollTx(buff, size);
     }
 
-    // This function should be called in the main loop
+    /** @brief This function should be called in the main loop
+     *  @returns True if there are messages in the queue */
     inline bool Listener() const
     {
         if (parser_ != nullptr)
@@ -149,7 +150,9 @@ class SerialReceiver
         return false;
     }
 
-    // Retrieve a message from the receiver
+    /** @brief Retrieve a message from the receiver queue
+     *  @param msg: ParsedMessage struct to be filled with the next message
+     *  @returns True if a message was successfully retrieved */
     inline bool GetMessage(ParsedMessage& msg)
     {
         if (parser_ != nullptr)
@@ -159,20 +162,25 @@ class SerialReceiver
         return false;
     }
 
+    /** @brief Check if the message timeout has been exceeded
+     *  @param timeout_msec: Timeout duration in milliseconds
+     *  @returns True if the timeout has been exceeded, otherwise false */
+    inline bool MessageTimeout(uint32_t timeout_msec) const
+    {
+        return (System::GetNow() - last_message_timestamp_) > timeout_msec;
+    }
+
   private:
     UartHandler uart_;
     uint8_t* rx_buffer_;
     size_t rx_buffer_size_;
-    uint32_t lastGoodMessageMsec_;
+    uint32_t last_message_timestamp_;
 
     // Registered protocol parser
     ProtocolParser* parser_;
 
     // Protocol type
     ProtocolType protocol_type_;
-
-    // Parsed message structure
-    ParsedMessage msg;
 
     /** Static callback for Uart that occurs when new data
      *  is available from the peripheral.
@@ -190,9 +198,10 @@ class SerialReceiver
         {
             for (size_t i = 0; i < size; ++i)
             {
-                if (self->parser_->ParseByte(data[i], &self->msg))
+                if (self->parser_->ParseByte(data[i]))
                 {
                     // Message enqueued in parser's FIFO
+                    self->last_message_timestamp_ = System::GetNow(); // GetNow() wraps HAL_GetTick()
                 }
             }
         }
