@@ -210,7 +210,7 @@ class SerialReceiver
             {
                 if (self->parser_->ParseByte(data[i]))
                 {
-                    // Message enqueued in parser's FIFO
+                    // Message enqueued in ProtocolParser's FIFO by ParserNotify()
                     self->last_message_timestamp_ = System::GetNow(); // GetNow() wraps HAL_GetTick()
                 }
             }
