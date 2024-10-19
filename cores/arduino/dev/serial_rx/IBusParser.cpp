@@ -43,18 +43,10 @@ bool IBusParser::ParseByte(uint8_t byte)
         byte_count_++;
         // Store the byte in the channel array
         // odd bytes are high byte, even bytes are low
-        // channels array index is byte_count_ / 2 - 1
         i = (byte_count_ - 3u) / 2u;
         if (i < SERRX_NUM_CHAN)
         {
-            if (byte_count_ % 2u)
-            {
-                msg_.channels[i] = byte; // odd = low byte
-            }
-            else
-            {
-                msg_.channels[i] |= byte << 8u; // even = high bytr
-            }
+            msg_.channels[i] = (byte_count_ % 2u) ? byte : (msg_.channels[i] | (byte << 8u));
         }
         running_checksum_ -= byte;
         if (byte_count_ >= IBUS_FRAME_LEN_MINUS_CHECKSUM)
@@ -70,7 +62,7 @@ bool IBusParser::ParseByte(uint8_t byte)
         frame_checksum_ = (byte << 8) | frame_checksum_;
         if (frame_checksum_ == running_checksum_)
         {
-            ParserNotify();
+            ParserNotify(); // good frame received
             did_parse = true;
         }
         // Go back to start
@@ -90,6 +82,7 @@ void IBusParser::ResetParser()
     byte_count_ = 0;
     running_checksum_ = 0;
     frame_checksum_ = 0;
+
     std::memset(msg_.channels, 0, sizeof(msg_.channels)); // Zero out channels array
     msg_.error_flags = 0;
 }
