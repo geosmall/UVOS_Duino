@@ -38,9 +38,13 @@ public:
     }
 
     // Retrieve the next message from the queue
-    inline bool GetMessage(ParsedMessage& msg)
+    inline bool GetMessageFromFIFO(ParsedMessage* msg)
     {
-        return msg_q_.Get(msg);
+        if (msg == nullptr)
+        {
+            return false; // Handle null pointer case
+        }
+        return msg_q_.Get(*msg);
     }
 
 protected:

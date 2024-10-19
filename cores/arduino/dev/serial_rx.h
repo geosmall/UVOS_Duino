@@ -153,11 +153,11 @@ class SerialReceiver
     /** @brief Retrieve a message from the receiver queue
      *  @param msg: ParsedMessage struct to be filled with the next message
      *  @returns True if a message was successfully retrieved */
-    inline bool GetMessage(ParsedMessage& msg)
+    inline bool GetMessage(ParsedMessage* msg)
     {
         if (parser_ != nullptr)
         {
-            return parser_->GetMessage(msg);
+            return parser_->GetMessageFromFIFO(msg);
         }
         return false;
     }
