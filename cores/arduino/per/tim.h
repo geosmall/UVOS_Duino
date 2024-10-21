@@ -2,6 +2,7 @@
 #ifndef UVS_TIM_H
 #define UVS_TIM_H
 
+#include "util/hal_map.h"
 #include <cstdint>
 
 namespace uvos
@@ -174,10 +175,14 @@ class TimerHandle
     */
     void SetCallback(PeriodElapsedCallback cb, void* data = nullptr);
 
+    /** @brief Returns the underlying HAL TIM handle */
+    TIM_HandleTypeDef* GetTIMHandle();
+
     class Impl;
 
-  private:
+  protected:
     Impl* pimpl_;
+
 };
 
 } // namespace uvos

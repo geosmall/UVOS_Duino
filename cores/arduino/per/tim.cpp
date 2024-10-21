@@ -1,5 +1,4 @@
 #include "per/tim.h"
-#include "util/hal_map.h"
 #include "sys/system.h"
 
 
@@ -446,104 +445,9 @@ void TimerHandle::SetCallback(PeriodElapsedCallback cb, void* data)
     pimpl_->SetCallback(cb, data);
 }
 
+TIM_HandleTypeDef* TimerHandle::GetTIMHandle()
+{
+    return &pimpl_->tim_hal_handle_;
+}
 
 } // namespace uvos
-
-
-//////////////////////////////////////////////////////////////////
-// Delete from here down when everything is retested and works.
-//////////////////////////////////////////////////////////////////
-
-#if 0
-
-enum
-{
-    SCALE_MS,
-    SCALE_US,
-    SCALE_NS,
-    SCALE_LAST,
-};
-
-typedef struct
-{
-    uint32_t          scale[SCALE_LAST];
-    TIM_HandleTypeDef htim2;
-} uvs_tim;
-
-static void sthal_tim_init();
-
-static uvs_tim tim;
-
-void uvs_tim_init()
-{
-    tim.scale[SCALE_MS] = 200000;
-    tim.scale[SCALE_US] = 200;
-    tim.scale[SCALE_NS] = 2;
-    sthal_tim_init();
-}
-void uvs_tim_start()
-{
-    HAL_TIM_Base_Start(&tim.htim2);
-}
-
-uint32_t uvs_tim_get_tick()
-{
-    return tim.htim2.Instance->CNT;
-}
-
-void uvs_tim_delay_tick(uint32_t cnt)
-{
-    uint32_t now;
-    now = uvs_tim_get_tick();
-    while(uvs_tim_get_tick() - now < cnt) {}
-}
-uint32_t uvs_tim_get_ms()
-{
-    return tim.htim2.Instance->CNT / tim.scale[SCALE_MS];
-}
-void uvs_tim_delay_ms(uint32_t cnt)
-{
-    uvs_tim_delay_tick(cnt * tim.scale[SCALE_MS]);
-}
-uint32_t uvs_tim_get_us()
-{
-    return tim.htim2.Instance->CNT / tim.scale[SCALE_US];
-}
-
-void uvs_tim_delay_us(uint32_t cnt)
-{
-    uvs_tim_delay_tick(cnt * tim.scale[SCALE_US]);
-}
-
-// STM32 HAL Stuff below
-
-static void sthal_tim_init()
-{
-    TIM_ClockConfigTypeDef  sClockSourceConfig = {0};
-    TIM_MasterConfigTypeDef sMasterConfig      = {0};
-
-    tim.htim2.Instance           = TIM2;
-    tim.htim2.Init.Prescaler     = 0;
-    tim.htim2.Init.CounterMode   = TIM_COUNTERMODE_UP;
-    tim.htim2.Init.Period        = 0xffffffff;
-    tim.htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    //tim.htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-    tim.htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-    if(HAL_TIM_Base_Init(&tim.htim2) != HAL_OK)
-    {
-        //    Error_Handler();
-    }
-    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-    if(HAL_TIM_ConfigClockSource(&tim.htim2, &sClockSourceConfig) != HAL_OK)
-    {
-        //    Error_Handler();
-    }
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
-    if(HAL_TIMEx_MasterConfigSynchronization(&tim.htim2, &sMasterConfig)
-       != HAL_OK)
-    {
-        //    Error_Handler();
-    }
-}
-#endif
