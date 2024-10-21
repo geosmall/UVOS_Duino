@@ -15,6 +15,10 @@
 #error unknown compiler
 #endif
 
+#if defined (  __GNUC__  ) /* GCC CS3 */
+  #define WEAK __attribute__ ((weak))
+#endif
+
 /** @addtogroup utility
     @{
 */
