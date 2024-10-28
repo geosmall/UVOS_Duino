@@ -1,6 +1,5 @@
 #pragma once
-#ifndef UVS_GPIO_H
-#define UVS_GPIO_H
+
 #include "uvos_core.h"
 
 #ifdef __cplusplus
@@ -28,6 +27,8 @@ class GPIO
         OUTPUT,    /**< Output w/ push-pull configuration */
         OUTPUT_OD, /**< Output w/ open-drain configuration */
         ANALOG,    /**< Analog for connection to ADC or DAC peripheral */
+        AF_PP,     /**< Alternate Function Push-Pull */
+        AF_OD      /**< Alternate Function Open-Drain */
     };
 
     /** @brief Configures whether an internal Pull up or Pull down resistor is used. 
@@ -57,16 +58,17 @@ class GPIO
     /** @brief Configuration for a given GPIO */
     struct Config
     {
-        Pin   pin;
-        Mode  mode;
-        Pull  pull;
-        Speed speed;
+        Pin      pin;
+        Mode     mode;
+        Pull     pull;
+        Speed    speed;
+        uint32_t alternate; /**< Alternate function number */
 
         /** Constructor with no arguments will prepare an invalid GPIO set as
          *  an input, with no pullup. 
          */
         Config()
-        : pin(), mode(Mode::INPUT), pull(Pull::NOPULL), speed(Speed::LOW)
+        : pin(), mode(Mode::INPUT), pull(Pull::NOPULL), speed(Speed::LOW), alternate(0)
         {
         }
     };
@@ -85,16 +87,18 @@ class GPIO
     */
     void Init(Pin p, const Config &cfg);
 
-    /** @brief Explicity initialize all configuration for the GPIO 
+    /** @brief Explicitly initialize all configuration for the GPIO 
      *  @param p Pin specifying the physical connection on the hardware
      *  @param m Mode specifying the behavior of the GPIO (input, output, etc.). Defaults to Mode::INPUT
      *  @param pu Pull up/down state for the GPIO. Defaults to Pull::NOPULL
-     *  @param sp Speed setting for drive strength/slew rate. Defaults to Speed::Slow
+     *  @param sp Speed setting for drive strength/slew rate. Defaults to Speed::LOW
+     *  @param alt Alternate function number. Defaults to 0
     */
-    void Init(Pin   p,
-              Mode  m  = Mode::INPUT,
-              Pull  pu = Pull::NOPULL,
-              Speed sp = Speed::LOW);
+    void Init(Pin     p,
+              Mode    m  = Mode::INPUT,
+              Pull    pu = Pull::NOPULL,
+              Speed   sp = Speed::LOW,
+              uint32_t alt = 0);
 
     /** @brief Deinitializes the GPIO pin */
     void DeInit();
@@ -145,7 +149,7 @@ class GPIO
  *  few versions to support backwards compatibility.
  * 
  *  This should not be used for anything new.
- *  @deprecated These should only be used for casting to configs, and are planned to be reomved in a future version.
+ *  @deprecated These should only be used for casting to configs, and are planned to be removed in a future version.
  *  @{
  */
 extern "C"
@@ -208,6 +212,5 @@ extern "C"
     void uvs_gpio_toggle(const uvs_gpio *p);
     /**@} */
 }
-#endif
 
-#endif
+#endif /* __cplusplus */

@@ -17,6 +17,8 @@ void GPIO::Init(const Config &cfg)
         case Mode::OUTPUT: ginit.Mode = GPIO_MODE_OUTPUT_PP; break;
         case Mode::OUTPUT_OD: ginit.Mode = GPIO_MODE_OUTPUT_OD; break;
         case Mode::ANALOG: ginit.Mode = GPIO_MODE_ANALOG; break;
+        case Mode::AF_PP: ginit.Mode = GPIO_MODE_AF_PP; break;
+        case Mode::AF_OD: ginit.Mode = GPIO_MODE_AF_OD; break;
         case Mode::INPUT:
         default: ginit.Mode = GPIO_MODE_INPUT; break;
     }
@@ -34,6 +36,15 @@ void GPIO::Init(const Config &cfg)
         case Speed::MEDIUM: ginit.Speed = GPIO_SPEED_FREQ_MEDIUM; break;
         case Speed::LOW:
         default: ginit.Speed = GPIO_SPEED_FREQ_LOW;
+    }
+
+    if(cfg_.mode == Mode::AF_PP || cfg_.mode == Mode::AF_OD)
+    {
+        ginit.Alternate = cfg_.alternate;
+    }
+    else
+    {
+        ginit.Alternate = 0;
     }
 
     port_base_addr_ = GetGPIOBaseRegister();
@@ -65,13 +76,14 @@ void GPIO::Init(Pin p, const Config &cfg)
     cfg_.pin = p;
     Init(cfg_);
 }
-void GPIO::Init(Pin p, Mode m, Pull pu, Speed sp)
+void GPIO::Init(Pin p, Mode m, Pull pu, Speed sp, uint32_t alt)
 {
     // Populate Config struct, and init with overload
-    cfg_.pin   = p;
-    cfg_.mode  = m;
-    cfg_.pull  = pu;
-    cfg_.speed = sp;
+    cfg_.pin       = p;
+    cfg_.mode      = m;
+    cfg_.pull      = pu;
+    cfg_.speed     = sp;
+    cfg_.alternate = alt;
     Init(cfg_);
 }
 
@@ -163,7 +175,7 @@ extern "C"
             case UVS_GPIO_PULLDOWN: ginit.Pull = GPIO_PULLDOWN; break;
             default: ginit.Pull = GPIO_NOPULL; break;
         }
-        ginit.Speed = GPIO_SPEED_LOW;
+        ginit.Speed = GPIO_SPEED_FREQ_LOW;
         port        = uvs_hal_map_get_port(&p->pin);
         ginit.Pin   = uvs_hal_map_get_pin(&p->pin);
         start_clock_for_pin(p);
@@ -183,24 +195,18 @@ extern "C"
     {
         return HAL_GPIO_ReadPin(uvs_hal_map_get_port(&p->pin),
                                 uvs_hal_map_get_pin(&p->pin));
-        //    return HAL_GPIO_ReadPin((GPIO_TypeDef *)gpio_hal_port_map[p->pin.port],
-        //                            gpio_hal_pin_map[p->pin.pin]);
     }
 
     void uvs_gpio_write(const uvs_gpio *p, uint8_t state)
     {
-        return HAL_GPIO_WritePin(uvs_hal_map_get_port(&p->pin),
-                                 uvs_hal_map_get_pin(&p->pin),
-                                 (GPIO_PinState)(state > 0 ? 1 : 0));
-        //    HAL_GPIO_WritePin((GPIO_TypeDef *)gpio_hal_port_map[p->pin.port],
-        //                      gpio_hal_pin_map[p->pin.pin],
-        //                      (GPIO_PinState)(state > 0 ? 1 : 0));
+        HAL_GPIO_WritePin(uvs_hal_map_get_port(&p->pin),
+                          uvs_hal_map_get_pin(&p->pin),
+                          (GPIO_PinState)(state > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET));
     }
+
     void uvs_gpio_toggle(const uvs_gpio *p)
     {
-        return HAL_GPIO_TogglePin(uvs_hal_map_get_port(&p->pin),
-                                  uvs_hal_map_get_pin(&p->pin));
-        //    HAL_GPIO_TogglePin((GPIO_TypeDef *)gpio_hal_port_map[p->pin.port],
-        //                       gpio_hal_pin_map[p->pin.pin]);
+        HAL_GPIO_TogglePin(uvs_hal_map_get_port(&p->pin),
+                           uvs_hal_map_get_pin(&p->pin));
     }
 }
