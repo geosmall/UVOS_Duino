@@ -5,14 +5,20 @@
 #include <stdlib.h>
 
 #if defined(_MSC_VER)
-#define FORCE_INLINE __forceinline /**< & */
+  #define FORCE_INLINE __forceinline /**< & */
 #elif defined(__clang__)
-#define FORCE_INLINE inline __attribute__((always_inline)) /**< & */
-#pragma clang diagnostic ignored "-Wduplicate-decl-specifier"
+  #define FORCE_INLINE inline __attribute__((always_inline)) /**< & */
+  #pragma clang diagnostic ignored "-Wduplicate-decl-specifier"
 #elif defined(__GNUC__)
-#define FORCE_INLINE inline __attribute__((always_inline)) /**< & */
+  #define FORCE_INLINE inline __attribute__((always_inline)) /**< & */
 #else
-#error unknown compiler
+  #error unknown compiler
+#endif
+
+#if defined (  __GNUC__  ) /* GCC CS3 */
+  #define WEAK __attribute__ ((weak))
+#else
+  #error unknown compiler
 #endif
 
 /** @addtogroup utility
