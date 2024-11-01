@@ -3,6 +3,7 @@
 #define UVS_TIM_H
 
 #include <cstdint>
+#include "util/hal_map.h"
 
 namespace uvos
 {
@@ -77,6 +78,19 @@ class TimerHandle
           dir(CounterDir::UP),
           period(0xffffffff),
           enable_irq(false)
+        {
+        }
+    };
+
+    /** @brief PWM Output Channel Configuration */
+    struct PWMChannelConfig
+    {
+        uint32_t channel;    /**< Channel number: TIM_CHANNEL_1, TIM_CHANNEL_2, etc. */
+        Pin pin;             /**< GPIO Pin associated with the channel */
+        uint32_t duty_cycle; /**< Duty cycle in percentage (0 to 100) */
+        uint32_t polarity;   /**< Polarity: TIM_OCPOLARITY_HIGH or TIM_OCPOLARITY_LOW */
+
+        PWMChannelConfig() : channel(0), pin(), duty_cycle(0), polarity(TIM_OCPOLARITY_HIGH)
         {
         }
     };
@@ -173,6 +187,18 @@ class TimerHandle
      *  @param data optional pointer to arbitrary data (defaults to nullptr)
     */
     void SetCallback(PeriodElapsedCallback cb, void* data = nullptr);
+
+    /** @brief Initializes the timer for PWM output */
+    Result InitPWM(const Config& config, const PWMChannelConfig* channels, uint8_t num_channels);
+
+    /** @brief Starts PWM output on configured channels */
+    Result StartPWM();
+
+    /** @brief Stops PWM output on configured channels */
+    Result StopPWM();
+
+    /** @brief Sets the duty cycle for a specific channel */
+    Result SetPWMDutyCycle(uint32_t channel, uint32_t duty_cycle);
 
     class Impl;
 
