@@ -1,6 +1,7 @@
 #include "per/tim.h"
 #include "per/gpio.h"
 #include "sys/system.h"
+#include "util/hal_map.h"
 
 
 // To save from digging in reference manual here are some notes:
@@ -118,7 +119,7 @@ TimerHandle::Result TimerHandle::Impl::Init(const TimerHandle::Config& config)
     // Default to lowest prescalar
     tim_hal_handle_.Init.Prescaler = 0;
 
-    // Default to longest period (16-bit timers handled separaately for clarity,
+    // Default to longest period (16-bit timers handled separately for clarity,
     // though 16-bit timers extra bits are probably don't care.
     if(tim_hal_handle_.Instance == TIM2 || tim_hal_handle_.Instance == TIM5)
         tim_hal_handle_.Init.Period = config_.period;
@@ -192,17 +193,18 @@ TimerHandle::Result TimerHandle::Impl::Stop()
                : TimerHandle::Result::ERR;
 }
 
+TimerHandle::Result TimerHandle::Impl::SetPrescaler(uint32_t val)
+{
+    tim_hal_handle_.Instance->PSC = val;
+    tim_hal_handle_.Init.Prescaler = val;
+    return Result::OK;
+}
+
 TimerHandle::Result TimerHandle::Impl::SetPeriod(uint32_t ticks)
 {
     config_.period                = ticks;
     tim_hal_handle_.Instance->ARR = ticks;
     tim_hal_handle_.Init.Period   = ticks;
-    return Result::OK;
-}
-
-TimerHandle::Result TimerHandle::Impl::SetPrescaler(uint32_t val)
-{
-    tim_hal_handle_.Instance->PSC = val;
     return Result::OK;
 }
 
@@ -255,7 +257,9 @@ void TimerHandle::Impl::InternalCallback()
     }
 }
 
-TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config, const TimerHandle::PWMChannelConfig* channels, uint8_t num_channels)
+TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config,
+                                               const TimerHandle::PWMChannelConfig* channels,
+                                               uint8_t num_channels)
 {
     if (num_channels == 0 || num_channels > 4) return TimerHandle::Result::ERR;
 
@@ -263,13 +267,13 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
     num_pwm_channels_ = num_channels;
 
     // Copy channel configurations
-    for(uint8_t i = 0; i < num_pwm_channels_; ++i)
+    for (uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
         pwm_channels_[i] = channels[i];
     }
 
     // Initialize GPIO pins for PWM channels
-    for(uint8_t i = 0; i < num_pwm_channels_; ++i)
+    for (uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
         GPIO::Config gpio_cfg;
         gpio_cfg.pin = pwm_channels_[i].pin;
@@ -277,9 +281,8 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
         gpio_cfg.pull = GPIO::Pull::NOPULL;
         gpio_cfg.speed = GPIO::Speed::VERY_HIGH;
 
-        // Set the correct alternate function for the timer and channel
-        // Adjust this based on your specific timer and pin
-        gpio_cfg.alternate = GPIO_AF1_TIM2; // Example for TIM2
+        // Use the alternate function from the channel configuration
+        gpio_cfg.alternate = pwm_channels_[i].alternate;
 
         GPIO gpio;
         gpio.Init(gpio_cfg);
@@ -287,19 +290,26 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
 
     // Configure timer for PWM
     const int tim_idx = int(config_.periph);
-    if(tim_idx >= 4)
-        return TimerHandle::Result::ERR;
+    if (tim_idx >= 4) return TimerHandle::Result::ERR;
 
     constexpr TIM_TypeDef* instances[4] = {TIM2, TIM3, TIM4, TIM5};
     tim_hal_handle_.Instance = instances[tim_idx];
 
-    tim_hal_handle_.Init.Prescaler = 0; // Adjust as necessary
+    // Default to lowest prescalar
+    tim_hal_handle_.Init.Prescaler = 0;
+
+    // Default to longest period (16-bit timers handled separately for clarity,
+    // though 16-bit timers extra bits are probably don't care.
+    if(tim_hal_handle_.Instance == TIM2 || tim_hal_handle_.Instance == TIM5)
+        tim_hal_handle_.Init.Period = config_.period;
+    else
+        tim_hal_handle_.Init.Period = (uint16_t)config_.period;
+
     tim_hal_handle_.Init.CounterMode = TIM_COUNTERMODE_UP;
-    tim_hal_handle_.Init.Period = config_.period;
     tim_hal_handle_.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     tim_hal_handle_.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
-    if(HAL_TIM_PWM_Init(&tim_hal_handle_) != HAL_OK)
+    if (HAL_TIM_PWM_Init(&tim_hal_handle_) != HAL_OK)
     {
         Error_Handler();
     }
@@ -309,28 +319,25 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
     sConfigOC.OCMode = TIM_OCMODE_PWM1;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 
-    for(uint8_t i = 0; i < num_pwm_channels_; ++i)
+    for (uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
         sConfigOC.Pulse = (config_.period * pwm_channels_[i].duty_cycle) / 100;
         sConfigOC.OCPolarity = pwm_channels_[i].polarity;
 
-        if(HAL_TIM_PWM_ConfigChannel(&tim_hal_handle_, &sConfigOC, pwm_channels_[i].channel) != HAL_OK)
+        if (HAL_TIM_PWM_ConfigChannel(&tim_hal_handle_, &sConfigOC, pwm_channels_[i].channel) != HAL_OK)
         {
             Error_Handler();
         }
     }
-
-    // Call MSP Init for PWM
-    HAL_TIM_PWM_MspInit(&tim_hal_handle_);
 
     return TimerHandle::Result::OK;
 }
 
 TimerHandle::Result TimerHandle::Impl::StartPWM()
 {
-    for(uint8_t i = 0; i < num_pwm_channels_; ++i)
+    for (uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
-        if(HAL_TIM_PWM_Start(&tim_hal_handle_, pwm_channels_[i].channel) != HAL_OK)
+        if (HAL_TIM_PWM_Start(&tim_hal_handle_, pwm_channels_[i].channel) != HAL_OK)
         {
             return TimerHandle::Result::ERR;
         }
@@ -340,14 +347,30 @@ TimerHandle::Result TimerHandle::Impl::StartPWM()
 
 TimerHandle::Result TimerHandle::Impl::StopPWM()
 {
-    for(uint8_t i = 0; i < num_pwm_channels_; ++i)
+    for (uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
-        if(HAL_TIM_PWM_Stop(&tim_hal_handle_, pwm_channels_[i].channel) != HAL_OK)
+        if (HAL_TIM_PWM_Stop(&tim_hal_handle_, pwm_channels_[i].channel) != HAL_OK)
         {
             return TimerHandle::Result::ERR;
         }
     }
     return TimerHandle::Result::OK;
+}
+
+TimerHandle::Result TimerHandle::Impl::SetPWMDutyCycle(uint32_t channel, uint32_t duty_cycle)
+{
+    // Find the channel index
+    for(uint8_t i = 0; i < num_pwm_channels_; ++i)
+    {
+        if(pwm_channels_[i].channel == channel)
+        {
+            pwm_channels_[i].duty_cycle = duty_cycle;
+            uint32_t pulse = (config_.period * duty_cycle) / 100;
+            __HAL_TIM_SET_COMPARE(&tim_hal_handle_, channel, pulse);
+            return TimerHandle::Result::OK;
+        }
+    }
+    return TimerHandle::Result::ERR; // Channel not found
 }
 
 // HAL Functions

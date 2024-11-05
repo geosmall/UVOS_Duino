@@ -89,8 +89,14 @@ class TimerHandle
         Pin pin;             /**< GPIO Pin associated with the channel */
         uint32_t duty_cycle; /**< Duty cycle in percentage (0 to 100) */
         uint32_t polarity;   /**< Polarity: TIM_OCPOLARITY_HIGH or TIM_OCPOLARITY_LOW */
+        uint32_t alternate;  /**< Alternate function number for the GPIO pin */
 
-        PWMChannelConfig() : channel(0), pin(), duty_cycle(0), polarity(TIM_OCPOLARITY_HIGH)
+        PWMChannelConfig()
+        : channel(0),
+          pin(),
+          duty_cycle(0),
+          polarity(TIM_OCPOLARITY_HIGH),
+          alternate(0)
         {
         }
     };
@@ -122,15 +128,6 @@ class TimerHandle
     /** @brief Returns a const reference to the Config struct */
     const Config& GetConfig() const;
 
-    /** @brief Sets the period of the Timer.
-     * 
-     ** This is the number of ticks it takes before it wraps back around.
-     ** For self-managed timing, this can be left at the default. (0xffff for 16-bit
-     ** and 0xffffffff for 32-bit timers). 
-     ** This can be changed "on-the-fly" 
-     ** */
-    Result SetPeriod(uint32_t ticks);
-
     /** @brief Sets the Prescalar applied to the TIM peripheral. 
      * 
      ** This can be any number up to 0xffff 
@@ -141,6 +138,15 @@ class TimerHandle
      ** This can be changed "on-the-fly" 
      ** */
     Result SetPrescaler(uint32_t val);
+
+    /** @brief Sets the period of the Timer.
+     * 
+     ** This is the number of ticks it takes before it wraps back around.
+     ** For self-managed timing, this can be left at the default. (0xffff for 16-bit
+     ** and 0xffffffff for 32-bit timers). 
+     ** This can be changed "on-the-fly" 
+     ** */
+    Result SetPeriod(uint32_t ticks);
 
     /** @brief Starts the TIM peripheral specified by Config */
     Result Start();
