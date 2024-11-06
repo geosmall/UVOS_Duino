@@ -116,8 +116,8 @@ TimerHandle::Result TimerHandle::Impl::Init(const TimerHandle::Config& config)
               ? TIM_COUNTERMODE_UP
               : TIM_COUNTERMODE_DOWN;
 
-    // Default to lowest prescalar
-    tim_hal_handle_.Init.Prescaler = 0;
+    // Defaults to lowest prescale val of 0
+    tim_hal_handle_.Init.Prescaler = config_.prescaler;
 
     // Default to longest period (16-bit timers handled separately for clarity,
     // though 16-bit timers extra bits are probably don't care.
@@ -195,7 +195,8 @@ TimerHandle::Result TimerHandle::Impl::Stop()
 
 TimerHandle::Result TimerHandle::Impl::SetPrescaler(uint32_t val)
 {
-    tim_hal_handle_.Instance->PSC = val;
+    config_.prescaler              = val;
+    tim_hal_handle_.Instance->PSC  = val;
     tim_hal_handle_.Init.Prescaler = val;
     return Result::OK;
 }
@@ -295,8 +296,8 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
     constexpr TIM_TypeDef* instances[4] = {TIM2, TIM3, TIM4, TIM5};
     tim_hal_handle_.Instance = instances[tim_idx];
 
-    // Default to lowest prescalar
-    tim_hal_handle_.Init.Prescaler = 0;
+    // Defaults to lowest prescale val of 0
+    tim_hal_handle_.Init.Prescaler = config_.prescaler;
 
     // Default to longest period (16-bit timers handled separately for clarity,
     // though 16-bit timers extra bits are probably don't care.

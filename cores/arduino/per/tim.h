@@ -66,16 +66,23 @@ class TimerHandle
         Peripheral periph; /**< Hardware Peripheral */
         CounterDir dir;    /**< Counter direction */
 
+        /** @brief prescaler value for TIM peripheral.  Must be 0 min to 0xffff max.
+         * @note TIM2-5 are all on APB1, so the prescaler is based on the APB1 clock.
+         */
+        uint32_t prescaler;
+
         /** @brief period in ticks at TIM frequency that counter will reset based on dir
          *  @note TIM3 and TIM4 are both 16-bit timers. So the period maximum is 0xffff.
         */
         uint32_t period;
+
         bool     enable_irq; /**< Enable interrupt for user based callback */
 
         /* @brief Constructor for default states */
         Config()
         : periph(Peripheral::TIM_2),
           dir(CounterDir::UP),
+          prescaler(0),
           period(0xffffffff),
           enable_irq(false)
         {

@@ -20,10 +20,18 @@ int main(void)
     hardware.Configure();
     hardware.Init();
 
+    uint32_t timer_freq_hz = (System::GetPClk1Freq() * 2);
+    uint32_t target_tick_freq_hz = 1'000'000; // 1 MHz
+    uint32_t period_uSec = 1000; // 1 ms period
+
+    // Calculate prescaler
+    uint32_t prescale_val = (timer_freq_hz / target_tick_freq_hz) - 1;
+
     uvos::TimerHandle timer;
     uvos::TimerHandle::Config timer_cfg;
     timer_cfg.periph = uvos::TimerHandle::Config::Peripheral::TIM_3;
-    timer_cfg.period = (1000 - 1); // Set the period
+    timer_cfg.prescaler = prescale_val; // Set the prescaler 1 MHz
+    timer_cfg.period = (period_uSec - 1); // Set the period to 1 ms
 
     uvos::TimerHandle::PWMChannelConfig pwm_channels[4];
     // std::array<uvos::TimerHandle::PWMChannelConfig, 3> pwm_channels;
@@ -57,19 +65,6 @@ int main(void)
     pwm_channels[3].alternate = GPIO_AF2_TIM3; // Specify the correct alternate function
 
     timer.InitPWM(timer_cfg, pwm_channels, 4);
-
-    // Define the APB1 frequency, target tick, and period
-    uint32_t timer_freq_hz = timer.GetFreq(); // Expect 200'000'000 Hz
-    uint32_t target_tick_freq_hz = 1'000'000; // 1MHz
-    uint32_t period_uSec = 1000; // 1 ms period
-
-    // Calculate prescaler
-    uint32_t prescaler = (timer_freq_hz / target_tick_freq_hz) - 1;
-    // Calculate auto-reload value, divide by 1'000'000 first to avoid overflow
-    uint32_t auto_reload = (target_tick_freq_hz / 1'000'000) * period_uSec - 1;
-
-    timer.SetPrescaler(prescaler);
-    timer.SetPeriod(auto_reload);
 
     timer.StartPWM();
 
