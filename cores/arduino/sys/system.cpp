@@ -404,11 +404,11 @@ void System::ConfigureClocks()
      *  VOS3: low-power (max frequency 200 MHz)
     */
     if ( cfg_.cpu_freq == Config::SysClkFreq::FREQ_480MHZ ) {
-        plln_val = ( hseValue == 25000000 ) ? 240 : 192;
+        plln_val = ( hseValue == 25000000 ) ? 192 : 240;
         flash_latency = FLASH_LATENCY_4;
         __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE0 );
     } else {
-        plln_val = ( hseValue == 25000000 ) ? 200 : 160;
+        plln_val = ( hseValue == 25000000 ) ? 160 : 200;
         flash_latency = FLASH_LATENCY_2;
         __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE1 );
     }
