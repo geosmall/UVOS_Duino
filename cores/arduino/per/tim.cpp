@@ -53,7 +53,7 @@ class TimerHandle::Impl
     TimerHandle::Result InitPWM(const TimerHandle::Config& config, const TimerHandle::PWMChannelConfig* channels, uint8_t num_channels);
     TimerHandle::Result StartPWM();
     TimerHandle::Result StopPWM();
-    TimerHandle::Result SetPWMDutyCycle(uint32_t channel, uint32_t duty_cycle);
+    TimerHandle::Result SetPWMPulse(uint32_t channel, uint32_t pulse);
 
     TIM_HandleTypeDef   tim_hal_handle_;
 
@@ -322,7 +322,7 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
 
     for (uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
-        sConfigOC.Pulse = (config_.period * pwm_channels_[i].duty_cycle) / 100;
+        sConfigOC.Pulse = pwm_channels_[i].pulse;
         sConfigOC.OCPolarity = pwm_channels_[i].polarity;
 
         if (HAL_TIM_PWM_ConfigChannel(&tim_hal_handle_, &sConfigOC, pwm_channels_[i].channel) != HAL_OK)
@@ -358,15 +358,14 @@ TimerHandle::Result TimerHandle::Impl::StopPWM()
     return TimerHandle::Result::OK;
 }
 
-TimerHandle::Result TimerHandle::Impl::SetPWMDutyCycle(uint32_t channel, uint32_t duty_cycle)
+TimerHandle::Result TimerHandle::Impl::SetPWMPulse(uint32_t channel, uint32_t pulse)
 {
     // Find the channel index
     for(uint8_t i = 0; i < num_pwm_channels_; ++i)
     {
         if(pwm_channels_[i].channel == channel)
         {
-            pwm_channels_[i].duty_cycle = duty_cycle;
-            uint32_t pulse = (config_.period * duty_cycle) / 100;
+            pwm_channels_[i].pulse = pulse;
             __HAL_TIM_SET_COMPARE(&tim_hal_handle_, channel, pulse);
             return TimerHandle::Result::OK;
         }
@@ -633,9 +632,9 @@ TimerHandle::Result TimerHandle::StopPWM()
     return pimpl_->StopPWM();
 }
 
-TimerHandle::Result TimerHandle::SetPWMDutyCycle(uint32_t channel, uint32_t duty_cycle)
+TimerHandle::Result TimerHandle::SetPWMPulse(uint32_t channel, uint32_t pulse)
 {
-    return pimpl_->SetPWMDutyCycle(channel, duty_cycle);
+    return pimpl_->SetPWMPulse(channel, pulse);
 }
 
 } // namespace uvos

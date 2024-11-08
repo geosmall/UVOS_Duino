@@ -47,10 +47,10 @@ class TimerHandle
         /** @brief Hardware Timer to configure, and use. */
         enum class Peripheral
         {
-            TIM_2 = 0, /**< 32-bit counter */
-            TIM_3,     /**< 16-bit counter */
-            TIM_4,     /**< 16-bit counter */
-            TIM_5,     /**< 32-bit counter*/
+            TIM_2 = 0, /**< 32-bit counter, 4 CC channels */
+            TIM_3,     /**< 16-bit counter, 4 CC channels */
+            TIM_4,     /**< 16-bit counter, 4 CC channels */
+            TIM_5,     /**< 32-bit counter, 4 CC channels */
         };
 
         /** @brief Direction of the auto-reload counter. 
@@ -94,14 +94,14 @@ class TimerHandle
     {
         uint32_t channel;    /**< Channel number: TIM_CHANNEL_1, TIM_CHANNEL_2, etc. */
         Pin pin;             /**< GPIO Pin associated with the channel */
-        uint32_t duty_cycle; /**< Duty cycle in percentage (0 to 100) */
+        uint32_t pulse;      /**< Pulse value to be loaded into CCRx (0x0000 to 0xFFFF) */
         uint32_t polarity;   /**< Polarity: TIM_OCPOLARITY_HIGH or TIM_OCPOLARITY_LOW */
         uint32_t alternate;  /**< Alternate function number for the GPIO pin */
 
         PWMChannelConfig()
         : channel(0),
           pin(),
-          duty_cycle(0),
+          pulse(0),
           polarity(TIM_OCPOLARITY_HIGH),
           alternate(0)
         {
@@ -210,8 +210,8 @@ class TimerHandle
     /** @brief Stops PWM output on configured channels */
     Result StopPWM();
 
-    /** @brief Sets the duty cycle for a specific channel */
-    Result SetPWMDutyCycle(uint32_t channel, uint32_t duty_cycle);
+    /** @brief Sets the pulse width for a specific channel */
+    Result SetPWMPulse(uint32_t channel, uint32_t pulse);
 
     class Impl;
 

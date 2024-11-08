@@ -8,6 +8,12 @@ using namespace uvos;
 // Declare a UVOSboard object called hardware
 UVOSboard hardware;
 
+// Helper function to convert a duty cycle to a pulse width
+static inline uint32_t duty_cycle_to_pulse(uint32_t period, uint32_t duty_cycle)
+{
+    return ((period * duty_cycle) / 100);
+}
+
 int main(void)
 {
     // Declare a variable to store the state we want to set for the LED.
@@ -39,28 +45,28 @@ int main(void)
     // For TIM3 Channel 1 on Pin PB4
     pwm_channels[0].channel = TIM_CHANNEL_1;
     pwm_channels[0].pin = Pin(PORTB, 4);
-    pwm_channels[0].duty_cycle = 50; // 50% duty cycle
+    pwm_channels[0].pulse = duty_cycle_to_pulse(timer_cfg.period, 50); // 50% duty cycle
     pwm_channels[0].polarity = TIM_OCPOLARITY_HIGH;
     pwm_channels[0].alternate = GPIO_AF2_TIM3; // Specify the correct alternate function
 
     // For TIM3 Channel 2 on Pin PB5
     pwm_channels[1].channel = TIM_CHANNEL_2;
     pwm_channels[1].pin = Pin(PORTB, 5);
-    pwm_channels[1].duty_cycle = 37; // 37% duty cycle
+    pwm_channels[1].pulse = duty_cycle_to_pulse(timer_cfg.period, 37); // 37% duty cycle
     pwm_channels[1].polarity = TIM_OCPOLARITY_HIGH;
     pwm_channels[1].alternate = GPIO_AF2_TIM3; // Specify the correct alternate function
 
     // For TIM3 Channel 3 on Pin PB0
     pwm_channels[2].channel = TIM_CHANNEL_3;
     pwm_channels[2].pin = Pin(PORTB, 0);
-    pwm_channels[2].duty_cycle = 25; // 25% duty cycle
+    pwm_channels[2].pulse = duty_cycle_to_pulse(timer_cfg.period, 25);; // 25% duty cycle
     pwm_channels[2].polarity = TIM_OCPOLARITY_HIGH;
     pwm_channels[2].alternate = GPIO_AF2_TIM3; // Specify the correct alternate function
 
     // For TIM3 Channel 4 on Pin PB1
     pwm_channels[3].channel = TIM_CHANNEL_4;
     pwm_channels[3].pin = Pin(PORTB, 1);
-    pwm_channels[3].duty_cycle = 12; // 12% duty cycle
+    pwm_channels[3].pulse = duty_cycle_to_pulse(timer_cfg.period, 12);; // 12% duty cycle
     pwm_channels[3].polarity = TIM_OCPOLARITY_HIGH;
     pwm_channels[3].alternate = GPIO_AF2_TIM3; // Specify the correct alternate function
 
