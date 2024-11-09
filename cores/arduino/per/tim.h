@@ -98,14 +98,14 @@ class TimerHandle
         uint32_t polarity;   /**< Polarity: TIM_OCPOLARITY_HIGH or TIM_OCPOLARITY_LOW */
         uint32_t alternate;  /**< Alternate function number for the GPIO pin */
 
+        // Default constructor
         PWMChannelConfig()
-        : channel(0),
-          pin(),
-          pulse(0),
-          polarity(TIM_OCPOLARITY_HIGH),
-          alternate(0)
-        {
-        }
+            : channel(0), pin(Pin()), pulse(0), polarity(0), alternate(0) {}
+
+        // Constructor with parameters, pulse defaults to 0
+        PWMChannelConfig(uint32_t ch, Pin p, uint32_t pol, uint32_t alt)
+            : channel(ch), pin(p), pulse(0), polarity(pol), alternate(alt) {}
+
     };
 
     /** @brief Return values for TIM funcitons. */
