@@ -47,10 +47,11 @@ class TimerHandle
         /** @brief Hardware Timer to configure, and use. */
         enum class Peripheral
         {
-            TIM_2 = 0, /**< 32-bit counter, 4 CC channels */
-            TIM_3,     /**< 16-bit counter, 4 CC channels */
-            TIM_4,     /**< 16-bit counter, 4 CC channels */
-            TIM_5,     /**< 32-bit counter, 4 CC channels */
+            TIM_2 = 0, /**< 32-bit counter, 4 CC channels, APB1 */
+            TIM_3,     /**< 16-bit counter, 4 CC channels, APB1 */
+            TIM_4,     /**< 16-bit counter, 4 CC channels, APB1 */
+            TIM_5,     /**< 32-bit counter, 4 CC channels, APB1 */
+            TIM_15,    /**< 16-bit counter, 2 CC channels, APB2 */
         };
 
         /** @brief Direction of the auto-reload counter. 

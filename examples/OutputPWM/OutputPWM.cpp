@@ -46,6 +46,8 @@ int main(void)
         {TimPeriph::TIM_4, TIM_CHANNEL_2, Pin(PORTD, 13), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
         {TimPeriph::TIM_4, TIM_CHANNEL_3, Pin(PORTD, 14), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
         {TimPeriph::TIM_4, TIM_CHANNEL_4, Pin(PORTD, 15), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
+        {TimPeriph::TIM_15, TIM_CHANNEL_1, Pin(PORTE, 5), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF4_TIM15},
+        {TimPeriph::TIM_15, TIM_CHANNEL_2, Pin(PORTE, 6), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF4_TIM15},
     };
     constexpr size_t NUM_ESC_OUTPUTS = SIZEOF_ARRAY(esc_outputs);
 
@@ -67,6 +69,8 @@ int main(void)
     ESC_pwm.SetPulseWidth(0, 1100); // ESC S7 to 1100 microseconds
     ESC_pwm.SetPulseWidth(1, 1200); // ESC S8 to 1200 microseconds
     ESC_pwm.SetPulseWidth(2, 1300); // ESC S9 to 1300 microseconds
+    ESC_pwm.SetPulseWidth(4, 1400); // ESC S9 to 1300 microseconds
+    ESC_pwm.SetPulseWidth(5, 1500); // ESC S9 to 1300 microseconds
 
     // Loop forever
     for(;;)

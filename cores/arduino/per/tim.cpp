@@ -3,11 +3,10 @@
 #include "sys/system.h"
 #include "util/hal_map.h"
 
-
 // To save from digging in reference manual here are some notes:
 //
 // The following TIMs are on APB1 Clock (RM0433 Rev7 - pg 458):
-// - TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM12, TITM13, TIM14
+// - TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM12, TIM13, TIM14
 // - LPTIM1
 //
 // The following TIMs are on APB2 Clock (RM0433 Rev7 - pg 464):
@@ -79,16 +78,16 @@ static void Error_Handler()
 
 // Global References
 
-static TimerHandle::Impl tim_handles[4];
+static TimerHandle::Impl tim_handles[5];  // Increased size from 4 to 5
 
-/** @brief returns a poitner to the private implementation object associated
+/** @brief returns a pointer to the private implementation object associated
  *   with the peripheral instance (register base address)
  *  @return Pointer to global tim_handle object or NULL
  */
 static TimerHandle::Impl* get_tim_impl_from_instance(TIM_TypeDef* per_instance)
 {
     /** Check each impl */
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 5; i++)  // Updated loop limit from 4 to 5
     {
         TimerHandle::Impl* p = &tim_handles[i];
         if(p->tim_hal_handle_.Instance == per_instance)
@@ -104,23 +103,24 @@ static TimerHandle::Impl* get_tim_impl_from_instance(TIM_TypeDef* per_instance)
 TimerHandle::Result TimerHandle::Impl::Init(const TimerHandle::Config& config)
 {
     const int tim_idx = int(config.periph);
-    if(tim_idx >= 4)
+    if(tim_idx >= 5)  // Updated check from 4 to 5
         return TimerHandle::Result::ERR;
-    config_                             = config;
-    constexpr TIM_TypeDef* instances[4] = {TIM2, TIM3, TIM4, TIM5};
+
+    config_ = config;
+
+    constexpr TIM_TypeDef* instances[5] = {TIM2, TIM3, TIM4, TIM5, TIM15};  // Added TIM15
 
     // HAL Initialization
     tim_hal_handle_.Instance = instances[tim_idx];
     tim_hal_handle_.Init.CounterMode
-        = config_.dir == TimerHandle::Config ::CounterDir::UP
+        = config_.dir == TimerHandle::Config::CounterDir::UP
               ? TIM_COUNTERMODE_UP
               : TIM_COUNTERMODE_DOWN;
 
     // Defaults to lowest prescale val of 0
     tim_hal_handle_.Init.Prescaler = config_.prescaler;
 
-    // Default to longest period (16-bit timers handled separately for clarity,
-    // though 16-bit timers extra bits are probably don't care.
+    // Default to longest period (16-bit timers handled separately for clarity)
     if(tim_hal_handle_.Instance == TIM2 || tim_hal_handle_.Instance == TIM5)
         tim_hal_handle_.Init.Period = config_.period;
     else
@@ -212,11 +212,24 @@ TimerHandle::Result TimerHandle::Impl::SetPeriod(uint32_t ticks)
 uint32_t TimerHandle::Impl::GetFreq()
 {
     // TIM ticks run at 2x PClk
-    // there is a switchable 1/2/4 prescalar available
-    // that is not yet implemented.
-    // Once it is, it should be taken into account here as well.
-    uint32_t clkfreq_hz = (System::GetPClk1Freq() * 2);
-    uint32_t hz         = clkfreq_hz / (tim_hal_handle_.Instance->PSC + 1);
+    uint32_t clkfreq_hz = 0;
+    if(tim_hal_handle_.Instance == TIM2 || tim_hal_handle_.Instance == TIM3 ||
+       tim_hal_handle_.Instance == TIM4 || tim_hal_handle_.Instance == TIM5)
+    {
+        // Timers on APB1
+        clkfreq_hz = System::GetPClk1Freq() * 2;
+    }
+    else if(tim_hal_handle_.Instance == TIM15)
+    {
+        // Timer on APB2
+        clkfreq_hz = System::GetPClk2Freq() * 2;
+    }
+    else
+    {
+        // Handle other timers if needed
+        clkfreq_hz = System::GetPClk1Freq();  // Default to PCLK1
+    }
+    uint32_t hz = clkfreq_hz / (tim_hal_handle_.Instance->PSC + 1);
     return hz;
 }
 
@@ -227,8 +240,9 @@ uint32_t TimerHandle::Impl::GetTick()
 
 uint32_t TimerHandle::Impl::GetMs()
 {
-    return GetTick() / (GetFreq() / 100000000);
+    return GetTick() / (GetFreq() / 1000);
 }
+
 uint32_t TimerHandle::Impl::GetUs()
 {
     return GetTick() / (GetFreq() / 1000000);
@@ -242,7 +256,7 @@ void TimerHandle::Impl::DelayTick(uint32_t del)
 
 void TimerHandle::Impl::DelayMs(uint32_t del)
 {
-    DelayTick(del * (GetFreq() / 100000000));
+    DelayTick(del * (GetFreq() / 1000));
 }
 
 void TimerHandle::Impl::DelayUs(uint32_t del)
@@ -291,16 +305,15 @@ TimerHandle::Result TimerHandle::Impl::InitPWM(const TimerHandle::Config& config
 
     // Configure timer for PWM
     const int tim_idx = int(config_.periph);
-    if (tim_idx >= 4) return TimerHandle::Result::ERR;
+    if (tim_idx >= 5) return TimerHandle::Result::ERR;
 
-    constexpr TIM_TypeDef* instances[4] = {TIM2, TIM3, TIM4, TIM5};
+    constexpr TIM_TypeDef* instances[5] = {TIM2, TIM3, TIM4, TIM5, TIM15};  // Added TIM15
     tim_hal_handle_.Instance = instances[tim_idx];
 
     // Defaults to lowest prescale val of 0
     tim_hal_handle_.Init.Prescaler = config_.prescaler;
 
-    // Default to longest period (16-bit timers handled separately for clarity,
-    // though 16-bit timers extra bits are probably don't care.
+    // Default to longest period (16-bit timers handled separately for clarity)
     if(tim_hal_handle_.Instance == TIM2 || tim_hal_handle_.Instance == TIM5)
         tim_hal_handle_.Init.Period = config_.period;
     else
@@ -378,12 +391,7 @@ extern "C"
 {
     void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     {
-        TimerHandle::Impl* impl
-            = get_tim_impl_from_instance(tim_baseHandle->Instance);
-        /** In the case of TIM6 (DAC usage) there will be no impl.
-         *  The preceding enable_irq checks should be false
-         *  since the default constructor sets it that way 
-         */
+        TimerHandle::Impl* impl = get_tim_impl_from_instance(tim_baseHandle->Instance);
         TimerHandle::Config cfg;
         if(impl)
             cfg = impl->GetConfig();
@@ -417,20 +425,25 @@ extern "C"
         else if(tim_baseHandle->Instance == TIM5)
         {
             __HAL_RCC_TIM5_CLK_ENABLE();
-            /** @todo make this conditional based on user config */
             if(cfg.enable_irq)
             {
                 HAL_NVIC_SetPriority(TIM5_IRQn, 0x0f, 0);
                 HAL_NVIC_EnableIRQ(TIM5_IRQn);
             }
         }
+        else if(tim_baseHandle->Instance == TIM15)
+        {
+            __HAL_RCC_TIM15_CLK_ENABLE();
+            if(cfg.enable_irq)
+            {
+                HAL_NVIC_SetPriority(TIM15_IRQn, 0x0f, 0);
+                HAL_NVIC_EnableIRQ(TIM15_IRQn);
+            }
+        }
         else if(tim_baseHandle->Instance == TIM6)
         {
             __HAL_RCC_TIM6_CLK_ENABLE();
-            /** DAC Peripheral shares IRQ with TIM6
-             *  and is implemented as part of DAC
-             *  callback structure.
-             */
+            // DAC Peripheral shares IRQ with TIM6
         }
     }
 
@@ -456,13 +469,15 @@ extern "C"
             __HAL_RCC_TIM5_CLK_DISABLE();
             HAL_NVIC_DisableIRQ(TIM5_IRQn);
         }
+        else if(tim_baseHandle->Instance == TIM15)
+        {
+            __HAL_RCC_TIM15_CLK_DISABLE();
+            HAL_NVIC_DisableIRQ(TIM15_IRQn);
+        }
         else if(tim_baseHandle->Instance == TIM6)
         {
             __HAL_RCC_TIM6_CLK_DISABLE();
-            /** DAC Peripheral shares IRQ with TIM6
-             *  and is implemented as part of DAC
-             *  callback structure.
-             */
+            // DAC Peripheral shares IRQ with TIM6
         }
     }
 
@@ -485,6 +500,10 @@ extern "C"
         {
             __HAL_RCC_TIM5_CLK_ENABLE();
         }
+        else if (tim_pwmHandle->Instance == TIM15)
+        {
+            __HAL_RCC_TIM15_CLK_ENABLE();
+        }
     }
 
     void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
@@ -504,6 +523,10 @@ extern "C"
         else if (tim_pwmHandle->Instance == TIM5)
         {
             __HAL_RCC_TIM5_CLK_DISABLE();
+        }
+        else if (tim_pwmHandle->Instance == TIM15)
+        {
+            __HAL_RCC_TIM15_CLK_DISABLE();
         }
     }
 }
@@ -535,6 +558,11 @@ extern "C" void TIM4_IRQHandler(void)
 extern "C" void TIM5_IRQHandler(void)
 {
     HAL_TIM_IRQHandler(&tim_handles[(int)TimerHandle::Config::Peripheral::TIM_5]
+                            .tim_hal_handle_);
+}
+extern "C" void TIM15_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&tim_handles[(int)TimerHandle::Config::Peripheral::TIM_15]
                             .tim_hal_handle_);
 }
 
@@ -638,102 +666,3 @@ TimerHandle::Result TimerHandle::SetPWMPulse(uint32_t channel, uint32_t pulse)
 }
 
 } // namespace uvos
-
-
-//////////////////////////////////////////////////////////////////
-// Delete from here down when everything is retested and works.
-//////////////////////////////////////////////////////////////////
-
-#if 0
-
-enum
-{
-    SCALE_MS,
-    SCALE_US,
-    SCALE_NS,
-    SCALE_LAST,
-};
-
-typedef struct
-{
-    uint32_t          scale[SCALE_LAST];
-    TIM_HandleTypeDef htim2;
-} uvs_tim;
-
-static void sthal_tim_init();
-
-static uvs_tim tim;
-
-void uvs_tim_init()
-{
-    tim.scale[SCALE_MS] = 200000;
-    tim.scale[SCALE_US] = 200;
-    tim.scale[SCALE_NS] = 2;
-    sthal_tim_init();
-}
-void uvs_tim_start()
-{
-    HAL_TIM_Base_Start(&tim.htim2);
-}
-
-uint32_t uvs_tim_get_tick()
-{
-    return tim.htim2.Instance->CNT;
-}
-
-void uvs_tim_delay_tick(uint32_t cnt)
-{
-    uint32_t now;
-    now = uvs_tim_get_tick();
-    while(uvs_tim_get_tick() - now < cnt) {}
-}
-uint32_t uvs_tim_get_ms()
-{
-    return tim.htim2.Instance->CNT / tim.scale[SCALE_MS];
-}
-void uvs_tim_delay_ms(uint32_t cnt)
-{
-    uvs_tim_delay_tick(cnt * tim.scale[SCALE_MS]);
-}
-uint32_t uvs_tim_get_us()
-{
-    return tim.htim2.Instance->CNT / tim.scale[SCALE_US];
-}
-
-void uvs_tim_delay_us(uint32_t cnt)
-{
-    uvs_tim_delay_tick(cnt * tim.scale[SCALE_US]);
-}
-
-// STM32 HAL Stuff below
-
-static void sthal_tim_init()
-{
-    TIM_ClockConfigTypeDef  sClockSourceConfig = {0};
-    TIM_MasterConfigTypeDef sMasterConfig      = {0};
-
-    tim.htim2.Instance           = TIM2;
-    tim.htim2.Init.Prescaler     = 0;
-    tim.htim2.Init.CounterMode   = TIM_COUNTERMODE_UP;
-    tim.htim2.Init.Period        = 0xffffffff;
-    tim.htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    //tim.htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-    tim.htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-    if(HAL_TIM_Base_Init(&tim.htim2) != HAL_OK)
-    {
-        //    Error_Handler();
-    }
-    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-    if(HAL_TIM_ConfigClockSource(&tim.htim2, &sClockSourceConfig) != HAL_OK)
-    {
-        //    Error_Handler();
-    }
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
-    if(HAL_TIMEx_MasterConfigSynchronization(&tim.htim2, &sMasterConfig)
-       != HAL_OK)
-    {
-        //    Error_Handler();
-    }
-}
-#endif
