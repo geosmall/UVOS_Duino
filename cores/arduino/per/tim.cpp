@@ -227,7 +227,7 @@ uint32_t TimerHandle::Impl::GetFreq()
     else
     {
         // Handle other timers if needed
-        clkfreq_hz = System::GetPClk1Freq();  // Default to PCLK1
+        clkfreq_hz = System::GetPClk1Freq() * 2;  // Default to 2 * PCLK1
     }
     uint32_t hz = clkfreq_hz / (tim_hal_handle_.Instance->PSC + 1);
     return hz;
