@@ -33,6 +33,13 @@ struct PWMOutputChannel
 class PWMOutput
 {
   public:
+    /** @brief Result enum for PWMOutput operations. */
+    enum class Result
+    {
+        OK,          /**< Operation successful. */
+        ERR,         /**< General error. */
+    };
+
     /** @brief Constructor for PWMOutput.
      *  @param outputs Array of PWMOutputChannel structures defining the outputs.
      *  @param num_outputs Number of outputs in the array.
@@ -42,8 +49,10 @@ class PWMOutput
 
     ~PWMOutput();
 
-    /** @brief Initializes the PWM outputs and timers. */
-    void Init();
+    /** @brief Initializes the PWM outputs and timers.
+     *  @return ERR if an error occurred, OK otherwise.
+     */
+    Result Init();
 
     /** @brief Sets the pulse width for a specific output.
      *  @param output_index Index of the output to set.

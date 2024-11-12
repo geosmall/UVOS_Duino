@@ -66,7 +66,7 @@ void PWMOutput::CalculatePrescalerAndPeriod(uint32_t frequency,
     period = (target_timer_clk / frequency) - 1;
 }
 
-void PWMOutput::Init()
+PWMOutput::Result PWMOutput::Init()
 {
     // Initialize timers used by outputs
     num_timers_ = 0;
@@ -87,11 +87,12 @@ void PWMOutput::Init()
             }
         }
 
-        // If timer not found, add it to timers_ array
+        // If timer not found, add it to timers_ array and increment counter
         if (!timer_exists)
         {
             // Ensure we don't exceed MAX_TIMERS
-            assert(num_timers_ < MAX_TIMERS && "Exceeded maximum number of timers");
+            if (num_timers_ >= MAX_TIMERS) return Result::ERR;
+
             timers_[num_timers_].periph = output.timer_periph;
             num_timers_++;
         }
@@ -113,7 +114,8 @@ void PWMOutput::Init()
 
         // Initialize timer
         TimerHandle::Result result = timer_info.timer_handle.Init(timer_cfg);
-        assert(result == TimerHandle::Result::OK && "Timer initialization failed");
+        if (result != TimerHandle::Result::OK)
+            return Result::ERR;
 
         // Compute timer frequency
         uint32_t timer_clk = GetTimerClockFrequency(timer_info.periph);
@@ -137,12 +139,13 @@ void PWMOutput::Init()
             if (output.timer_periph == timer_info.periph)
             {
                 // Ensure we don't exceed the timer's channel capacity
-                assert(num_channels < max_channels && "Exceeded maximum channels for timer");
+                if (num_channels >= max_channels)
+                    return Result::ERR;
 
                 // Ensure the specified output channel is valid
-                assert((((max_channels == 2) && IS_VALID_PWM_2CHANNEL(output.channel)) ||
-                        ((max_channels == 4) && IS_VALID_PWM_4CHANNEL(output.channel))) &&
-                       "Invalid PWM channel for timer");
+                if (!(((max_channels == 2) && IS_VALID_PWM_2CHANNEL(output.channel)) ||
+                      ((max_channels == 4) && IS_VALID_PWM_4CHANNEL(output.channel))))
+                    return Result::ERR;
 
                 // Add PWM channel to this timer
                 TimerHandle::PWMChannelConfig& pwm_ch = pwm_channels[num_channels++];
@@ -169,6 +172,8 @@ void PWMOutput::Init()
             timer_info.timer_handle.StartPWM();
         }
     }
+
+    return Result::OK;
 }
 
 void PWMOutput::SetPulseWidth(size_t output_index, uint32_t pulse_width)
