@@ -10,16 +10,16 @@ namespace uvos
 /** @brief Hardare timer peripheral support.
  ** 
  ** Supports general-function TIM peripherals:
- ** - TIM2, TIM3, TIM4, TIM5
+ ** - TIM2, TIM3, TIM4, TIM5, TIM15
  **
- ** UVOSboard, and many internal peripherals utilize TIM2 for timing/delay purposes.
- ** It is configured to be at the maximum frequency: typically 200MHz or 240MHz (boost) 
- ** for measuring/delaying for very short periods. 
+ ** UVOSboard utilizes TIM2 for timing/delay purposes. It is configured to run
+ ** at the maximum frequency: typically 200MHz or 240MHz (boost) 
+ ** for measuring/delaying for very short periods.
  **
  ** The GetUs/GetMs functions are available for convenience (and backwards compatibility),
  ** but to avoid wrapping errors on math when doing time-delta calculations, using ticks is 
- ** recommended. The data can be converted to the final time-base after getting the difference in ticks.
- ** (Using GetFreq() can be used for these time-base calculations).
+ ** recommended. The data can be converted to the final time-base after getting the difference
+ ** in ticks. (Using GetFreq() can be used for these time-base calculations).
  **
  ** User callbacks can be set, and changed at any point during operation. However,
  ** the Config::enable_irq must be set to true when initializing for the interrupts
