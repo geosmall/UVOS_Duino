@@ -17,6 +17,7 @@ struct PWMOutputChannel
     uint32_t alternate;                           /**< GPIO alternate function. */
 };
 
+// clang-format off
 #define MAX_PWM_CHANNELS 4
 #define IS_VALID_PWM_2CHANNEL(__CHANNEL__) (((__CHANNEL__) == TIM_CHANNEL_1) || \
                                             ((__CHANNEL__) == TIM_CHANNEL_2))
@@ -24,6 +25,10 @@ struct PWMOutputChannel
                                             ((__CHANNEL__) == TIM_CHANNEL_2) || \
                                             ((__CHANNEL__) == TIM_CHANNEL_3) || \
                                             ((__CHANNEL__) == TIM_CHANNEL_4))
+#define PWM_TIMER_FREQ 1'000'000
+#define PWM_MIN_FREQ 20
+#define PWM_MAX_FREQ 12000
+// clang-format on
 
 /** @brief PWMOutput class manages PWM outputs for a specific frequency.
  *
@@ -78,8 +83,9 @@ class PWMOutput
      *  @param prescaler Calculated prescaler value.
      *  @param period Calculated period value.
      *  @param timer_periph Timer peripheral to calculate for.
+     *  @return ERR if an error occurred, OK otherwise.
      */
-    void CalculatePrescalerAndPeriod(uint32_t frequency,
+    PWMOutput::Result CalculatePrescalerAndPeriod(uint32_t frequency,
                                      uint32_t& prescaler,
                                      uint32_t& period,
                                      TimerHandle::Config::Peripheral timer_periph);

@@ -1,6 +1,12 @@
 #include "uvos_brd.h"
 #include "dev/pwm_output.h"
 
+static void Error_Handler()
+{
+    asm("bkpt 255");
+    while(1) {}
+}
+
 // Use the uvos namespace to prevent having to type
 // uvos:: before all libuvos functions
 using namespace uvos;
@@ -56,8 +62,15 @@ int main(void)
     PWMOutput ESC_pwm(esc_outputs, NUM_ESC_OUTPUTS, 500);        // 500 Hz for ESCs
 
     // Initialize PWM outputs
-    Servo_pwm.Init();
-    ESC_pwm.Init();
+    if (Servo_pwm.Init() != PWMOutput::Result::OK)
+    {
+        Error_Handler();
+    }
+
+    if (ESC_pwm.Init() != PWMOutput::Result::OK)
+    {
+        Error_Handler();
+    }
 
     // Example usage: Set pulse widths
     // Set servo outputs to different positions

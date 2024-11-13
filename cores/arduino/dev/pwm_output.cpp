@@ -55,15 +55,22 @@ uint32_t PWMOutput::GetTimerClockFrequency(TimerHandle::Config::Peripheral timer
     return timer_clk;
 }
 
-void PWMOutput::CalculatePrescalerAndPeriod(uint32_t frequency,
+PWMOutput::Result PWMOutput::CalculatePrescalerAndPeriod(uint32_t frequency,
                                             uint32_t& prescaler,
                                             uint32_t& period,
                                             TimerHandle::Config::Peripheral timer_periph)
 {
+    // check frequency is within a reasonable range
+    if (frequency < PWM_MIN_FREQ || frequency > PWM_MAX_FREQ)
+        return Result::ERR;
+
     uint32_t timer_clk = GetTimerClockFrequency(timer_periph);
-    uint32_t target_timer_clk = 1'000'000; // 1 MHz timer clock
+    uint32_t target_timer_clk = PWM_TIMER_FREQ;
+
     prescaler = (timer_clk / target_timer_clk) - 1;
     period = (target_timer_clk / frequency) - 1;
+
+    return Result::OK;
 }
 
 PWMOutput::Result PWMOutput::Init()
@@ -106,7 +113,12 @@ PWMOutput::Result PWMOutput::Init()
         timer_cfg.periph = timer_info.periph;
 
         // Calculate prescaler and period
-        CalculatePrescalerAndPeriod(frequency_, timer_cfg.prescaler, timer_cfg.period, timer_info.periph);
+        // res is returned to check for errors
+        if (CalculatePrescalerAndPeriod(frequency_, timer_cfg.prescaler, timer_cfg.period, timer_info.periph) !=
+            Result::OK)
+        {
+            return Result::ERR;
+        }
 
         // Store prescaler and period in timer_info
         timer_info.prescaler = timer_cfg.prescaler;
