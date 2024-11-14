@@ -32,6 +32,18 @@ uint8_t PWMOutput::GetTimerMaxChannels(TimerHandle::Config::Peripheral timer_per
     }
 }
 
+uint8_t PWMOutput::GetChannelIndex(TimChannel channel)
+{
+    switch (channel)
+    {
+        case TimChannel::CH_1: return 1;
+        case TimChannel::CH_2: return 2;
+        case TimChannel::CH_3: return 3;
+        case TimChannel::CH_4: return 4;
+        default: return 0; // Invalid channel
+    }
+}
+
 uint32_t PWMOutput::GetTimerClockFrequency(TimerHandle::Config::Peripheral timer_periph)
 {
     uint32_t timer_clk = 0;
@@ -56,19 +68,17 @@ uint32_t PWMOutput::GetTimerClockFrequency(TimerHandle::Config::Peripheral timer
 }
 
 PWMOutput::Result PWMOutput::CalculatePrescalerAndPeriod(uint32_t frequency,
-                                            uint32_t& prescaler,
-                                            uint32_t& period,
-                                            TimerHandle::Config::Peripheral timer_periph)
+                                                         uint32_t* prescaler,
+                                                         uint32_t* period,
+                                                         TimerHandle::Config::Peripheral timer_periph)
 {
-    // check frequency is within a reasonable range
-    if (frequency < PWM_MIN_FREQ || frequency > PWM_MAX_FREQ)
-        return Result::ERR;
+    if (prescaler == nullptr || period == nullptr) return Result::ERR; // Handle null pointers
 
     uint32_t timer_clk = GetTimerClockFrequency(timer_periph);
     uint32_t target_timer_clk = PWM_TIMER_FREQ;
 
-    prescaler = (timer_clk / target_timer_clk) - 1;
-    period = (target_timer_clk / frequency) - 1;
+    *prescaler = (timer_clk / target_timer_clk) - 1;
+    *period = (target_timer_clk / frequency) - 1;
 
     return Result::OK;
 }
@@ -112,9 +122,11 @@ PWMOutput::Result PWMOutput::Init()
         TimerHandle::Config timer_cfg;
         timer_cfg.periph = timer_info.periph;
 
-        // Calculate prescaler and period
-        // res is returned to check for errors
-        if (CalculatePrescalerAndPeriod(frequency_, timer_cfg.prescaler, timer_cfg.period, timer_info.periph) !=
+        // Check frequency_ is within a reasonable range
+        if (frequency_ < PWM_MIN_FREQ || frequency_ > PWM_MAX_FREQ) return Result::ERR;
+
+        // Calculate prescaler and period, check for any errors
+        if (CalculatePrescalerAndPeriod(frequency_, &timer_cfg.prescaler, &timer_cfg.period, timer_info.periph) !=
             Result::OK)
         {
             return Result::ERR;
@@ -154,16 +166,15 @@ PWMOutput::Result PWMOutput::Init()
                 if (num_channels >= max_channels)
                     return Result::ERR;
 
-                // Ensure the specified output channel is valid
-                if (!(((max_channels == 2) && IS_VALID_PWM_2CHANNEL(output.channel)) ||
-                      ((max_channels == 4) && IS_VALID_PWM_4CHANNEL(output.channel))))
-                    return Result::ERR;
+                // Validate the channel is in range for given time channels
+                uint8_t channel_index = GetChannelIndex(output.channel);
+                if (channel_index == 0 || channel_index > max_channels) return Result::ERR;
 
                 // Add PWM channel to this timer
                 TimerHandle::PWMChannelConfig& pwm_ch = pwm_channels[num_channels++];
-                pwm_ch.channel = output.channel;
+                pwm_ch.channel = static_cast<uint32_t>(output.channel);
                 pwm_ch.pin = output.pin;
-                pwm_ch.polarity = output.polarity;
+                pwm_ch.polarity = static_cast<uint32_t>(output.polarity);
                 pwm_ch.alternate = output.alternate;
 
                 // Convert pulse width from microseconds to ticks
@@ -216,7 +227,8 @@ void PWMOutput::SetPulseWidth(size_t output_index, uint32_t pulse_width)
     if (pulse_ticks > timer_info->period) pulse_ticks = timer_info->period;
 
     // Set the pulse width using the associated timer
-    timer_info->timer_handle.SetPWMPulse(output.channel, pulse_ticks);
+    uint32_t channel = static_cast<uint32_t>(output.channel);
+    timer_info->timer_handle.SetPWMPulse(channel, pulse_ticks);
 }
 
 } // namespace uvos

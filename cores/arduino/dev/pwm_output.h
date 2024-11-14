@@ -6,29 +6,37 @@
 namespace uvos
 {
 
+/** @brief Enum class representing timer channels. */
+enum class TimChannel : uint32_t
+{
+    CH_1 = TIM_CHANNEL_1,
+    CH_2 = TIM_CHANNEL_2,
+    CH_3 = TIM_CHANNEL_3,
+    CH_4 = TIM_CHANNEL_4,
+};
+
+/** @brief Enum class representing output polarity. */
+enum class TimPolarity : uint32_t
+{
+    HIGH = TIM_OCPOLARITY_HIGH,
+    LOW = TIM_OCPOLARITY_LOW,
+};
+
 /** @brief Structure representing a PWM output channel. */
 struct PWMOutputChannel
 {
     TimerHandle::Config::Peripheral timer_periph; /**< Timer peripheral used. */
-    uint32_t channel;                             /**< Timer channel (TIM_CHANNEL_1, etc.). */
+    TimChannel channel;                           /**< Timer channel (CHANNEL_1, etc.). */
     Pin pin;                                      /**< GPIO pin associated with the output. */
     uint32_t pulse_width;                         /**< Current pulse width in microseconds. */
-    uint32_t polarity;                            /**< Polarity: TIM_OCPOLARITY_HIGH or TIM_OCPOLARITY_LOW. */
+    TimPolarity polarity;                         /**< Polarity: HIGH or LOW. */
     uint32_t alternate;                           /**< GPIO alternate function. */
 };
 
-// clang-format off
-#define MAX_PWM_CHANNELS 4
-#define IS_VALID_PWM_2CHANNEL(__CHANNEL__) (((__CHANNEL__) == TIM_CHANNEL_1) || \
-                                            ((__CHANNEL__) == TIM_CHANNEL_2))
-#define IS_VALID_PWM_4CHANNEL(__CHANNEL__) (((__CHANNEL__) == TIM_CHANNEL_1) || \
-                                            ((__CHANNEL__) == TIM_CHANNEL_2) || \
-                                            ((__CHANNEL__) == TIM_CHANNEL_3) || \
-                                            ((__CHANNEL__) == TIM_CHANNEL_4))
-#define PWM_TIMER_FREQ 1'000'000
-#define PWM_MIN_FREQ 20
-#define PWM_MAX_FREQ 12000
-// clang-format on
+constexpr int MAX_PWM_CHANNELS = 4;
+constexpr int PWM_TIMER_FREQ = 1'000'000;
+constexpr int PWM_MIN_FREQ = 20;
+constexpr int PWM_MAX_FREQ = 12000;
 
 /** @brief PWMOutput class manages PWM outputs for a specific frequency.
  *
@@ -72,6 +80,12 @@ class PWMOutput
      */
     uint8_t GetTimerMaxChannels(TimerHandle::Config::Peripheral timer_periph);
 
+    /** @brief Gets a numerical index for a given TimChannel.
+     *  @param channel TimChannel to get index for.
+     *  @return Numerical index for the channel, 0 if invalid.
+     */
+    uint8_t GetChannelIndex(TimChannel channel);
+
     /** @brief Gets the timer clock frequency based on the timer peripheral.
      *  @param timer_periph Timer peripheral to get clock frequency for.
      *  @return Timer clock frequency in Hz.
@@ -86,9 +100,9 @@ class PWMOutput
      *  @return ERR if an error occurred, OK otherwise.
      */
     PWMOutput::Result CalculatePrescalerAndPeriod(uint32_t frequency,
-                                     uint32_t& prescaler,
-                                     uint32_t& period,
-                                     TimerHandle::Config::Peripheral timer_periph);
+                                                  uint32_t* prescaler,
+                                                  uint32_t* period,
+                                                  TimerHandle::Config::Peripheral timer_periph);
 
     // Array of outputs
     PWMOutputChannel* outputs_;

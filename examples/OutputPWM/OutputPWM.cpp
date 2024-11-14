@@ -35,42 +35,37 @@ int main(void)
     // Define servo outputs (S1-S6)
     static PWMOutputChannel servo_outputs[] = {
         // S1 and S2 on TIM3
-        {TimPeriph::TIM_3, TIM_CHANNEL_3, Pin(PORTB, 0), init_pulse_servo, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM3},
-        {TimPeriph::TIM_3, TIM_CHANNEL_4, Pin(PORTB, 1), init_pulse_servo, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM3},
+        {TimPeriph::TIM_3, TimChannel::CH_3, Pin(PORTB, 0), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM3},
+        {TimPeriph::TIM_3, TimChannel::CH_4, Pin(PORTB, 1), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM3},
         // S3-S6 on TIM5
-        {TimPeriph::TIM_5, TIM_CHANNEL_1, Pin(PORTA, 0), init_pulse_servo, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
-        {TimPeriph::TIM_5, TIM_CHANNEL_2, Pin(PORTA, 1), init_pulse_servo, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
-        {TimPeriph::TIM_5, TIM_CHANNEL_3, Pin(PORTA, 2), init_pulse_servo, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
-        {TimPeriph::TIM_5, TIM_CHANNEL_4, Pin(PORTA, 3), init_pulse_servo, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
+        {TimPeriph::TIM_5, TimChannel::CH_1, Pin(PORTA, 0), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM5},
+        {TimPeriph::TIM_5, TimChannel::CH_2, Pin(PORTA, 1), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM5},
+        {TimPeriph::TIM_5, TimChannel::CH_3, Pin(PORTA, 2), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM5},
+        {TimPeriph::TIM_5, TimChannel::CH_4, Pin(PORTA, 3), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM5},
     };
     constexpr size_t NUM_SERVO_OUTPUTS = SIZEOF_ARRAY(servo_outputs);
 
     // Define ESC outputs (S7-S10)
     static PWMOutputChannel esc_outputs[] = {
         // S7-S10 on TIM4
-        {TimPeriph::TIM_4, TIM_CHANNEL_1, Pin(PORTD, 12), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
-        {TimPeriph::TIM_4, TIM_CHANNEL_2, Pin(PORTD, 13), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
-        {TimPeriph::TIM_4, TIM_CHANNEL_3, Pin(PORTD, 14), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
-        {TimPeriph::TIM_4, TIM_CHANNEL_4, Pin(PORTD, 15), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM4},
-        {TimPeriph::TIM_15, TIM_CHANNEL_1, Pin(PORTE, 5), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF4_TIM15},
-        {TimPeriph::TIM_15, TIM_CHANNEL_2, Pin(PORTE, 6), init_pulse_esc, TIM_OCPOLARITY_HIGH, GPIO_AF4_TIM15},
+        {TimPeriph::TIM_4, TimChannel::CH_1, Pin(PORTD, 12), init_pulse_esc, TimPolarity::HIGH, GPIO_AF2_TIM4},
+        {TimPeriph::TIM_4, TimChannel::CH_2, Pin(PORTD, 13), init_pulse_esc, TimPolarity::HIGH, GPIO_AF2_TIM4},
+        {TimPeriph::TIM_4, TimChannel::CH_3, Pin(PORTD, 14), init_pulse_esc, TimPolarity::HIGH, GPIO_AF2_TIM4},
+        {TimPeriph::TIM_4, TimChannel::CH_4, Pin(PORTD, 15), init_pulse_esc, TimPolarity::HIGH, GPIO_AF2_TIM4},
+        {TimPeriph::TIM_15, TimChannel::CH_1, Pin(PORTE, 5), init_pulse_esc, TimPolarity::HIGH, GPIO_AF4_TIM15},
+        {TimPeriph::TIM_15, TimChannel::CH_2, Pin(PORTE, 6), init_pulse_esc, TimPolarity::HIGH, GPIO_AF4_TIM15},
     };
     constexpr size_t NUM_ESC_OUTPUTS = SIZEOF_ARRAY(esc_outputs);
 
-    // Create PWMOutput objects
-    PWMOutput Servo_pwm(servo_outputs, NUM_SERVO_OUTPUTS, 50);   // 50 Hz for servos
-    PWMOutput ESC_pwm(esc_outputs, NUM_ESC_OUTPUTS, 500);        // 500 Hz for ESCs
+    // Create and initialize servo PWMOutput object,
+    // check for initialization errors
+    PWMOutput Servo_pwm(servo_outputs, NUM_SERVO_OUTPUTS, 50); // 50 Hz for servos
+    if (Servo_pwm.Init() != PWMOutput::Result::OK) Error_Handler();
 
-    // Initialize PWM outputs
-    if (Servo_pwm.Init() != PWMOutput::Result::OK)
-    {
-        Error_Handler();
-    }
-
-    if (ESC_pwm.Init() != PWMOutput::Result::OK)
-    {
-        Error_Handler();
-    }
+    // Create and initialize servo PWMOutput object,
+    // check for initialization errors
+    PWMOutput ESC_pwm(esc_outputs, NUM_ESC_OUTPUTS, 500); // 500 Hz for ESCs
+    if (ESC_pwm.Init() != PWMOutput::Result::OK) Error_Handler();
 
     // Example usage: Set pulse widths
     // Set servo outputs to different positions
