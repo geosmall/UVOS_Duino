@@ -4,7 +4,7 @@
 #include "per/uart.h"
 #include "sys/dma.h"
 #include "sys/system.h"
-#include "ProtocolParser.h"
+#include "protocol_parser.h"
 #include "serial_rx/IBusParser.h"
 
 namespace uvos

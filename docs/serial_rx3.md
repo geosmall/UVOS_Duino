@@ -16,7 +16,7 @@ Organize your project with clear separation between the main receiver and indivi
 /serial_rx
 ├── include
 │   ├── SerialReceiver.h
-│   ├── ProtocolParser.h
+│   ├── protocol_parser.h
 │   ├── IBusParser.h
 │   ├── SBusParser.h
 │   └── ... (other protocol parsers)
@@ -28,11 +28,11 @@ Organize your project with clear separation between the main receiver and indivi
 ```
 
 ## 2. Define the Protocol Parser Interface
-Create an abstract base class ProtocolParser that defines the interface for all protocol-specific parsers. This allows the SerialReceiver to interact with any protocol parser polymorphically.
+Create an abstract base class protocol_parser that defines the interface for all protocol-specific parsers. This allows the SerialReceiver to interact with any protocol parser polymorphically.
 
-### ProtocolParser.h
+### protocol_parser.h
 ``` cpp
-// include/ProtocolParser.h
+// include/protocol_parser.h
 
 #ifndef PROTOCOL_PARSER_H
 #define PROTOCOL_PARSER_H
@@ -52,9 +52,9 @@ struct ParsedMessage {
 // Type alias for the parse callback
 using SerRxParseCallback = std::function<void(const ParsedMessage&)>;
 
-class ProtocolParser {
+class protocol_parser {
 public:
-    virtual ~ProtocolParser() = default;
+    virtual ~protocol_parser() = default;
 
     // Process a single byte. Return true if a complete message is parsed.
     virtual bool parse_byte(uint8_t byte) = 0;
@@ -80,7 +80,7 @@ private:
 ```
 
 ## 3. Implement Protocol-Specific Parsers
-Each protocol parser inherits from ProtocolParser and implements the parse_byte method. Here's an example for IBusParser and SBusParser.
+Each protocol parser inherits from protocol_parser and implements the parse_byte method. Here's an example for IBusParser and SBusParser.
 
 ### IBusParser.h
 ``` cpp
@@ -89,9 +89,9 @@ Each protocol parser inherits from ProtocolParser and implements the parse_byte 
 #ifndef IBUS_PARSER_H
 #define IBUS_PARSER_H
 
-#include "ProtocolParser.h"
+#include "protocol_parser.h"
 
-class IBusParser : public ProtocolParser {
+class IBusParser : public protocol_parser {
 public:
     IBusParser();
     ~IBusParser() override = default;
@@ -162,9 +162,9 @@ bool IBusParser::parse_byte(uint8_t byte) {
 #ifndef SBUS_PARSER_H
 #define SBUS_PARSER_H
 
-#include "ProtocolParser.h"
+#include "protocol_parser.h"
 
-class SBusParser : public ProtocolParser {
+class SBusParser : public protocol_parser {
 public:
     SBusParser();
     ~SBusParser() override = default;
@@ -241,7 +241,7 @@ The SerialReceiver manages DMA buffer handling, registers multiple protocol pars
 #include <vector>
 #include <memory>
 #include <cstdint>
-#include "ProtocolParser.h"
+#include "protocol_parser.h"
 
 // Define DMA_BUFFER_MEM_SECTION as per your MCU's memory attributes
 #ifndef DMA_BUFFER_MEM_SECTION
@@ -259,7 +259,7 @@ public:
     SerialReceiver& operator=(const SerialReceiver&) = delete;
 
     // Register a protocol parser
-    void register_parser(std::unique_ptr<ProtocolParser> parser);
+    void register_parser(std::unique_ptr<protocol_parser> parser);
 
     // Method to be called when DMA receives data
     void on_dma_receive(const uint8_t* data, size_t length);
@@ -274,7 +274,7 @@ private:
     static DMA_BUFFER_MEM_SECTION uint8_t default_serial_rx_buffer[BUFFER_SIZE];
 
     // Collection of registered protocol parsers
-    std::vector<std::unique_ptr<ProtocolParser>> parsers_;
+    std::vector<std::unique_ptr<protocol_parser>> parsers_;
 
     // Callback to notify when a message is parsed
     SerRxParseCallback parse_callback_;
@@ -314,7 +314,7 @@ SerialReceiver::~SerialReceiver() {
     // Deinitialize DMA and UART peripherals if necessary
 }
 
-void SerialReceiver::register_parser(std::unique_ptr<ProtocolParser> parser) {
+void SerialReceiver::register_parser(std::unique_ptr<protocol_parser> parser) {
     // Set the parse callback for the parser
     parser->set_parse_callback(parse_callback_);
     // Add to the list of parsers
@@ -477,7 +477,7 @@ Modularity: Each protocol parser resides in its own TU, making the codebase easi
 
 Flexibility: Easily add new protocols by creating new parser classes without modifying the SerialReceiver.
 
-Reusability: The ProtocolParser interface can be reused across different projects or platforms with minimal changes.
+Reusability: The protocol_parser interface can be reused across different projects or platforms with minimal changes.
 
 Maintainability: Clear separation of concerns improves code maintainability and readability.
 
@@ -504,9 +504,9 @@ Create Header and Source Files:
 #ifndef FLEXI_PARSER_H
 #define FLEXI_PARSER_H
 
-#include "ProtocolParser.h"
+#include "protocol_parser.h"
 
-class FlexiParser : public ProtocolParser {
+class FlexiParser : public protocol_parser {
 public:
     FlexiParser();
     ~FlexiParser() override = default;
