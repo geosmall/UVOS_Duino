@@ -51,6 +51,8 @@ cache enabled.
 #define S322F_SCALE 4.6566129e-10f    /**< 1 / (2** 31) */
 #define F2S32_SCALE 2147483647.f      /**< (2 ** 31) - 1 */
 
+/** Size of an array (num items.) */
+#define SIZEOF_ARRAY(x) (sizeof(x) / sizeof((x)[0]))
 
 /** shorthand macro for simplifying the reading of the left 
  *  channel of a non-interleaved output buffer named out */
