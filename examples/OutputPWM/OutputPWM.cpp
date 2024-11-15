@@ -70,15 +70,19 @@ int main(void)
     // Example usage: Set pulse widths
     // Set servo outputs to different positions
     Servo_pwm.SetPulseWidth(0, 1000); // Servo S1 to 1000 microseconds
-    Servo_pwm.SetPulseWidth(1, 1500); // Servo S2 to 1500 microseconds
-    Servo_pwm.SetPulseWidth(2, 2000); // Servo S3 to 2000 microseconds
+    Servo_pwm.SetPulseWidth(1, 1300); // Servo S2 to 1300 microseconds
+    Servo_pwm.SetPulseWidth(2, 1500); // Servo S3 to 1500 microseconds
+    Servo_pwm.SetPulseWidth(3, 1700); // Servo S4 to 1700 microseconds
+    Servo_pwm.SetPulseWidth(4, 1900); // Servo S5 to 1900 microseconds
+    Servo_pwm.SetPulseWidth(5, 2000); // Servo S6 to 2000 microseconds
 
     // Set ESC outputs to different throttle levels
     ESC_pwm.SetPulseWidth(0, 1100); // ESC S7 to 1100 microseconds
     ESC_pwm.SetPulseWidth(1, 1200); // ESC S8 to 1200 microseconds
     ESC_pwm.SetPulseWidth(2, 1300); // ESC S9 to 1300 microseconds
-    ESC_pwm.SetPulseWidth(4, 1400); // ESC S9 to 1300 microseconds
-    ESC_pwm.SetPulseWidth(5, 1500); // ESC S9 to 1300 microseconds
+    ESC_pwm.SetPulseWidth(3, 1400); // ESC S10 to 1400 microseconds
+    ESC_pwm.SetPulseWidth(4, 1500); // ESC S11 to 1500 microseconds
+    ESC_pwm.SetPulseWidth(5, 1600); // ESC S12 to 1600 microseconds
 
     // Loop forever
     for(;;)

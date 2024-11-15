@@ -1,4 +1,5 @@
 #include "uvos_brd.h"
+#include <cassert>
 
 // Use the uvos namespace to prevent having to type
 // uvos:: before all libuvos functions
@@ -38,17 +39,14 @@ int main(void)
     timer_cfg.prescaler = prescale_val; // Set the prescaler 1 MHz
     timer_cfg.period = (period_uSec - 1); // Set the period to 1 ms
 
-    uvos::TimerHandle::PWMChannelConfig pwm_ch1[4] = {
-        {TIM_CHANNEL_1, Pin(PORTB, 4), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM3},
-        {TIM_CHANNEL_2, Pin(PORTB, 5), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM3},
+    // Matek H743 S1 and S2 on TIM3
+    uvos::TimerHandle::PWMChannelConfig pwm_ch1[2] = {
         {TIM_CHANNEL_3, Pin(PORTB, 0), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM3},
         {TIM_CHANNEL_4, Pin(PORTB, 1), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM3}
     };
 
     pwm_ch1[0].pulse = duty_cycle_to_pulse(timer_cfg.period, 50); // 50% duty cycle
     pwm_ch1[1].pulse = duty_cycle_to_pulse(timer_cfg.period, 37); // 37% duty cycle
-    pwm_ch1[2].pulse = duty_cycle_to_pulse(timer_cfg.period, 25); // 25% duty cycle
-    pwm_ch1[3].pulse = duty_cycle_to_pulse(timer_cfg.period, 12); // 12% duty cycle
 
     timer1.InitPWM(timer_cfg, pwm_ch1, SIZEOF_ARRAY(pwm_ch1));
 
@@ -57,13 +55,18 @@ int main(void)
     uvos::TimerHandle timer2;
     timer_cfg.periph = uvos::TimerHandle::Config::Peripheral::TIM_5;
 
-    uvos::TimerHandle::PWMChannelConfig pwm_ch2[2] = {
+    // Matek H743 S3-S6 on TIM5
+    uvos::TimerHandle::PWMChannelConfig pwm_ch2[4] = {
+        {TIM_CHANNEL_1, Pin(PORTA, 0), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
+        {TIM_CHANNEL_2, Pin(PORTA, 1), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
         {TIM_CHANNEL_3, Pin(PORTA, 2), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5},
         {TIM_CHANNEL_4, Pin(PORTA, 3), TIM_OCPOLARITY_HIGH, GPIO_AF2_TIM5}
     };
 
     pwm_ch2[0].pulse = duty_cycle_to_pulse(timer_cfg.period, 85); // 85% duty cycle
     pwm_ch2[1].pulse = duty_cycle_to_pulse(timer_cfg.period, 75); // 75% duty cycle
+    pwm_ch2[2].pulse = duty_cycle_to_pulse(timer_cfg.period, 65); // 65% duty cycle
+    pwm_ch2[3].pulse = duty_cycle_to_pulse(timer_cfg.period, 55); // 55% duty cycle
 
     timer2.InitPWM(timer_cfg, pwm_ch2, SIZEOF_ARRAY(pwm_ch2));
 
