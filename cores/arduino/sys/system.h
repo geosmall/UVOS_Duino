@@ -119,10 +119,13 @@ class System
      */
     void JumpToQspi();
 
-    /** \return a uint32_t value of milliseconds since the SysTick started */
-    static uint32_t GetNow();
+    /** \return a uint32_t of milliseconds since the SysTick started, uses HAL */
+    static uint32_t GetTickHAL();
 
-    /** \return a uint32_t of microseconds within the internal timer. */
+    /** \return a uint32_t of milliseconds within the internal timer TIM2. */
+    static uint32_t GetMs();
+
+    /** \return a uint32_t of microseconds within the internal timer TIM2. */
     static uint32_t GetUs();
 
     /** \return a uint32_t of ticks at (PCLk1 * 2)Hz
@@ -258,7 +261,7 @@ namespace uvos
 class System
 {
   public:
-    static uint32_t GetNow()
+    static uint32_t GetTickHAL()
     {
         return testIsolator_.GetStateForCurrentTest()->currentUs_ / 1000;
     }

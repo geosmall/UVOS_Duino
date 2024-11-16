@@ -167,7 +167,7 @@ class SerialReceiver
      *  @returns True if the timeout has been exceeded for the defined persistence threshold, otherwise false */
     inline bool MessageTimeout(uint32_t timeout_msec) const
     {
-        if ((System::GetNow() - last_message_timestamp_) > timeout_msec) {
+        if ((System::GetTickHAL() - last_message_timestamp_) > timeout_msec) {
             if (++timeout_persistence_count_ >= kTimeoutPersistenceThreshold) {
                 return true;
             }
@@ -211,7 +211,7 @@ class SerialReceiver
                 if (self->parser_->ParseByte(data[i]))
                 {
                     // Message enqueued in ProtocolParser's FIFO by ParserNotify()
-                    self->last_message_timestamp_ = System::GetNow(); // GetNow() wraps HAL_GetTick()
+                    self->last_message_timestamp_ = System::GetTickHAL(); // SysTick mSec
                 }
             }
         }

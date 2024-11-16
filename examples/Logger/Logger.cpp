@@ -250,7 +250,7 @@ int main(void)
     {
         System::Delay(500);
 
-        const float time_s = System::GetNow() * 1.0e-3f;
+        const float time_s = System::GetTickHAL() * 1.0e-3f;
 
         /** showcase floating point output 
          * note that FLT_FMT is part of the format string

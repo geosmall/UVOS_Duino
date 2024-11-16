@@ -262,9 +262,14 @@ void System::JumpToQspi()
     while(1) {}
 }
 
-uint32_t System::GetNow()
+uint32_t System::GetTickHAL()
 {
     return HAL_GetTick();
+}
+
+uint32_t System::GetMs()
+{
+    return tim_.GetMs();
 }
 
 uint32_t System::GetUs()
