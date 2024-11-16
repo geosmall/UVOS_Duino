@@ -1,8 +1,9 @@
 # UVOS_Duino
 
-Unmanned Vehicles OS for Arduino
+Unmanned Vehicles OS for Arduino IDE and GNU gcc/g++.
 
-Minimal STM32H7 Arduino core based on ST HAL drivers
+Minimal STM32H7 core based on ST HAL drivers following Arduino conventions
+to be compatible with Arduino IDE.
 
 Add this link in the "Additional Boards Managers URLs" field:
 
