@@ -1,6 +1,5 @@
 #include "uvos_brd.h"
 #include "dev/serial_rx.h"
-#include "dev/protocol_parser.h"
 #include <cstring>
 
 /** This prevents us from having to type "uvos::" in front of a lot of things. */

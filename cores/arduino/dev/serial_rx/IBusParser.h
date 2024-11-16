@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dev/protocol_parser.h"
+#include "protocol_parser.h"
 
 namespace uvos
 {
