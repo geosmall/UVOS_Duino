@@ -72,6 +72,9 @@
 // #include "util/VoctCalibration.h"
 // #include "util/WaveTableLoader.h"
 // #include "util/WavWriter.h"
+#include "dev/icm42688p.h"
+#include "dev/pwm_output.h"
+
 #endif /* __cplusplus */
 
 #endif /* UVS_LIBUVOS_H */

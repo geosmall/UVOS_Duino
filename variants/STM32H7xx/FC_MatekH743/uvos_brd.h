@@ -1,11 +1,6 @@
 #pragma once
-#ifndef UVS_SEED_H
-#define UVS_SEED_H
 
 #include "uvos.h"
-
-//Uncomment this out if you're still using the rev2 hardware
-//#define SEED_REV2
 
 namespace uvos
 {
@@ -203,5 +198,3 @@ namespace seed
 } // namespace seed
 
 } // namespace uvos
-
-#endif
