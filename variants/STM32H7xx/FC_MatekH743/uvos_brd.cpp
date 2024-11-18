@@ -115,6 +115,8 @@ UVOSboard::BoardVersion UVOSboard::CheckBoardVersion()
      *  * PD4 tied to gnd reserved for future hardware
      */
 
+#if 0 // @TODO
+
     /** Initialize GPIO */
     GPIO s2dfm_gpio, seed_1_1_gpio;
     Pin  seed_1_1_pin(PORTD, 3);
@@ -129,4 +131,7 @@ UVOSboard::BoardVersion UVOSboard::CheckBoardVersion()
         return BoardVersion::UVOS_BOARD_2_DFM;
     else
         return BoardVersion::UVOS_BOARD;
+
+#endif // @TODO
+    return BoardVersion::UVOS_BOARD;
 }
