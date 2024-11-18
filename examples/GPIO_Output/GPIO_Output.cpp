@@ -9,7 +9,6 @@
 #include "uvos_brd.h"
 
 using namespace uvos;
-using namespace uvos::seed;
 
 UVOSboard hw;
 
@@ -21,8 +20,11 @@ int main(void)
     // Create an LED
     GPIO my_led;
 
-    // Initialize it to pin D24 (PA1) as an OUTPUT
-    my_led.Init(D24, GPIO::Mode::OUTPUT);
+    // Create an LED pin as my_led_pin = Pin(PORTA, 1)
+    Pin my_led_pin = Pin(PORTA, 1);
+
+    // Initialize it to pin PA1 as an OUTPUT
+    my_led.Init(my_led_pin, GPIO::Mode::OUTPUT);
 
     // In an infinite loop, we'll continuously turn the LED on/off.
     while(1)
