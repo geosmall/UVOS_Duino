@@ -725,9 +725,10 @@ pin_alt uart5_pins_rx[] = {{{UVS_GPIOB, 12}, GPIO_AF14_UART5},
                            {{UVS_GPIOD, 2}, GPIO_AF8_UART5},
                            {{UVS_GPIOB, 5}, GPIO_AF14_UART5}};
 
-pin_alt usart6_pins_tx[] = {pins_none, pins_none, pins_none};
+pin_alt usart6_pins_tx[]
+    = {{{UVS_GPIOC, 6}, GPIO_AF7_USART6}, pins_none, pins_none};
 pin_alt usart6_pins_rx[]
-    = {{{UVS_GPIOG, 9}, GPIO_AF7_USART6}, pins_none, pins_none};
+    = {{{UVS_GPIOC, 7}, GPIO_AF7_USART6}, pins_none, pins_none};
 
 pin_alt uart7_pins_tx[]
     = {{{UVS_GPIOB, 4}, GPIO_AF11_UART7}, pins_none, pins_none};

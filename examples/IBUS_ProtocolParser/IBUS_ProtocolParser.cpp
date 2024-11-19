@@ -41,8 +41,12 @@ int main(void)
     // Create SerialReceiver of type IBUS, provide a parse = TRUE callback
     SerialReceiver ibus_rx(SerialReceiver::IBUS);
 
-    // Config SerialReceiver UART and initialize it
+    // Config SerialReceiver object UART and initialize it
     SerialReceiver::Config ser_rx_config;
+    ser_rx_config.periph = UartHandler::Config::Peripheral::USART_6;
+    ser_rx_config.rx = {UVS_GPIOC, 7};
+    ser_rx_config.tx = {UVS_GPIOC, 6};
+
     ibus_rx.Init(ser_rx_config);
 
     // Start the SerialReceiver
