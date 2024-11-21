@@ -57,6 +57,13 @@ static constexpr uint8_t UB0_REG_INT_SOURCE0 = 0x65;
 static constexpr uint8_t UB0_REG_WHO_AM_I = 0x75;
 
 // User Bank 1
+static constexpr uint8_t UB1_REG_GYRO_CONFIG_STATIC2 = 0x0B;
+    #define GYRO_NOTCH_FILTER_DISABLE_BIT 0
+    #define GYRO_NOTCH_FILTER_ENABLED    (0 << GYRO_NOTCH_FILTER_DISABLE_BIT)
+    #define GYRO_NOTCH_FILTER_DISABLED   (1 << GYRO_NOTCH_FILTER_DISABLE_BIT)
+    #define GYRO_ANTI_ALIAS_FILTER_DISABLE_BIT 1
+    #define GYRO_ANTI_ALIAS_FILTER_ENABLED    (0 << GYRO_ANTI_ALIAS_FILTER_DISABLE_BIT)
+    #define GYRO_ANTI_ALIAS_FILTER_DISABLED   (1 << GYRO_ANTI_ALIAS_FILTER_DISABLE_BIT)
 static constexpr uint8_t UB1_REG_GYRO_CONFIG_STATIC3 = 0x0C;
 static constexpr uint8_t UB1_REG_GYRO_CONFIG_STATIC4 = 0x0D;
 static constexpr uint8_t UB1_REG_GYRO_CONFIG_STATIC5 = 0x0E;
@@ -126,6 +133,11 @@ ICM42688::Result ICM42688::Init(SpiHandle spi)
     intfConfig1Value &= ~INTF_CONFIG1_AFSR_MASK;
     intfConfig1Value |= INTF_CONFIG1_AFSR_DISABLE;
     writeRegister(UB0_REG_INTF_CONFIG1, intfConfig1Value);
+
+    // Disable gyro notch filter (default is enabled), leave anti-alias filter enabled
+    setBank(1);
+    writeRegister(UB1_REG_GYRO_CONFIG_STATIC2, GYRO_ANTI_ALIAS_FILTER_ENABLED | GYRO_NOTCH_FILTER_DISABLED);
+    setBank(0);
 
     // Turn on accel and gyro in Low Noise (LN) Mode
     if (SetGyroAccPwrState(PwrState::POWER_ON) != Result::OK) return Result::ERR;
