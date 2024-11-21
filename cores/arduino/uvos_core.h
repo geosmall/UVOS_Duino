@@ -51,6 +51,9 @@ cache enabled.
 #define S322F_SCALE 4.6566129e-10f    /**< 1 / (2** 31) */
 #define F2S32_SCALE 2147483647.f      /**< (2 ** 31) - 1 */
 
+/** Arduino utility functions */
+#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+
 /** Size of an array (num items.) */
 #define SIZEOF_ARRAY(x) (sizeof(x) / sizeof((x)[0]))
 
