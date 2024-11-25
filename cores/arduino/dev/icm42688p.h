@@ -9,184 +9,177 @@ namespace uvos
 class ICM42688
 {
   public:
-    enum GyroFS : uint8_t
-    {
-        dps2000 = 0x00, // (default)
-        dps1000 = 0x01,
-        dps500 = 0x02,
-        dps250 = 0x03,
-        dps125 = 0x04,
-        dps62_5 = 0x05,
-        dps31_25 = 0x06,
-        dps15_625 = 0x07
+
+    enum GyroFS : uint8_t {
+      dps2000 = 0x00,
+      dps1000 = 0x01,
+      dps500 = 0x02,
+      dps250 = 0x03,
+      dps125 = 0x04,
+      dps62_5 = 0x05,
+      dps31_25 = 0x06,
+      dps15_625 = 0x07
     };
 
-    enum AccelFS : uint8_t
-    {
-        gpm16 = 0x00, // (default)
-        gpm8 = 0x01,
-        gpm4 = 0x02,
-        gpm2 = 0x03
+    enum AccelFS : uint8_t {
+      gpm16 = 0x00,
+      gpm8 = 0x01,
+      gpm4 = 0x02,
+      gpm2 = 0x03
     };
 
-    enum ODR : uint8_t
-    {
-        odr32k = 0x01, // LN mode only
-        odr16k = 0x02, // LN mode only
-        odr8k = 0x03,  // LN mode only
-        odr4k = 0x04,  // LN mode only
-        odr2k = 0x05,  // LN mode only
-        odr1k = 0x06,  // LN mode only (default)
-        odr200 = 0x07,
-        odr100 = 0x08,
-        odr50 = 0x09,
-        odr25 = 0x0A,
-        odr12_5 = 0x0B,
-        odr6a25 = 0x0C,   // LP mode only (accel only)
-        odr3a125 = 0x0D,  // LP mode only (accel only)
-        odr1a5625 = 0x0E, // LP mode only (accel only)
-        odr500 = 0x0F,
+    enum ODR : uint8_t {
+      odr32k = 0x01, // LN mode only
+      odr16k = 0x02, // LN mode only
+      odr8k = 0x03, // LN mode only
+      odr4k = 0x04, // LN mode only
+      odr2k = 0x05, // LN mode only
+      odr1k = 0x06, // LN mode only
+      odr200 = 0x07,
+      odr100 = 0x08,
+      odr50 = 0x09,
+      odr25 = 0x0A,
+      odr12_5 = 0x0B,
+      odr6a25 = 0x0C, // LP mode only (accel only)
+      odr3a125 = 0x0D, // LP mode only (accel only)
+      odr1a5625 = 0x0E, // LP mode only (accel only)
+      odr500 = 0x0F,
     };
-
-    enum aafConfig_e
-    {
-        AAF_CONFIG_258HZ = 0,
-        AAF_CONFIG_536HZ,
-        AAF_CONFIG_997HZ,
-        AAF_CONFIG_1962HZ,
-        AAF_CONFIG_COUNT
-    };
-
-    struct AAFConfig
-    {
-        uint8_t delt;
-        uint16_t deltSqr;
-        uint8_t bitshift;
-
-        AAFConfig(uint8_t d, uint16_t ds, uint8_t bs) : delt(d), deltSqr(ds), bitshift(bs)
-        {
-        }
-    };
-
-    enum class Result
-    {
-        OK,
-        ERR,
-    };
-
-    // Struct that represents the data from the IMU
-    struct ImuData
-    {
-        int16_t accX;
-        int16_t accY;
-        int16_t accZ;
-        int16_t gyroX;
-        int16_t gyroY;
-        int16_t gyroZ;
-
-    };
-
-    ICM42688()
-    {
-    }
-    ~ICM42688()
-    {
-    }
-
-    /** 
-     * @brief Initializes the ICM42688 using SPI.
-     * @param spi SPI handle for communication.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result Init(SpiHandle spi);
-
-    /** 
-     * @brief Sets the full scale range for the accelerometer.
-     * @param fssel Full scale selection for the accelerometer.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result setAccelFS(AccelFS fssel);
-
-    /** 
-     * @brief Sets the full scale range for the gyroscope.
-     * @param fssel Full scale selection for the gyroscope.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result setGyroFS(GyroFS fssel);
-
-    /** 
-     * @brief Sets the Output Data Rate (ODR) for the accelerometer.
-     * @param odr Output data rate selection for the accelerometer.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result setAccelODR(ODR odr);
-
-    /** 
-     * @brief Sets the Output Data Rate (ODR) for the gyroscope.
-     * @param odr Output data rate selection for the gyroscope.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result setGyroODR(ODR odr);
-
-    /** 
-     * @brief Sets the AAF filter for the gyroscope.
-     * @param gyroAAF AAF filter configuration for the gyroscope.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result setGyroAAF(AAFConfig gyroAFF);
-
-    /** 
-     * @brief Sets the AAF filter for the accelerometer.
-     * @param accelAAF AAF filter configuration for the accelerometer.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result setAccelAAF(AAFConfig accelAAF);
-
-    /** 
-     * @brief Enables the data ready interrupt.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result enableDataReadyInterrupt();
-
-    /** 
-     * @brief Disables the data ready interrupt.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result disableDataReadyInterrupt();
-
-    /** 
-     * @brief Retrieves accelerometer, gyroscope, and temperature data.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result getAGT();
 
     /**
-     * @brief Retrieves accelerometer, gyroscope data.
-     * @param data int16_t struct of accel and gyro X, Y, Z-axis data, passed by reference.
-     * @return OK if successful, ERR otherwise.
+     * @brief      Constructor for SPI communication
+     *
+     * @param      bus    SPI bus handle
      */
-    Result getIMU(ImuData& data);
+    ICM42688(SpiHandle bus, uint32_t SPI_HS_CLK = 8000000);
 
     /**
-     * @brief Retrieves accelerometer, gyroscope data.
-     * @param AcX int16_t* pointer to accelerometer X-axis data.
-     * @param AcY int16_t* pointer to accelerometer Y-axis data.
-     * @param AcZ int16_t* pointer to accelerometer Z-axis data.
-     * @param GyX int16_t* pointer to gyroscope X-axis data.
-     * @param GyY int16_t* pointer to gyroscope Y-axis data.
-     * @param GyZ int16_t* pointer to gyroscope Z-axis data.
-     * @return OK if successful, ERR otherwise.
+     * @brief      Initialize the device.
+     *
+     * @return     ret < 0 if error
      */
-    Result getIMU6(int16_t* AcX, int16_t* AcY, int16_t* AcZ, int16_t* GyX, int16_t* GyY, int16_t* GyZ);
+    int begin();
 
+    /**
+     * @brief      Sets the full scale range for the accelerometer
+     *
+     * @param[in]  fssel  Full scale selection
+     *
+     * @return     ret < 0 if error
+     */
+    int setAccelFS(AccelFS fssel);
 
-  private:
-    SpiHandle spi_;
-    // SpiHandle::Config::BaudPrescaler baud_PS_HS;
-    // SpiHandle::Config::BaudPrescaler baud_PS_LS;
+    /**
+     * @brief      Sets the full scale range for the gyro
+     *
+     * @param[in]  fssel  Full scale selection
+     *
+     * @return     ret < 0 if error
+     */
+    int setGyroFS(GyroFS fssel);
 
-    uvs_gpio nss_pin_;
+    /**
+     * @brief      Set the ODR for accelerometer
+     *
+     * @param[in]  odr   Output data rate
+     *
+     * @return     ret < 0 if error
+     */
+    int setAccelODR(ODR odr);
+
+    /**
+     * @brief      Set the ODR for gyro
+     *
+     * @param[in]  odr   Output data rate
+     *
+     * @return     ret < 0 if error
+     */
+    int setGyroODR(ODR odr);
+
+    int setFilters(bool gyroFilters, bool accFilters);
+
+    /**
+     * @brief      Enables the data ready interrupt.
+     *
+     *             - routes UI data ready interrupt to INT1
+     *             - push-pull, pulsed, active HIGH interrupts
+     *
+     * @return     ret < 0 if error
+     */
+    int enableDataReadyInterrupt();
+
+    /**
+     * @brief      Masks the data ready interrupt
+     *
+     * @return     ret < 0 if error
+     */
+    int disableDataReadyInterrupt();
+
+    /**
+     * @brief      Transfers data from ICM 42688-p to microcontroller.
+     *             Must be called to access new measurements.
+     *
+     * @return     ret < 0 if error
+     */
+    int getAGT();
+
+    /** 
+     * @brief      Initializes software NSS (Slave Select) pin.
+     */
+    void initializeSoftNSSPin();
+
+    /**
+     * @brief      Get accelerometer data, per axis
+     *
+     * @return     Acceleration in g's
+     */
+    float accX() const { return _acc[0]; }
+    float accY() const { return _acc[1]; }
+    float accZ() const { return _acc[2]; }
+
+    /**
+     * @brief      Get gyro data, per axis
+     *
+     * @return     Angular velocity in dps
+     */
+    float gyrX() const { return _gyr[0]; }
+    float gyrY() const { return _gyr[1]; }
+    float gyrZ() const { return _gyr[2]; }
+
+    /**
+     * @brief      Get temperature of gyro die
+     *
+     * @return     Temperature in Celsius
+     */
+    float temp() const { return _t; }
+
+    int calibrateGyro();
+    float getGyroBiasX();
+    float getGyroBiasY();
+    float getGyroBiasZ();
+    void setGyroBiasX(float bias);
+    void setGyroBiasY(float bias);
+    void setGyroBiasZ(float bias);
+    int calibrateAccel();
+    float getAccelBiasX_mss();
+    float getAccelScaleFactorX();
+    float getAccelBiasY_mss();
+    float getAccelScaleFactorY();
+    float getAccelBiasZ_mss();
+    float getAccelScaleFactorZ();
+    void setAccelCalX(float bias,float scaleFactor);
+    void setAccelCalY(float bias,float scaleFactor);
+    void setAccelCalZ(float bias,float scaleFactor);
+  protected:
+
+    ///\brief SPI Communication
+    SpiHandle _spi;
+    uvs_gpio _csPin;
     bool nss_pin_is_SOFT;
+    bool _useSPI = true;
+    bool _useSPIHS = false;
+    static constexpr uint32_t SPI_LS_CLOCK = 1000000; // 1 MHz
+    uint32_t SPI_HS_CLOCK = 8000000; // 8 MHz
 
     // buffer for reading from sensor
     // 15 bytes is the max read size
@@ -196,8 +189,8 @@ class ICM42688
     // 6 bytes for X,Y,Z GYRO_DATA
     // 15 bytes total
     static constexpr uint8_t ICM42688_BUFFER_SIZE = 15;
-    uint8_t txBuffer_[ICM42688_BUFFER_SIZE] = {0};
-    uint8_t rxBuffer_[ICM42688_BUFFER_SIZE] = {0};
+    uint8_t _txBuffer[ICM42688_BUFFER_SIZE] = {0};
+    uint8_t _rxBuffer[ICM42688_BUFFER_SIZE] = {0};
 
     // data buffer
     float _t = 0.0f;
@@ -224,95 +217,81 @@ class ICM42688
     float _gyrB[3] = {};
 
     ///\brief Constants
-    static constexpr uint8_t WHO_AM_I = 0x47;      ///< expected value in UB0_REG_WHO_AM_I reg
+    static constexpr uint8_t WHO_AM_I = 0x47; ///< expected value in UB0_REG_WHO_AM_I reg
     static constexpr int NUM_CALIB_SAMPLES = 1000; ///< for gyro/accel bias calib
 
     ///\brief Conversion formula to get temperature in Celsius (Sec 4.13)
     static constexpr float TEMP_DATA_REG_SCALE = 132.48f;
     static constexpr float TEMP_OFFSET = 25.0f;
 
-    ///\brief Conversion formula to normalize sensor data to +/- 1.0
-    static constexpr float NORMALIZE_SENSOR_VAL = 32768.0f;
-
-    enum class PwrState
-    {
-        POWER_OFF,
-        POWER_ON,
-    };
-
-    // Possible gyro Anti-Alias Filter (AAF) cutoffs for ICM-42688P
-    AAFConfig aafLUT42688[AAF_CONFIG_COUNT] = {
-      // see table in section 5.3 ICM-42688-P datasheet v1.8
-      [AAF_CONFIG_258HZ]  = AAFConfig{ 6,   36, 10},
-      [AAF_CONFIG_536HZ]  = AAFConfig{12,  144,  8},
-      [AAF_CONFIG_997HZ]  = AAFConfig{21,  440,  6},
-      [AAF_CONFIG_1962HZ] = AAFConfig{37, 1376,  4},
-    };
-
     uint8_t _bank = 0; ///< current user bank
 
-    /** 
-     * @brief Writes the specified byte to the register at the specified address.
-     * @param addr Address of the register.
-     * @param data Byte to write.
-     * @return Result of the operation.
-     */
-    Result writeRegister(uint8_t addr, uint8_t data);
+    const uint8_t FIFO_EN = 0x23;
+    const uint8_t FIFO_TEMP_EN = 0x04;
+    const uint8_t FIFO_GYRO = 0x02;
+    const uint8_t FIFO_ACCEL = 0x01;
+    // const uint8_t FIFO_COUNT = 0x2E;
+    // const uint8_t FIFO_DATA = 0x30;
 
-    /** 
-     * @brief Writes the specified byte to the register using a mask to modify only certain bits.
-     * @param addr Address of the register.
-     * @param data Byte to write.
-     * @param mask Mask to apply.
-     * @return Result of the operation.
-     */
-    Result writeRegisterMask(uint8_t addr, uint8_t data, uint8_t mask);
+    // BANK 1
+    // const uint8_t GYRO_CONFIG_STATIC2 = 0x0B;
+    const uint8_t GYRO_NF_ENABLE = 0x00;
+    const uint8_t GYRO_NF_DISABLE = 0x01;
+    const uint8_t GYRO_AAF_ENABLE = 0x00;
+    const uint8_t GYRO_AAF_DISABLE = 0x02;
 
-    /** 
-     * @brief Reads count bytes into dest at the specified register address.
-     * @param addr Address of the register.
-     * @param count Number of bytes to read.
-     * @param dest Destination buffer.
-     * @return Result of the operation.
-     */
-    Result readRegisters(uint8_t addr, uint8_t count, uint8_t* dest);
+    // BANK 2
+    // const uint8_t ACCEL_CONFIG_STATIC2 = 0x03;
+    const uint8_t ACCEL_AAF_ENABLE = 0x00;
+    const uint8_t ACCEL_AAF_DISABLE = 0x01;
 
-    /** 
-     * @brief Read single byte into rxBuffer_ at the specified register address.
-     * @param addr Address of the register.
-     * @return The byte read.
-     */
-    uint8_t readRegister(uint8_t addr);
+    // private functions
+    int writeRegister(uint8_t subAddress, uint8_t data);
+    int readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest);
+    int setBank(uint8_t bank);
 
-    /** 
-     * @brief Sets the active register bank number.
-     * @param bank Bank number to set.
-     * @return Result of the operation.
-     */
-    Result setBank(uint8_t bank);
-
-    /** 
-     * @brief Performs a software reset of the device.
+    /**
+     * @brief      Software reset of the device
      */
     void reset();
 
-    /** 
-     * @brief Reads the WHO_AM_I register.
-     * @return Value of the WHO_AM_I register, -1 if error
+    /**
+     * @brief      Read the WHO_AM_I register
+     *
+     * @return     Value of WHO_AM_I register
      */
-    int16_t whoAmI();
+    uint8_t whoAmI();
+};
 
-    /** 
-     * @brief Turns power to accelerometer and gyroscope on or off.
-     * @param state Desired power state, POWER_ON or POWER_OFF.
-     * @return OK if successful, ERR otherwise.
-     */
-    Result SetGyroAccPwrState(PwrState state);
-
-    /** 
-     * @brief Initializes software NSS (Slave Select) pin.
-     */
-    void initializeSoftNSSPin();
+class ICM42688_FIFO: public ICM42688 {
+  public:
+    using ICM42688::ICM42688;
+    int enableFifo(bool accel,bool gyro,bool temp);
+    int readFifo();
+    void getFifoAccelX_mss(size_t *size,float* data);
+    void getFifoAccelY_mss(size_t *size,float* data);
+    void getFifoAccelZ_mss(size_t *size,float* data);
+    void getFifoGyroX(size_t *size,float* data);
+    void getFifoGyroY(size_t *size,float* data);
+    void getFifoGyroZ(size_t *size,float* data);
+    void getFifoTemperature_C(size_t *size,float* data);
+  protected:
+    // fifo
+    bool _enFifoAccel = false;
+    bool _enFifoGyro = false;
+    bool _enFifoTemp = false;
+    size_t _fifoSize = 0;
+    size_t _fifoFrameSize = 0;
+    float _axFifo[85] = {};
+    float _ayFifo[85] = {};
+    float _azFifo[85] = {};
+    size_t _aSize = 0;
+    float _gxFifo[85] = {};
+    float _gyFifo[85] = {};
+    float _gzFifo[85] = {};
+    size_t _gSize = 0;
+    float _tFifo[256] = {};
+    size_t _tSize = 0;
 };
 
 } // namespace uvos
