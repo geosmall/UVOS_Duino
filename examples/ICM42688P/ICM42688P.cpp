@@ -48,7 +48,7 @@ int main(void)
     // components before initialization.
     hw.Configure();
     hw.Init();
-    // hw.usb_handle.Init(UsbHandle::FS_INTERNAL);
+    hw.usb_handle.Init(UsbHandle::FS_INTERNAL);
 
     // Configure the ICM-42688P IMU SPI interface (match for Matek_H743 WLITE)
     spi_conf.periph = SpiHandle::Config::Peripheral::SPI_1;
