@@ -442,7 +442,7 @@ void ICM42688::initializeSoftNSSPin()
 {
     nss_pin_.pin = spi_.GetConfig().pin_config.nss;
     nss_pin_.mode = UVS_GPIO_MODE_OUTPUT_PP;
-    nss_pin_.pull = UVS_GPIO_NOPULL;
+    nss_pin_.pull = UVS_GPIO_PULLUP;
     uvs_gpio_init(&nss_pin_);
 }
 
