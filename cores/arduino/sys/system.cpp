@@ -4,6 +4,7 @@
 #include "uvos_core.h"
 #include "sys/system.h"
 #include "sys/dma.h"
+#include "sys/dwt.h"
 #include "per/gpio.h"
 
 // global init functions for peripheral drivers.
@@ -229,6 +230,11 @@ void System::Init(const System::Config& config)
         SCB_EnableDCache();
     if(config.use_icache)
         SCB_EnableICache();
+
+    /* Init DWT if present */
+#ifdef DWT_BASE
+    dwt_init();
+#endif
 
     // Configure and start highspeed timer.
     // TIM 2 counter UP (defaults to fastest tick/longest period).
