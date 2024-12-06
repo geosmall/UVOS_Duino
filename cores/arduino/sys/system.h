@@ -139,12 +139,13 @@ class System
      */
     static void Delay(uint32_t delay_ms);
 
-    /** Blocking Delay using internal timer to wait
-     ** \param delay_us Time to ddelay in microseconds */
+    /** Blocking Delay using DWT timer to wait
+     ** \param delay_us Time to delay in microseconds */
     static void DelayUs(uint32_t delay_us);
 
-
-    static void DelayNanos(int32_t ns);
+    /** Blocking Delay using DWT timer to wait
+     ** \param delay_ns Time to delay in nanoseconds */
+    static void DelayNs(int32_t delay_ns);
 
     /** Blocking Delay using internal timer to wait
      ** \param delay_ticks Time to ddelay in microseconds */

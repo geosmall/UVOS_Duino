@@ -379,7 +379,7 @@ inline void System::DelayUs(uint32_t delay_us)
     }
 }
 
-inline void System::DelayNanos(int32_t delay_ns)
+inline void System::DelayNs(int32_t delay_ns)
 {
     const uint32_t start = GetTicksDWT();
     const uint32_t ticks = (delay_ns * usTicks) / 1000;
