@@ -242,11 +242,6 @@ class System
      */
     uint32_t InitDWT();
 
-    /** Enables or disables access to the DWT unit via 0xC5ACCE55
-     **\param enable true to enable, false to disable
-     */
-    void AccessDWT(bool enable);
-
     /** \return the current tick count from the DWT unit */
     static inline uint32_t GetTicksDWT()
     {

@@ -271,13 +271,26 @@ uint32_t System::InitDWT()
         CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     }
 
-    /* Unlock */
-    AccessDWT(true);
+    /* Unlock DWT */
+    // https://stackoverflow.com/questions/38355831/measuring-clock-cycle-count-on-cortex-m7
+#if !defined DWT_LSR_Present_Msk
+#define DWT_LSR_Present_Msk ITM_LSR_Present_Msk
+#endif
+#if !defined DWT_LSR_Access_Msk
+#define DWT_LSR_Access_Msk ITM_LSR_Access_Msk
+#endif
+    if ((DWT->LSR & DWT_LSR_Present_Msk) != 0)
+    {
+        if ((DWT->LSR & DWT_LSR_Access_Msk) != 0)
+        { // locked
+            DWT->LAR = 0xC5ACCE55;
+        }
+    }
 
     /* Reset the clock cycle counter value */
     DWT->CYCCNT = 0;
 
-    /* Enable  clock cycle counter */
+    /* Enable clock cycle counter */
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     /* 3 NO OPERATION instructions */
@@ -287,36 +300,6 @@ uint32_t System::InitDWT()
 
     /* Check if clock cycle counter has started */
     return (DWT->CYCCNT) ? 0 : 1;
-}
-
-void System::AccessDWT(bool enable)
-{
-    // https://stackoverflow.com/questions/38355831/measuring-clock-cycle-count-on-cortex-m7
-#if !defined DWT_LSR_Present_Msk
-#define DWT_LSR_Present_Msk ITM_LSR_Present_Msk
-#endif
-#if !defined DWT_LSR_Access_Msk
-#define DWT_LSR_Access_Msk ITM_LSR_Access_Msk
-#endif
-    uint32_t lsr = DWT->LSR;
-
-    if ((lsr & DWT_LSR_Present_Msk) != 0)
-    {
-        if (enable)
-        {
-            if ((lsr & DWT_LSR_Access_Msk) != 0)
-            { // locked
-                DWT->LAR = 0xC5ACCE55;
-            }
-        }
-        else
-        {
-            if ((lsr & DWT_LSR_Access_Msk) == 0)
-            { // unlocked
-                DWT->LAR = 0;
-            }
-        }
-    }
 }
 
 void System::JumpToQspi()
@@ -369,7 +352,7 @@ void System::Delay(uint32_t delay_ms)
     HAL_Delay(delay_ms);
 }
 
-inline void System::DelayUs(uint32_t delay_us)
+void System::DelayUs(uint32_t delay_us)
 {
     uint32_t start  = GetTicksDWT();
     uint32_t ticks = delay_us * usTicks;
@@ -379,7 +362,7 @@ inline void System::DelayUs(uint32_t delay_us)
     }
 }
 
-inline void System::DelayNs(int32_t delay_ns)
+void System::DelayNs(int32_t delay_ns)
 {
     const uint32_t start = GetTicksDWT();
     const uint32_t ticks = (delay_ns * usTicks) / 1000;
@@ -389,7 +372,7 @@ inline void System::DelayNs(int32_t delay_ns)
     }
 }
 
-inline void System::DelayTicks(uint32_t ticks)
+void System::DelayTicks(uint32_t ticks)
 {
     if (ticks == 0) return;
     uint32_t start = GetTicksDWT();
