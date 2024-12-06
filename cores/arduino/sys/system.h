@@ -144,6 +144,8 @@ class System
     static void DelayUs(uint32_t delay_us);
 
 
+    static void DelayNanos(int32_t ns);
+
     /** Blocking Delay using internal timer to wait
      ** \param delay_ticks Time to ddelay in microseconds */
     static void DelayTicks(uint32_t delay_ticks);
@@ -232,6 +234,23 @@ class System
     void   ConfigureClocks();
     void   ConfigureMpu();
     Config cfg_;
+
+    /** Initializes the DWT (Data Watchpoint and Trace) unit.
+     ** This is used for cycle counting and other debugging features.
+     ** \return 0 on success, 1 on failure
+     */
+    uint32_t InitDWT();
+
+    /** Enables or disables access to the DWT unit via 0xC5ACCE55
+     **\param enable true to enable, false to disable
+     */
+    void AccessDWT(bool enable);
+
+    /** \return the current tick count from the DWT unit */
+    static inline uint32_t GetTicksDWT()
+    {
+        return (volatile uint32_t)(DWT->CYCCNT); 
+    }
 
     /** One TimerHandle to rule them all
      ** Maybe this whole class should be static.. */

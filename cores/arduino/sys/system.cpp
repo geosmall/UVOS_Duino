@@ -4,7 +4,6 @@
 #include "uvos_core.h"
 #include "sys/system.h"
 #include "sys/dma.h"
-#include "sys/dwt.h"
 #include "per/gpio.h"
 
 // global init functions for peripheral drivers.
@@ -79,6 +78,9 @@ __attribute__((always_inline)) static inline void __JUMPTOQSPI()
 }
 
 typedef void (*EntryPoint)(void);
+
+/** Static variable to hold DWT ticks per microsecond */
+static uint32_t usTicks = 0;
 
 // System Level C functions and IRQ Handlers
 extern "C"
@@ -231,10 +233,9 @@ void System::Init(const System::Config& config)
     if(config.use_icache)
         SCB_EnableICache();
 
-    /* Init DWT if present */
-#ifdef DWT_BASE
-    dwt_init();
-#endif
+    // Init DWT timer, precompute delay ticks
+    InitDWT();
+    usTicks = SystemCoreClock / 1'000'000;
 
     // Configure and start highspeed timer.
     // TIM 2 counter UP (defaults to fastest tick/longest period).
@@ -262,6 +263,62 @@ void System::DeInit()
     // HAL_DeInit();
 }
 
+uint32_t System::InitDWT()
+{
+    /* Enable use of DWT */
+    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk))
+    {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    }
+
+    /* Unlock */
+    AccessDWT(true);
+
+    /* Reset the clock cycle counter value */
+    DWT->CYCCNT = 0;
+
+    /* Enable  clock cycle counter */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+    /* 3 NO OPERATION instructions */
+    __asm volatile(" nop      \n\t"
+                   " nop      \n\t"
+                   " nop      \n\t");
+
+    /* Check if clock cycle counter has started */
+    return (DWT->CYCCNT) ? 0 : 1;
+}
+
+void System::AccessDWT(bool enable)
+{
+    // https://stackoverflow.com/questions/38355831/measuring-clock-cycle-count-on-cortex-m7
+#if !defined DWT_LSR_Present_Msk
+#define DWT_LSR_Present_Msk ITM_LSR_Present_Msk
+#endif
+#if !defined DWT_LSR_Access_Msk
+#define DWT_LSR_Access_Msk ITM_LSR_Access_Msk
+#endif
+    uint32_t lsr = DWT->LSR;
+
+    if ((lsr & DWT_LSR_Present_Msk) != 0)
+    {
+        if (enable)
+        {
+            if ((lsr & DWT_LSR_Access_Msk) != 0)
+            { // locked
+                DWT->LAR = 0xC5ACCE55;
+            }
+        }
+        else
+        {
+            if ((lsr & DWT_LSR_Access_Msk) == 0)
+            { // unlocked
+                DWT->LAR = 0;
+            }
+        }
+    }
+}
+
 void System::JumpToQspi()
 {
     __JUMPTOQSPI();
@@ -272,6 +329,8 @@ uint32_t System::GetTickHAL()
 {
     return HAL_GetTick();
 }
+
+#if 0 // gls
 
 uint32_t System::GetMs()
 {
@@ -301,6 +360,43 @@ void System::DelayUs(uint32_t delay_us)
 void System::DelayTicks(uint32_t delay_ticks)
 {
     tim_.DelayTick(delay_ticks);
+}
+
+#endif // gls
+
+void System::Delay(uint32_t delay_ms)
+{
+    HAL_Delay(delay_ms);
+}
+
+inline void System::DelayUs(uint32_t delay_us)
+{
+    uint32_t start  = GetTicksDWT();
+    uint32_t ticks = delay_us * usTicks;
+    while ((GetTicksDWT() - start) < ticks)
+    {
+        asm volatile("" ::: "memory"); // Compiler barrier
+    }
+}
+
+inline void System::DelayNanos(int32_t delay_ns)
+{
+    const uint32_t start = GetTicksDWT();
+    const uint32_t ticks = (delay_ns * usTicks) / 1000;
+    while (GetTicksDWT() - start <= ticks)
+    {
+        asm volatile("" ::: "memory"); // Compiler barrier
+    }
+}
+
+inline void System::DelayTicks(uint32_t ticks)
+{
+    if (ticks == 0) return;
+    uint32_t start = GetTicksDWT();
+    while ((GetTicksDWT() - start) < ticks)
+    {
+        asm volatile("" ::: "memory"); // Compiler barrier to prevent optimization
+    }
 }
 
 void System::ResetToBootloader(BootloaderMode mode)
