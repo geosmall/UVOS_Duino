@@ -19,6 +19,15 @@ int main(void)
     hardware.Configure();
     hardware.Init();
 
+    // Create a test pin object
+    GPIO my_pin;
+
+    // Create a test pin as my_test_pin
+    Pin my_test_pin = Pin(PORTA, 5);
+
+    // Initialize it as an OUTPUT
+    my_pin.Init(my_test_pin, GPIO::Mode::OUTPUT);
+
     // Loop forever
     for(;;)
     {
@@ -27,6 +36,9 @@ int main(void)
 
         // Toggle the LED state for the next time around.
         led_state = !led_state;
+
+        // Use Toggle to change test pin state
+        my_pin.Toggle();
 
         // Wait 500ms
         System::DelayUs(500'000);
