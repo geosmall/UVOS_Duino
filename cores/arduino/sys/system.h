@@ -143,13 +143,61 @@ class System
      ** \param delay_us Time to delay in microseconds */
     static void DelayUs(uint32_t delay_us);
 
+    /**
+     * @brief Common assembly loop for delaying based on cycle count.
+     *
+     * @param CYCCNT_PTR Pointer to the DWT->CYCCNT register.
+     * @param START_VAL  Starting cycle count.
+     * @param TARGET_CYC Desired number of cycles to wait.
+     */
+#define DWT_DELAY_LOOP(CYCCNT_PTR, START_VAL, TARGET_CYC) \
+    __asm__ volatile (                                \
+        "1:\n"                                        \
+        "ldr r1, [%[cyccnt_ptr]]\n"                   \
+        "subs r2, r1, %[start_val]\n"                 \
+        "cmp r2, %[target_cyc]\n"                     \
+        "blt 1b\n"                                    \
+        :                                             \
+        : [cyccnt_ptr] "r" (CYCCNT_PTR),              \
+          [start_val] "r" (START_VAL),                \
+          [target_cyc] "r" (TARGET_CYC)               \
+        : "r1", "r2", "cc"                            \
+    )
+
     /** Blocking Delay using DWT timer to wait
-     ** \param delay_ns Time to delay in nanoseconds */
-    static void DelayNs(int32_t delay_ns);
+     ** \param delay_ns Time to delay in nanoseconds
+     ** @param delay_ns Number of nanoseconds to delay
+     ** @param ns_to_cycles_factor Factor to convert nanoseconds to CPU cycles */
+    static inline void DelayNs(uint32_t delay_ns, uint32_t ns_to_cycles_factor)
+    {
+        if (delay_ns == 0)
+            return;
+
+        // Calculate the number of CPU cycles needed for the delay
+        uint32_t cycles = delay_ns * ns_to_cycles_factor;
+
+        // Ensure at least one cycle to prevent an infinite loop
+        if (cycles == 0) cycles = 1;
+
+        // Capture the starting cycle count
+        uint32_t start = DWT->CYCCNT;
+
+        // Use the common assembly DWT delay loop
+        DWT_DELAY_LOOP(&DWT->CYCCNT, start, cycles);
+    }
 
     /** Blocking Delay using internal timer to wait
      ** \param delay_ticks Time to ddelay in microseconds */
-    static void DelayTicks(uint32_t delay_ticks);
+    static inline void DelayTicks(uint32_t ticks)
+    {
+        if (ticks == 0) return;
+
+        // Capture the starting cycle count
+        uint32_t start = DWT->CYCCNT;
+
+        // Use the common assembly loop
+        DWT_DELAY_LOOP(&DWT->CYCCNT, start, ticks);
+    }
 
     /** Specify how the board should return to the bootloader
      * \param STM return to the STM32-provided

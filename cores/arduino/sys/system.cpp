@@ -362,26 +362,6 @@ void System::DelayUs(uint32_t delay_us)
     }
 }
 
-void System::DelayNs(int32_t delay_ns)
-{
-    const uint32_t start = GetTicksDWT();
-    const uint32_t ticks = (delay_ns * usTicks) / 1000;
-    while (GetTicksDWT() - start <= ticks)
-    {
-        asm volatile("" ::: "memory"); // Compiler barrier
-    }
-}
-
-void System::DelayTicks(uint32_t ticks)
-{
-    if (ticks == 0) return;
-    uint32_t start = GetTicksDWT();
-    while ((GetTicksDWT() - start) < ticks)
-    {
-        asm volatile("" ::: "memory"); // Compiler barrier to prevent optimization
-    }
-}
-
 void System::ResetToBootloader(BootloaderMode mode)
 {
     if(mode == BootloaderMode::STM)
