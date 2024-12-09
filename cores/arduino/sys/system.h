@@ -135,43 +135,50 @@ class System
     static uint32_t GetTick();
 
     /** Blocking Delay that uses the SysTick (1ms callback) to wait.
-     ** \param delay_ms Time to delay in ms
-     */
+     ** \param delay_ms Time to delay in ms */
     static void Delay(uint32_t delay_ms);
 
     /** Blocking Delay using DWT timer to wait
      ** \param delay_us Time to delay in microseconds */
     static void DelayUs(uint32_t delay_us);
 
-    /**
-     * @brief Common assembly loop for delaying based on cycle count.
-     *
-     * @param CYCCNT_PTR Pointer to the DWT->CYCCNT register.
-     * @param START_VAL  Starting cycle count.
-     * @param TARGET_CYC Desired number of cycles to wait.
-     */
-#define DWT_DELAY_LOOP(CYCCNT_PTR, START_VAL, TARGET_CYC) \
-    __asm__ volatile (                                \
-        "1:\n"                                        \
-        "ldr r1, [%[cyccnt_ptr]]\n"                   \
-        "subs r2, r1, %[start_val]\n"                 \
-        "cmp r2, %[target_cyc]\n"                     \
-        "blt 1b\n"                                    \
-        :                                             \
-        : [cyccnt_ptr] "r" (CYCCNT_PTR),              \
-          [start_val] "r" (START_VAL),                \
-          [target_cyc] "r" (TARGET_CYC)               \
-        : "r1", "r2", "cc"                            \
-    )
+    /** Calculates the number of CPU cycles per microsecond.
+     ** This function retrieves the current HCLK frequency and calculates
+     ** the number of cycles that occur in one microsecond.
+     ** @return uint32_t Number of cycles per microsecond. */
+    static uint32_t CyclesPerUs(void)
+    {
+        return SystemCoreClock / 1'000'000; 
+    }
+
+    /** Common assembly loop for delaying based on DWT cycle count.
+     ** @param cyccnt_ptr Pointer to the DWT->CYCCNT register.
+     ** @param start_val  Starting cycle count.
+     ** @param target_cyc Desired number of cycles to wait. */
+    static inline __attribute__((always_inline))
+    void DelayLoop(volatile uint32_t *cyccnt_ptr, uint32_t start_val, uint32_t target_cyc)
+    {
+        __asm__ volatile (
+            "1:\n"                                   // Label for loop start
+            "ldr r1, [%[cyccnt_ptr]]\n"              // Load current DWT->CYCCNT into r1
+            "subs r2, r1, %[start_val]\n"            // Subtract start_val from current CYCCNT
+            "cmp r2, %[target_cyc]\n"                // Compare elapsed cycles with desired cycles
+            "blt 1b\n"                               // If elapsed < desired, branch to label 1
+            :
+            : [cyccnt_ptr] "r" (cyccnt_ptr),         // Input: address of CYCCNT
+            [start_val] "r" (start_val),             // Input: start cycle count
+            [target_cyc] "r" (target_cyc)            // Input: desired cycle count
+            : "r1", "r2", "cc"                       // Clobbered registers
+        );
+    }
 
     /** Blocking Delay using DWT timer to wait
      ** \param delay_ns Time to delay in nanoseconds
      ** @param delay_ns Number of nanoseconds to delay
      ** @param ns_to_cycles_factor Factor to convert nanoseconds to CPU cycles */
-    static inline void DelayNs(uint32_t delay_ns, uint32_t ns_to_cycles_factor)
+    static inline __attribute__((always_inline)) void DelayNs(uint32_t delay_ns, uint32_t ns_to_cycles_factor)
     {
-        if (delay_ns == 0)
-            return;
+        if (delay_ns == 0) return;
 
         // Calculate the number of CPU cycles needed for the delay
         uint32_t cycles = delay_ns * ns_to_cycles_factor;
@@ -182,21 +189,22 @@ class System
         // Capture the starting cycle count
         uint32_t start = DWT->CYCCNT;
 
-        // Use the common assembly DWT delay loop
-        DWT_DELAY_LOOP(&DWT->CYCCNT, start, cycles);
+        // Use the common assembly loop
+        DelayLoop(&DWT->CYCCNT, start, cycles);
     }
 
     /** Blocking Delay using internal timer to wait
      ** \param delay_ticks Time to ddelay in microseconds */
-    static inline void DelayTicks(uint32_t ticks)
+    static inline __attribute__((always_inline)) void DelayTicks(uint32_t ticks)
     {
-        if (ticks == 0) return;
+        // Ensure at least one cycle to prevent an infinite loop
+        if (ticks == 0) ticks = 1;
 
         // Capture the starting cycle count
         uint32_t start = DWT->CYCCNT;
 
         // Use the common assembly loop
-        DWT_DELAY_LOOP(&DWT->CYCCNT, start, ticks);
+        DelayLoop(&DWT->CYCCNT, start, ticks);
     }
 
     /** Specify how the board should return to the bootloader

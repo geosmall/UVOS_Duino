@@ -6,6 +6,7 @@ using namespace uvos;
 
 // Declare a UVOSboard object called hardware
 UVOSboard hardware;
+UartHandler uart;
 
 int main(void)
 {
@@ -40,7 +41,16 @@ int main(void)
         // Use Toggle to change test pin state
         my_pin.Toggle();
 
+        // Precalculate CyclesPerUs
+        uint32_t cycles_per_us = System::CyclesPerUs();
+
+        // Print cycles_per_us to UART using snprintf to first build a formatted string
+        // and then print it to the UART.
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "Cycles per us: %lu\n", cycles_per_us);
+
         // Wait 500ms
-        System::DelayUs(500'000);
+        // System::DelayUs(500'000);
+        System::DelayNs(500, cycles_per_us);
     }
 }
