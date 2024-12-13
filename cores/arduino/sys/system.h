@@ -144,50 +144,60 @@ class System
 
     /** Convert nanoseconds to ticks (CPU cycles) from CMSIS SystemCoreClock
      ** @param ns Number of nanoseconds to convert.
-     ** @return uint32_t Number of cycles per microsecond. */
+     ** @return uint32_t Number of cycles for a given nsec delay. */
     static uint32_t NsToTicks(uint32_t ns)
     {
-        /* Using 64-bit intermediate to avoid overflow,
-           add . */
+        /** Using 64-bit intermediate to avoid overflow, adding
+         ** 999'999'999 and dividing by 1'000'000'000 rounds up. */
         uint64_t cycles = ((uint64_t)SystemCoreClock * ns + 999'999'999ULL) / 1'000'000'000ULL;
-
-        // Ensure at least one cycle:
-        if (cycles == 0) cycles = 1;
-
         return (uint32_t)cycles;
     }
 
-    /** Blocking Delay using internal timer to wait
-     ** \param ticks Number of DWT ticks to delay */
+    /** Blocking Delay using NOPs / DWT timer to wait
+     ** \param ticks Number of cpu ticks to delay */
     static inline __attribute__((always_inline))
-#if 0 // gls
-    void DelayTicks(uint32_t ticks)
+    void DelayTicks( uint32_t ticks )
     {
-        // Ensure at least one cycle to prevent an infinite loop
-        if (ticks == 0) return;
-        uint32_t start = DWT->CYCCNT;
-        // Busy-wait until DWT->CYCCNT - start >= ticks
-        while ((uint32_t)(DWT->CYCCNT - start) < ticks) {}
-    }
-#else
-    void DelayTicks(uint32_t ticks)
-    {
-        if (ticks == 0)
-        {
-            return;
-        }
-        else if (ticks <= 50)
-        {
-            for (uint32_t i = 0; i < ticks; i++)
-                __NOP();
-        }
-        else
-        {
+        if ( ticks <= 25 ) {
+            // Use a switch-case fallthrough to generate a linear sequence of NOPs.
+            // The compiler often creates a jump table or a minimal branch sequence here.
+            // Starting from the largest case ensures that if we request 25 ticks,
+            // we execute 25 NOPs, and if fewer ticks are requested, we jump into
+            // the middle of the chain.
+            switch ( ticks ) {
+            case 25: __NOP();
+            case 24: __NOP();
+            case 23: __NOP();
+            case 22: __NOP();
+            case 21: __NOP();
+            case 20: __NOP();
+            case 19: __NOP();
+            case 18: __NOP();
+            case 17: __NOP();
+            case 16: __NOP();
+            case 15: __NOP();
+            case 14: __NOP();
+            case 13: __NOP();
+            case 12: __NOP();
+            case 11: __NOP();
+            case 10: __NOP();
+            case 9: __NOP();
+            case 8: __NOP();
+            case 7: __NOP();
+            case 6: __NOP();
+            case 5: __NOP();
+            case 4: __NOP();
+            case 3: __NOP();
+            case 2: __NOP();
+            case 1: __NOP();
+            default:
+                break;
+            }
+        } else {
             uint32_t start = DWT->CYCCNT;
-            while ((DWT->CYCCNT - start) < ticks) { }
+            while ( ( DWT->CYCCNT - start ) < ticks ) { }
         }
     }
-#endif
 
     /** Specify how the board should return to the bootloader
      * \param STM return to the STM32-provided
