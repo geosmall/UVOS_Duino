@@ -1,4 +1,5 @@
 #include "uvos_brd.h"
+#include "stm32h7xx_ll_gpio.h"
 
 // Use the uvos namespace to prevent having to type
 // uvos:: before all libuvos functions
@@ -6,51 +7,33 @@ using namespace uvos;
 
 // Declare a UVOSboard object called hardware
 UVOSboard hardware;
-UartHandler uart;
 
 int main(void)
 {
-    // Declare a variable to store the state we want to set for the LED.
-    bool led_state;
-    led_state = true;
-
     // Configure and Initialize the UVOS board
     // These are separate to allow reconfiguration of any of the internal
     // components before initialization.
     hardware.Configure();
     hardware.Init();
 
-    // Create a test pin object
-    GPIO my_pin;
+    // Create a test pin object, init as an output
+    uvs_gpio test_pin;
+    test_pin.pin.port = UVS_GPIOA;
+    test_pin.pin.pin  = 5;
+    test_pin.mode     = UVS_GPIO_MODE_OUTPUT_PP;
+    uvs_gpio_init(&test_pin);
+    uvs_gpio_write(&test_pin, 0);
 
-    // Create a test pin as my_test_pin
-    Pin my_test_pin = Pin(PORTA, 5);
-
-    // Initialize it as an OUTPUT
-    my_pin.Init(my_test_pin, GPIO::Mode::OUTPUT);
+    // Precalculate NsToTicks
+    uint32_t ticks = System::NsToTicks(500);
 
     // Loop forever
     for(;;)
     {
-        // Set the onboard LED
-        hardware.SetLed(led_state);
+        // LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_5);
+        WRITE_REG(GPIOA->ODR, READ_REG(GPIOA->ODR) ^ LL_GPIO_PIN_5);
 
-        // Toggle the LED state for the next time around.
-        led_state = !led_state;
-
-        // Use Toggle to change test pin state
-        my_pin.Toggle();
-
-        // Precalculate CyclesPerUs
-        uint32_t cycles_per_us = System::CyclesPerUs();
-
-        // Print cycles_per_us to UART using snprintf to first build a formatted string
-        // and then print it to the UART.
-        char buffer[64];
-        snprintf(buffer, sizeof(buffer), "Cycles per us: %lu\n", cycles_per_us);
-
-        // Wait 500ms
-        // System::DelayUs(500'000);
-        System::DelayNs(500, cycles_per_us);
+        // Wait (ticks) DWT ticks
+        System::DelayTicks(ticks);
     }
 }

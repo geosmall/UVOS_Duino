@@ -142,70 +142,52 @@ class System
      ** \param delay_us Time to delay in microseconds */
     static void DelayUs(uint32_t delay_us);
 
-    /** Calculates the number of CPU cycles per microsecond.
-     ** This function retrieves the current HCLK frequency and calculates
-     ** the number of cycles that occur in one microsecond.
+    /** Convert nanoseconds to ticks (CPU cycles) from CMSIS SystemCoreClock
+     ** @param ns Number of nanoseconds to convert.
      ** @return uint32_t Number of cycles per microsecond. */
-    static uint32_t CyclesPerUs(void)
+    static uint32_t NsToTicks(uint32_t ns)
     {
-        return SystemCoreClock / 1'000'000; 
-    }
+        /* Using 64-bit intermediate to avoid overflow,
+           add . */
+        uint64_t cycles = ((uint64_t)SystemCoreClock * ns + 999'999'999ULL) / 1'000'000'000ULL;
 
-    /** Common assembly loop for delaying based on DWT cycle count.
-     ** @param cyccnt_ptr Pointer to the DWT->CYCCNT register.
-     ** @param start_val  Starting cycle count.
-     ** @param target_cyc Desired number of cycles to wait. */
-    static inline __attribute__((always_inline))
-    void DelayLoop(volatile uint32_t *cyccnt_ptr, uint32_t start_val, uint32_t target_cyc)
-    {
-        __asm__ volatile (
-            "1:\n"                                   // Label for loop start
-            "ldr r1, [%[cyccnt_ptr]]\n"              // Load current DWT->CYCCNT into r1
-            "subs r2, r1, %[start_val]\n"            // Subtract start_val from current CYCCNT
-            "cmp r2, %[target_cyc]\n"                // Compare elapsed cycles with desired cycles
-            "blt 1b\n"                               // If elapsed < desired, branch to label 1
-            :
-            : [cyccnt_ptr] "r" (cyccnt_ptr),         // Input: address of CYCCNT
-            [start_val] "r" (start_val),             // Input: start cycle count
-            [target_cyc] "r" (target_cyc)            // Input: desired cycle count
-            : "r1", "r2", "cc"                       // Clobbered registers
-        );
-    }
-
-    /** Blocking Delay using DWT timer to wait
-     ** \param delay_ns Time to delay in nanoseconds
-     ** @param delay_ns Number of nanoseconds to delay
-     ** @param ns_to_cycles_factor Factor to convert nanoseconds to CPU cycles */
-    static inline __attribute__((always_inline)) void DelayNs(uint32_t delay_ns, uint32_t ns_to_cycles_factor)
-    {
-        if (delay_ns == 0) return;
-
-        // Calculate the number of CPU cycles needed for the delay
-        uint32_t cycles = delay_ns * ns_to_cycles_factor;
-
-        // Ensure at least one cycle to prevent an infinite loop
+        // Ensure at least one cycle:
         if (cycles == 0) cycles = 1;
 
-        // Capture the starting cycle count
-        uint32_t start = DWT->CYCCNT;
-
-        // Use the common assembly loop
-        DelayLoop(&DWT->CYCCNT, start, cycles);
+        return (uint32_t)cycles;
     }
 
     /** Blocking Delay using internal timer to wait
-     ** \param delay_ticks Time to ddelay in microseconds */
-    static inline __attribute__((always_inline)) void DelayTicks(uint32_t ticks)
+     ** \param ticks Number of DWT ticks to delay */
+    static inline __attribute__((always_inline))
+#if 0 // gls
+    void DelayTicks(uint32_t ticks)
     {
         // Ensure at least one cycle to prevent an infinite loop
-        if (ticks == 0) ticks = 1;
-
-        // Capture the starting cycle count
+        if (ticks == 0) return;
         uint32_t start = DWT->CYCCNT;
-
-        // Use the common assembly loop
-        DelayLoop(&DWT->CYCCNT, start, ticks);
+        // Busy-wait until DWT->CYCCNT - start >= ticks
+        while ((uint32_t)(DWT->CYCCNT - start) < ticks) {}
     }
+#else
+    void DelayTicks(uint32_t ticks)
+    {
+        if (ticks == 0)
+        {
+            return;
+        }
+        else if (ticks <= 50)
+        {
+            for (uint32_t i = 0; i < ticks; i++)
+                __NOP();
+        }
+        else
+        {
+            uint32_t start = DWT->CYCCNT;
+            while ((DWT->CYCCNT - start) < ticks) { }
+        }
+    }
+#endif
 
     /** Specify how the board should return to the bootloader
      * \param STM return to the STM32-provided

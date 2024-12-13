@@ -696,20 +696,22 @@ pin_alt pins_none = {{UVS_GPIOX, 0}, 255};
 //valid pins per periph, and the alt they're on
 pin_alt usart1_pins_tx[] = {{{UVS_GPIOB, 6}, GPIO_AF7_USART1},
                             {{UVS_GPIOB, 14}, GPIO_AF4_USART1},
-                            pins_none};
+                            {{UVS_GPIOA, 9}, GPIO_AF7_USART1}};
 pin_alt usart1_pins_rx[] = {{{UVS_GPIOB, 7}, GPIO_AF7_USART1},
                             {{UVS_GPIOB, 15}, GPIO_AF4_USART1},
-                            pins_none};
+                            {{UVS_GPIOA, 10}, GPIO_AF7_USART1}};
 
 pin_alt usart2_pins_tx[]
     = {{{UVS_GPIOA, 2}, GPIO_AF7_USART2}, pins_none, pins_none};
 pin_alt usart2_pins_rx[]
     = {{{UVS_GPIOA, 3}, GPIO_AF7_USART2}, pins_none, pins_none};
 
-pin_alt usart3_pins_tx[]
-    = {{{UVS_GPIOC, 10}, GPIO_AF7_USART3}, pins_none, pins_none};
-pin_alt usart3_pins_rx[]
-    = {{{UVS_GPIOC, 11}, GPIO_AF7_USART3}, pins_none, pins_none};
+pin_alt usart3_pins_tx[] = {{{UVS_GPIOC, 10}, GPIO_AF7_USART3},
+                            {{UVS_GPIOD, 8}, GPIO_AF7_USART3},
+                            pins_none};
+pin_alt usart3_pins_rx[] = {{{UVS_GPIOC, 11}, GPIO_AF7_USART3},
+                            {{UVS_GPIOD, 9}, GPIO_AF7_USART3},
+                            pins_none};
 
 pin_alt uart4_pins_tx[] = {{{UVS_GPIOB, 9}, GPIO_AF8_UART4},
                            {{UVS_GPIOC, 10}, GPIO_AF8_UART4},
