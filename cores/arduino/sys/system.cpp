@@ -79,9 +79,6 @@ __attribute__((always_inline)) static inline void __JUMPTOQSPI()
 
 typedef void (*EntryPoint)(void);
 
-/** Static variable to hold DWT ticks per microsecond */
-static uint32_t usTicks = 0;
-
 // System Level C functions and IRQ Handlers
 extern "C"
 {
@@ -90,6 +87,21 @@ extern "C"
         HAL_IncTick();
         HAL_SYSTICK_IRQHandler();
     }
+
+/** Static variable to hold DWT ticks per microsecond */
+static uint32_t usTicks;
+
+static inline uint32_t ticks(void) 
+{
+    return DWT->CYCCNT;
+}
+
+void delayNanos(int32_t ns)
+{
+    const uint32_t startTicks = DWT->CYCCNT;
+    const uint32_t ticksToWait = (ns * usTicks) / 1000;
+    while (DWT->CYCCNT - startTicks <= ticksToWait);
+}
 
     /** USB IRQ Handlers since they are shared resources for multiple classes */
     extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
