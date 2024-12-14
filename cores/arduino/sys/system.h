@@ -155,8 +155,8 @@ class System
 
     /** Blocking Delay using NOPs / DWT timer to wait
      ** \param ticks Number of cpu ticks to delay */
-    static inline __attribute__((always_inline))
-    void DelayTicks( uint32_t ticks )
+    // static inline __attribute__((always_inline)) void DelayTicks( uint32_t ticks )
+    static void DelayTicks( uint32_t ticks )
     {
         if ( ticks <= 25 ) {
             // Use a switch-case fallthrough to generate a linear sequence of NOPs.
