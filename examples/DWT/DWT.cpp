@@ -3,7 +3,9 @@
 #include "stm32h7xx_ll_gpio.h"
 #include "stm32h7xx_ll_bus.h"
 
-// #define USE_HAL
+// #define USE_INAV_DELAY
+// #define USE_HAL /* Uncomment to use ST HAL gpio vs LL/CMSIS
+
 #define TEST_RCC_GPIO_CLOCK_ENABLE() __HAL_RCC_GPIOA_CLK_ENABLE()
 #define TEST_GPIO_PORT GPIOA
 #define TEST_GPIO_PIN GPIO_PIN_5
@@ -63,20 +65,28 @@ int main(void)
 #else
         // LL_GPIO_SetOutputPin(TEST_GPIO_PORT, TEST_LL_GPIO_PIN);
         WRITE_REG(TEST_GPIO_PORT->BSRR, TEST_LL_GPIO_PIN);
-#endif
+#endif /* USE_HAL */
+
         // Wait (ticks) DWT ticks
+#if defined(USE_INAV_DELAY)
+        delayNanos(DELAY_NS);
+#else
         System::DelayTicks(ticks);
-        // delayNanos(DELAY_NS);
+#endif /* USE_INAV_DELAY */
 
 #if defined(USE_HAL)
         HAL_GPIO_WritePin(TEST_GPIO_PORT, TEST_GPIO_PIN, GPIO_PIN_RESET);
 #else
         // LL_GPIO_ResetOutputPin(TEST_GPIO_PORT, TEST_LL_GPIO_PIN);
         WRITE_REG(TEST_GPIO_PORT->BSRR, TEST_LL_GPIO_PIN << 16U);
-#endif
+#endif /* USE_HAL */
+
         // Wait (ticks) DWT ticks
+#if defined(USE_INAV_DELAY)
+        delayNanos(DELAY_NS);
+#else
         System::DelayTicks(ticks);
-        // delayNanos(DELAY_NS);
+#endif /* USE_INAV_DELAY */
 
     }
 }
