@@ -71,7 +71,8 @@ int main(void)
 #if defined(USE_INAV_DELAY)
         delayNanos(DELAY_NS);
 #else
-        System::DelayTicks(ticks);
+        // System::DelayTicks(ticks);
+        DELAY_TICKS(12);
 #endif /* USE_INAV_DELAY */
 
 #if defined(USE_HAL)
@@ -85,7 +86,8 @@ int main(void)
 #if defined(USE_INAV_DELAY)
         delayNanos(DELAY_NS);
 #else
-        System::DelayTicks(ticks);
+        // System::DelayTicks(ticks);
+        DELAY_TICKS(12);
 #endif /* USE_INAV_DELAY */
 
     }

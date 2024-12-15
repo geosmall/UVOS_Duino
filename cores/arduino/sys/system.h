@@ -6,6 +6,49 @@
 #include <cstdint>
 #include "per/tim.h"
 
+#define DELAY_TICKS(t)                                              \
+    do {                                                            \
+        if (__builtin_constant_p(t)) {                              \
+            /* t is known at compile time */                        \
+            if ((t) <= 20) {                                        \
+                /* Direct NOP-based delay */                        \
+                switch (t) {                                        \
+                    case 20: __NOP();                               \
+                    case 19: __NOP();                               \
+                    case 18: __NOP();                               \
+                    case 17: __NOP();                               \
+                    case 16: __NOP();                               \
+                    case 15: __NOP();                               \
+                    case 14: __NOP();                               \
+                    case 13: __NOP();                               \
+                    case 12: __NOP();                               \
+                    case 11: __NOP();                               \
+                    case 10: __NOP();                               \
+                    case 9: __NOP();                                \
+                    case 8: __NOP();                                \
+                    case 7: __NOP();                                \
+                    case 6: __NOP();                                \
+                    case 5: __NOP();                                \
+                    case 4: __NOP();                                \
+                    case 3: __NOP();                                \
+                    case 2: __NOP();                                \
+                    case 1: __NOP();                                \
+                    default: break;                                 \
+                }                                                   \
+            } else {                                                \
+                /* Larger known constant - use DWT-based delay */   \
+                const uint32_t __ticks = (t);                       \
+                const uint32_t __start = DWT->CYCCNT;               \
+                while ((DWT->CYCCNT - __start) < __ticks) {}        \
+            }                                                       \
+        } else {                                                    \
+            /* t not known at compile time; use DWT-based delay */  \
+            uint32_t __ticks = (t);                                 \
+            uint32_t __start = DWT->CYCCNT;                         \
+            while ((DWT->CYCCNT - __start) < __ticks) {}            \
+        }                                                           \
+    } while (0)
+
 namespace uvos
 {
 /** A handle for interacting with the Core System.
@@ -142,6 +185,10 @@ class System
      ** \param delay_us Time to delay in microseconds */
     static void DelayUs(uint32_t delay_us);
 
+    /** Blocking Delay using DWT timer to wait
+     ** \param delay_ns Time to delay in nanoseconds */
+    static void DelayNs(uint32_t delay_ns);
+
     /** Convert nanoseconds to ticks (CPU cycles) from CMSIS SystemCoreClock
      ** @param ns Number of nanoseconds to convert.
      ** @return uint32_t Number of cycles for a given nsec delay. */
@@ -155,48 +202,10 @@ class System
 
     /** Blocking Delay using NOPs / DWT timer to wait
      ** \param ticks Number of cpu ticks to delay */
-    // static inline __attribute__((always_inline)) void DelayTicks( uint32_t ticks )
-    static void DelayTicks( uint32_t ticks )
+    static inline __attribute__((always_inline)) void DelayTicks(uint32_t ticks)
     {
-        if ( ticks <= 25 ) {
-            // Use a switch-case fallthrough to generate a linear sequence of NOPs.
-            // The compiler often creates a jump table or a minimal branch sequence here.
-            // Starting from the largest case ensures that if we request 25 ticks,
-            // we execute 25 NOPs, and if fewer ticks are requested, we jump into
-            // the middle of the chain.
-            switch ( ticks ) {
-            case 25: __NOP();
-            case 24: __NOP();
-            case 23: __NOP();
-            case 22: __NOP();
-            case 21: __NOP();
-            case 20: __NOP();
-            case 19: __NOP();
-            case 18: __NOP();
-            case 17: __NOP();
-            case 16: __NOP();
-            case 15: __NOP();
-            case 14: __NOP();
-            case 13: __NOP();
-            case 12: __NOP();
-            case 11: __NOP();
-            case 10: __NOP();
-            case 9: __NOP();
-            case 8: __NOP();
-            case 7: __NOP();
-            case 6: __NOP();
-            case 5: __NOP();
-            case 4: __NOP();
-            case 3: __NOP();
-            case 2: __NOP();
-            case 1: __NOP();
-            default:
-                break;
-            }
-        } else {
-            uint32_t start = DWT->CYCCNT;
-            while ( ( DWT->CYCCNT - start ) < ticks ) { }
-        }
+        uint32_t start = DWT->CYCCNT;
+        while ( ( DWT->CYCCNT - start ) < ticks ) { }
     }
 
     /** Specify how the board should return to the bootloader
@@ -293,7 +302,7 @@ class System
     /** \return the current tick count from the DWT unit */
     static inline uint32_t GetTicksDWT()
     {
-        return (volatile uint32_t)(DWT->CYCCNT); 
+        return DWT->CYCCNT;
     }
 
     /** One TimerHandle to rule them all
