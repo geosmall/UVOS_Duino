@@ -40,6 +40,7 @@ int main(void)
 
   GPIO_InitStruct.Pin = TEST_GPIO_PIN;
   HAL_GPIO_Init(TEST_GPIO_PORT, &GPIO_InitStruct);
+  HAL_GPIO_WritePin(TEST_GPIO_PORT, TEST_GPIO_PIN, GPIO_PIN_RESET);
 #else
     /* Configure IO in output push-pull mode to drive external LED1 */
     LL_GPIO_SetPinMode(TEST_GPIO_PORT, TEST_LL_GPIO_PIN, LL_GPIO_MODE_OUTPUT);
@@ -49,9 +50,10 @@ int main(void)
     LL_GPIO_SetPinSpeed(TEST_GPIO_PORT, TEST_LL_GPIO_PIN, LL_GPIO_SPEED_FREQ_VERY_HIGH);
     /* Reset value is LL_GPIO_PULL_NO */
     LL_GPIO_SetPinPull(TEST_GPIO_PORT, TEST_LL_GPIO_PIN, LL_GPIO_PULL_UP);
+    LL_GPIO_ResetOutputPin(TEST_GPIO_PORT, TEST_LL_GPIO_PIN);
 #endif
 
-#define DELAY_NS 16
+#define DELAY_NS 80
 
     // Precalculate NsToTicks
     uint32_t ticks __attribute__((unused)) = System::NsToTicks(DELAY_NS);
@@ -72,7 +74,7 @@ int main(void)
         delayNanos(DELAY_NS);
 #else
         // System::DelayTicks(ticks);
-        DELAY_TICKS(12);
+        DELAY_TICKS(18);
 #endif /* USE_INAV_DELAY */
 
 #if defined(USE_HAL)
@@ -87,7 +89,7 @@ int main(void)
         delayNanos(DELAY_NS);
 #else
         // System::DelayTicks(ticks);
-        DELAY_TICKS(12);
+        DELAY_TICKS(18);
 #endif /* USE_INAV_DELAY */
 
     }
