@@ -79,9 +79,6 @@ __attribute__((always_inline)) static inline void __JUMPTOQSPI()
 
 typedef void (*EntryPoint)(void);
 
-/** Static variable to hold DWT ticks per microsecond */
-static uint32_t usTicks = 0;
-
 // System Level C functions and IRQ Handlers
 extern "C"
 {
@@ -90,6 +87,9 @@ extern "C"
         HAL_IncTick();
         HAL_SYSTICK_IRQHandler();
     }
+
+    /** Static variable to hold DWT ticks per microsecond */
+    static uint32_t usTicks;
 
     /** USB IRQ Handlers since they are shared resources for multiple classes */
     extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
@@ -313,23 +313,6 @@ uint32_t System::GetTickHAL()
     return HAL_GetTick();
 }
 
-#if 0 // gls
-
-uint32_t System::GetMs()
-{
-    return tim_.GetMs();
-}
-
-uint32_t System::GetUs()
-{
-    return tim_.GetUs();
-}
-
-uint32_t System::GetTick()
-{
-    return tim_.GetTick();
-}
-
 void System::Delay(uint32_t delay_ms)
 {
     HAL_Delay(delay_ms);
@@ -337,49 +320,16 @@ void System::Delay(uint32_t delay_ms)
 
 void System::DelayUs(uint32_t delay_us)
 {
-    tim_.DelayUs(delay_us);
+    const uint32_t start  = GetTicksDWT();
+    const uint32_t ticks = delay_us * usTicks;
+    while ((GetTicksDWT() - start) < ticks) { }
 }
 
-void System::DelayTicks(uint32_t delay_ticks)
+void System::DelayNs(uint32_t delay_ns)
 {
-    tim_.DelayTick(delay_ticks);
-}
-
-#endif // gls
-
-void System::Delay(uint32_t delay_ms)
-{
-    HAL_Delay(delay_ms);
-}
-
-void System::DelayUs(uint32_t delay_us)
-{
-    uint32_t start  = GetTicksDWT();
-    uint32_t ticks = delay_us * usTicks;
-    while ((GetTicksDWT() - start) < ticks)
-    {
-        asm volatile("" ::: "memory"); // Compiler barrier
-    }
-}
-
-void System::DelayNs(int32_t delay_ns)
-{
-    const uint32_t start = GetTicksDWT();
+    const uint32_t start  = DWT->CYCCNT;
     const uint32_t ticks = (delay_ns * usTicks) / 1000;
-    while (GetTicksDWT() - start <= ticks)
-    {
-        asm volatile("" ::: "memory"); // Compiler barrier
-    }
-}
-
-void System::DelayTicks(uint32_t ticks)
-{
-    if (ticks == 0) return;
-    uint32_t start = GetTicksDWT();
-    while ((GetTicksDWT() - start) < ticks)
-    {
-        asm volatile("" ::: "memory"); // Compiler barrier to prevent optimization
-    }
+    while ((DWT->CYCCNT - start) < ticks) { }
 }
 
 void System::ResetToBootloader(BootloaderMode mode)

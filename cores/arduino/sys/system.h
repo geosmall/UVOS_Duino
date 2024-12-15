@@ -6,6 +6,49 @@
 #include <cstdint>
 #include "per/tim.h"
 
+#define DELAY_TICKS(t)                                              \
+    do {                                                            \
+        if (__builtin_constant_p(t)) {                              \
+            /* t is known at compile time */                        \
+            if ((t) <= 20) {                                        \
+                /* Direct NOP-based delay */                        \
+                switch (t) {                                        \
+                    case 20: __NOP();                               \
+                    case 19: __NOP();                               \
+                    case 18: __NOP();                               \
+                    case 17: __NOP();                               \
+                    case 16: __NOP();                               \
+                    case 15: __NOP();                               \
+                    case 14: __NOP();                               \
+                    case 13: __NOP();                               \
+                    case 12: __NOP();                               \
+                    case 11: __NOP();                               \
+                    case 10: __NOP();                               \
+                    case 9: __NOP();                                \
+                    case 8: __NOP();                                \
+                    case 7: __NOP();                                \
+                    case 6: __NOP();                                \
+                    case 5: __NOP();                                \
+                    case 4: __NOP();                                \
+                    case 3: __NOP();                                \
+                    case 2: __NOP();                                \
+                    case 1: __NOP();                                \
+                    default: break;                                 \
+                }                                                   \
+            } else {                                                \
+                /* Larger known constant - use DWT-based delay */   \
+                const uint32_t __ticks = (t);                       \
+                const uint32_t __start = DWT->CYCCNT;               \
+                while ((DWT->CYCCNT - __start) < __ticks) {}        \
+            }                                                       \
+        } else {                                                    \
+            /* t not known at compile time; use DWT-based delay */  \
+            uint32_t __ticks = (t);                                 \
+            uint32_t __start = DWT->CYCCNT;                         \
+            while ((DWT->CYCCNT - __start) < __ticks) {}            \
+        }                                                           \
+    } while (0)
+
 namespace uvos
 {
 /** A handle for interacting with the Core System.
@@ -135,8 +178,7 @@ class System
     static uint32_t GetTick();
 
     /** Blocking Delay that uses the SysTick (1ms callback) to wait.
-     ** \param delay_ms Time to delay in ms
-     */
+     ** \param delay_ms Time to delay in ms */
     static void Delay(uint32_t delay_ms);
 
     /** Blocking Delay using DWT timer to wait
@@ -145,11 +187,26 @@ class System
 
     /** Blocking Delay using DWT timer to wait
      ** \param delay_ns Time to delay in nanoseconds */
-    static void DelayNs(int32_t delay_ns);
+    static void DelayNs(uint32_t delay_ns);
 
-    /** Blocking Delay using internal timer to wait
-     ** \param delay_ticks Time to ddelay in microseconds */
-    static void DelayTicks(uint32_t delay_ticks);
+    /** Convert nanoseconds to ticks (CPU cycles) from CMSIS SystemCoreClock
+     ** @param ns Number of nanoseconds to convert.
+     ** @return uint32_t Number of cycles for a given nsec delay. */
+    static uint32_t NsToTicks(uint32_t ns)
+    {
+        /** Using 64-bit intermediate to avoid overflow, adding
+         ** 999'999'999 and dividing by 1'000'000'000 rounds up. */
+        uint64_t cycles = ((uint64_t)SystemCoreClock * ns + 999'999'999ULL) / 1'000'000'000ULL;
+        return (uint32_t)cycles;
+    }
+
+    /** Blocking Delay using NOPs / DWT timer to wait
+     ** \param ticks Number of cpu ticks to delay */
+    static inline __attribute__((always_inline)) void DelayTicks(uint32_t ticks)
+    {
+        uint32_t start = DWT->CYCCNT;
+        while ( ( DWT->CYCCNT - start ) < ticks ) { }
+    }
 
     /** Specify how the board should return to the bootloader
      * \param STM return to the STM32-provided
@@ -245,7 +302,7 @@ class System
     /** \return the current tick count from the DWT unit */
     static inline uint32_t GetTicksDWT()
     {
-        return (volatile uint32_t)(DWT->CYCCNT); 
+        return DWT->CYCCNT;
     }
 
     /** One TimerHandle to rule them all
