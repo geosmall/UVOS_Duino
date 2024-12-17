@@ -89,7 +89,8 @@ extern "C"
     }
 
     /** Static variable to hold DWT ticks per microsecond */
-    static uint32_t usTicks;
+    // static uint32_t usTicks;
+    uint32_t usTicks;
 
     /** USB IRQ Handlers since they are shared resources for multiple classes */
     extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
@@ -224,8 +225,8 @@ void System::Init(const System::Config& config)
     }
     uvs_dma_init();
     // uvs_i2c_global_init();
-    // uvs_spi_global_init();
-    // uvs_uart_global_init();
+    uvs_spi_global_init();
+    uvs_uart_global_init();
 
     // Initialize Caches
     if(config.use_dcache)

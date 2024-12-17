@@ -2,6 +2,8 @@
 #include "uvos_brd.h"
 #include <cstring>
 
+#include "per/util/spi_util.h"
+
 static void Error_Handler()
 {
     asm("bkpt 255");
@@ -105,6 +107,12 @@ int main(void)
     // components before initialization.
     hw.Configure();
     hw.Init();
+
+    uint8_t tx_buf[8] = {0xDE};
+    uint8_t rx_buf[8];
+    uint32_t delay_us = spi_compute_disable_delay_us(SPI1);
+    // int32_t spi_transfer(SPI_TypeDef* spi_inst, const uint8_t *tx_buffer, uint8_t *rx_buffer, uint16_t len)
+    spi_transfer(SPI1, tx_buf, rx_buf, 8, delay_us);
 
     // Configure the ICM-42688P IMU SPI interface (match for Matek_H743 WLITE)
     spi_conf.periph = SpiHandle::Config::Peripheral::SPI_1;

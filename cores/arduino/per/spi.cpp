@@ -306,7 +306,7 @@ SpiHandle::Result SpiHandle::Impl::GetBaudHz(const Config::Peripheral periph,
     // Check that HAL SPI peripheral instance is valid
     if (!(IS_SPI_ALL_INSTANCE(instance))) return SpiHandle::Result::ERR;
 
-    uint32_t spi_freq = getClkFreqInst(instance);
+    uint32_t spi_freq = spi_get_clk_freq_inst(instance);
 
     // clang-format off
     if (speed >= (spi_freq / SPI_SPEED_CLOCK_DIV2_MHZ)) {
