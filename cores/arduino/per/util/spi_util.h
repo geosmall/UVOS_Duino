@@ -1,6 +1,8 @@
 #pragma once
 
 #include "stm32h7xx.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 ///@brief specifies the SPI speed bus in HZ.
 #define SPI_SPEED_CLOCK_DEFAULT 4000000
@@ -27,8 +29,6 @@ extern "C" {
 
 uint32_t spi_get_clk_freq_inst(SPI_TypeDef *spi_inst);
 uint32_t spi_compute_disable_delay_us(SPI_TypeDef *spi_inst);
-int32_t spi_transfer(SPI_TypeDef *spi_inst, const uint8_t *tx_buffer,
-                     uint8_t *rx_buffer, uint16_t len, uint32_t delay_us);
 
 // Add C++ guard
 #ifdef __cplusplus

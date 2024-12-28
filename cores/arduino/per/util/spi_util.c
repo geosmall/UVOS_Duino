@@ -2,13 +2,14 @@
 
 #include "stm32h7xx_ll_spi.h"
 
+static uint32_t disable_delay = 1;
+
 extern uint32_t usTicks;
 
 static inline uint32_t spi_dwt_get_cycles(void) { return (DWT->CYCCNT); };
 
 /* Private Functions */
-static inline void spi_delay_micros(uint32_t)
-    __attribute__((always_inline, unused));
+static inline void spi_delay_micros(uint32_t) __attribute__((always_inline, unused));
 static inline void spi_delay_micros(uint32_t delay_us) {
   const uint32_t start = spi_dwt_get_cycles();
   const uint32_t ticks = (delay_us * usTicks);
@@ -179,62 +180,4 @@ uint32_t spi_compute_disable_delay_us(SPI_TypeDef *spi_inst) {
 
   // Return the computed delay in microseconds.
   return disable_delay;
-}
-
-/**
- * @brief This function is implemented by user to send/receive data over
- *         SPI interface
- * @param  obj : pointer to spi_t structure
- * @param  tx_buffer : tx data to send before reception
- * @param  rx_buffer : rx data to receive if not numm
- * @param  len : length in byte of the data to send and receive
- * @retval status of the send operation (0) in case of error
- */
-int32_t spi_transfer(SPI_TypeDef *spi_inst, const uint8_t *tx_buffer,
-                     uint8_t *rx_buffer, uint16_t len, uint32_t delay_us) {
-  spi_status_e ret = SPI_OK;
-  uint32_t tickstart, size = len;
-  SPI_TypeDef *_SPI = spi_inst;
-  uint8_t *tx_buf = (uint8_t *)tx_buffer;
-
-  if (len == 0) return SPI_ERROR;
-
-  /* Start transfer */
-  LL_SPI_SetTransferSize(_SPI, size);
-  LL_SPI_Enable(_SPI);
-  LL_SPI_StartMasterTransfer(_SPI);
-
-  tickstart = HAL_GetTick();
-
-  while (size--) {
-    while (!LL_SPI_IsActiveFlag_TXP(_SPI))
-      ;
-    LL_SPI_TransmitData8(_SPI, tx_buf ? *tx_buf++ : 0XFF);
-
-    while (!LL_SPI_IsActiveFlag_RXP(_SPI))
-      ;
-    if (rx_buffer) {
-      *rx_buffer++ = LL_SPI_ReceiveData8(_SPI);
-    } else {
-      LL_SPI_ReceiveData8(_SPI);
-    }
-    if ((HAL_GetTick() - tickstart) >= SPI_TRANSFER_TIMEOUT) {
-      ret = SPI_TIMEOUT;
-      break;
-    }
-  }
-
-  // Add a delay before disabling SPI otherwise last-bit/last-clock may be
-  // truncated See https://github.com/stm32duino/Arduino_Core_STM32/issues/1294
-  // Computed delay is half SPI clock
-  spi_delay_micros(delay_us);
-
-  /* Close transfer */
-  /* Clear flags */
-  LL_SPI_ClearFlag_EOT(_SPI);
-  LL_SPI_ClearFlag_TXTF(_SPI);
-  /* Disable SPI peripheral */
-  LL_SPI_Disable(_SPI);
-
-  return ret;
 }
