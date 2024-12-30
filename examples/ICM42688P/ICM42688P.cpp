@@ -135,6 +135,9 @@ int main(void)
     hw.Configure();
     hw.Init();
 
+    // Give ICM-42688P some time to stabilize
+    System::Delay(5);
+
     // Configure the ICM-42688P IMU SPI interface (match for Matek_H743 WLITE)
     spi_conf.periph = SpiHandle::Config::Peripheral::SPI_1;
     spi_conf.mode = SpiHandle::Config::Mode::MASTER;
