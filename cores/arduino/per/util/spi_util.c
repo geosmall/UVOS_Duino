@@ -2,21 +2,6 @@
 
 #include "stm32h7xx_ll_spi.h"
 
-static uint32_t disable_delay = 1;
-
-extern uint32_t usTicks;
-
-static inline uint32_t spi_dwt_get_cycles(void) { return (DWT->CYCCNT); };
-
-/* Private Functions */
-static inline void spi_delay_micros(uint32_t) __attribute__((always_inline, unused));
-static inline void spi_delay_micros(uint32_t delay_us) {
-  const uint32_t start = spi_dwt_get_cycles();
-  const uint32_t ticks = (delay_us * usTicks);
-  while (spi_dwt_get_cycles() - start <= ticks)
-    ;
-}
-
 /**
  * @brief  return clock freq of an SPI instance
  * @param  spi_inst : SPI instance
