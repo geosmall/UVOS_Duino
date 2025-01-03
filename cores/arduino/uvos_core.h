@@ -55,7 +55,7 @@ cache enabled.
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
 /** Size of an array (num items.) */
-#define SIZEOF_ARRAY(x) (sizeof(x) / sizeof((x)[0]))
+#define ARRAYLEN(x) (sizeof(x) / sizeof((x)[0]))
 
 /** shorthand macro for simplifying the reading of the left 
  *  channel of a non-interleaved output buffer named out */
