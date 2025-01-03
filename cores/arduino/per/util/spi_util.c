@@ -116,7 +116,7 @@ uint32_t spi_get_clk_freq_inst(SPI_TypeDef *spi_inst) {
  * @brief  Compute H7 delay to use before disabling SPI, calculated
  *         using the SPI instance clock and configured prescaler bits
  *         See https://github.com/stm32duino/Arduino_Core_STM32/issues/1294
- *         Computed delay is half SPI clock
+ *         Computed delay is a single SPI clock period
  * @param  spi_inst : SPI instance
  * @retval Disable delay in microsecondes
  */
@@ -156,12 +156,11 @@ uint32_t spi_compute_disable_delay_us(SPI_TypeDef *spi_inst) {
    * microseconds).
    * - Divide by the SPI clock frequency (`spi_freq`) to get the SPI clock
    * period in microseconds.
-   * - Divide by 2 to calculate half the clock period.
    * - Add 1 to ensure rounding up (the delay must always be at least 1
    * microsecond). Note: All calculations use integer math, so results are
    * truncated (not rounded).
    */
-  disable_delay = (((prescaler * 1000000UL) / spi_freq) / 2) + 1;
+  disable_delay = ((prescaler * 1000000UL) / spi_freq) + 1;
 
   // Return the computed delay in microseconds.
   return disable_delay;
