@@ -1,8 +1,10 @@
 #include "icm_util.h"
 #include "stm32h7xx_ll_spi.h"
 
-#define ICM42605_RA_PWR_MGMT0                       0x4E
+#define ICM42605_RA_DEVICE_CONFIG                   0x11 
+#define ICM42605_DEVICE_CONFIG_SOFT_RESET           (1 << 0)
 
+#define ICM42605_RA_PWR_MGMT0                       0x4E
 #define ICM42605_PWR_MGMT0_ACCEL_MODE_LN            (3 << 0)
 #define ICM42605_PWR_MGMT0_GYRO_MODE_LN             (3 << 2)
 #define ICM42605_PWR_MGMT0_TEMP_DISABLE_OFF         (0 << 5)
@@ -122,8 +124,8 @@ static const gyroFilterAndRateConfig_t icm42605GyroConfigs[] = {
     { GYRO_LPF_256HZ,   1000,   { 1,    6  } }, /* 250 Hz LPF */
     { GYRO_LPF_256HZ,    500,   { 0,    15 } }, /* 250 Hz LPF */
 
-    { GYRO_LPF_188HZ,   1000,   { 3,   6  } },  /* 125 HZ */
-    { GYRO_LPF_188HZ,    500,   { 1,   15 } },  /* 125 HZ */
+    { GYRO_LPF_188HZ,   1000,   { 3,    6  } },  /* 125 HZ */
+    { GYRO_LPF_188HZ,    500,   { 1,    15 } },  /* 125 HZ */
 
     { GYRO_LPF_98HZ,    1000,   { 4,    6  } }, /* 100 HZ*/
     { GYRO_LPF_98HZ,     500,   { 2,    15 } }, /* 100 HZ*/
@@ -232,25 +234,6 @@ void busSetSpeed(const busDevice_t* dev, busSpeed_e speed)
 
 }
 
-bool spiBusWriteRegister(const busDevice_t* dev, uint8_t reg, uint8_t data)
-{
-    SpiHandle::Config cfg = dev->spi.spiBus.GetConfig();
-    SPI_TypeDef* instance = SpiHandle::PeripheralToHAL(cfg.periph);
-
-    if (!(dev->flags & DEVFLAGS_USE_MANUAL_DEVICE_SELECT)) {
-        spiBusSelectDevice(dev);
-    }
-
-    spiTransferByte(instance, reg);
-    spiTransferByte(instance, data);
-
-    if (!(dev->flags & DEVFLAGS_USE_MANUAL_DEVICE_SELECT)) {
-        spiBusDeselectDevice(dev);
-    }
-
-    return true;
-}
-
 bool spiBusReadRegister(const busDevice_t* dev, uint8_t reg, uint8_t* data)
 {
     SpiHandle::Config cfg = dev->spi.spiBus.GetConfig();
@@ -270,13 +253,23 @@ bool spiBusReadRegister(const busDevice_t* dev, uint8_t reg, uint8_t* data)
     return true;
 }
 
-bool busWrite(const busDevice_t* dev, uint8_t reg, uint8_t data)
+bool spiBusWriteRegister(const busDevice_t* dev, uint8_t reg, uint8_t data)
 {
-    if (dev->flags & DEVFLAGS_USE_RAW_REGISTERS) {
-        return spiBusWriteRegister(dev, reg, data);
-    } else {
-        return spiBusWriteRegister(dev, reg & 0x7F, data);
+    SpiHandle::Config cfg = dev->spi.spiBus.GetConfig();
+    SPI_TypeDef* instance = SpiHandle::PeripheralToHAL(cfg.periph);
+
+    if (!(dev->flags & DEVFLAGS_USE_MANUAL_DEVICE_SELECT)) {
+        spiBusSelectDevice(dev);
     }
+
+    spiTransferByte(instance, reg);
+    spiTransferByte(instance, data);
+
+    if (!(dev->flags & DEVFLAGS_USE_MANUAL_DEVICE_SELECT)) {
+        spiBusDeselectDevice(dev);
+    }
+
+    return true;
 }
 
 bool busRead(const busDevice_t* dev, uint8_t reg, uint8_t* data)
@@ -288,9 +281,43 @@ bool busRead(const busDevice_t* dev, uint8_t reg, uint8_t* data)
     }
 }
 
-static void setUserBank(const busDevice_t *dev, const uint8_t user_bank)
+bool busWrite(const busDevice_t* dev, uint8_t reg, uint8_t data)
 {
-    busWrite(dev, ICM426XX_RA_REG_BANK_SEL, user_bank & 7);
+    if (dev->flags & DEVFLAGS_USE_RAW_REGISTERS) {
+        return spiBusWriteRegister(dev, reg, data);
+    } else {
+        return spiBusWriteRegister(dev, reg & 0x7F, data);
+    }
+}
+
+bool busWriteVerify(const busDevice_t* dev, uint8_t reg, uint8_t data)
+{
+    uint8_t regRead;
+    busRead(dev, reg, &regRead);
+
+    busWrite(dev, reg, data);
+
+    System::Delay(10);
+
+    busRead(dev, reg, &regRead);
+    if (regRead != data) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool setUserBank(const busDevice_t *dev, const uint8_t user_bank)
+{
+    return busWriteVerify(dev, ICM426XX_RA_REG_BANK_SEL, user_bank & 7);
+}
+
+static void icm42605DeviceReset(const busDevice_t *dev)
+{
+    busWrite(dev, ICM42605_RA_DEVICE_CONFIG, 0x01);
+
+    // wait for ICM42688 to come back up
+    System::Delay(1);
 }
 
 bool icm42605DeviceDetect(const busDevice_t* dev)
@@ -407,57 +434,76 @@ static const aafConfig_t* getGyroAafConfig(bool is42688, const uint16_t desiredL
     return candidate;
 }
 
-void icm42605AccAndGyroInit(gyroDev_t *gyro)
+// INav style Init()
+void icm42605AccAndGyroInit(gyroDev_t* gyro)
 {
+    bool ret = false;
+
     busDevice_t* dev = gyro->busDev;
-    const gyroFilterAndRateConfig_t * config = chooseGyroConfig(gyro->lpf, 1000000 / gyro->requestedSampleIntervalUs,
-                                                                &icm42605GyroConfigs[0], ARRAYLEN(icm42605GyroConfigs));
+    const gyroFilterAndRateConfig_t* config = chooseGyroConfig(gyro->lpf, 1000000 / gyro->requestedSampleIntervalUs,
+                                                               &icm42605GyroConfigs[0], ARRAYLEN(icm42605GyroConfigs));
     gyro->sampleRateIntervalUs = 1000000 / config->gyroRateHz;
 
     busSetSpeed(dev, BUS_SPEED_INITIALIZATION);
 
     setUserBank(dev, ICM426XX_BANK_SELECT0);
-    busWrite(dev, ICM42605_RA_PWR_MGMT0, ICM42605_PWR_MGMT0_TEMP_DISABLE_OFF | ICM42605_PWR_MGMT0_ACCEL_MODE_LN | ICM42605_PWR_MGMT0_GYRO_MODE_LN);
+
+    icm42605DeviceReset(dev);
+
+    ret = busWriteVerify(dev, ICM42605_RA_PWR_MGMT0, ICM42605_PWR_MGMT0_TEMP_DISABLE_OFF | ICM42605_PWR_MGMT0_ACCEL_MODE_LN | ICM42605_PWR_MGMT0_GYRO_MODE_LN);
+    if (!ret) return;
     System::Delay(15);
 
     /* ODR and dynamic range */
-    busWrite(dev, ICM42605_RA_GYRO_CONFIG0, (0x00) << 5 | (config->gyroConfigValues[1] & 0x0F));    /* 2000 deg/s */
+    ret = busWriteVerify(dev, ICM42605_RA_GYRO_CONFIG0, (0x00) << 5 | (config->gyroConfigValues[1] & 0x0F));    /* 2000 deg/s */
+    if (!ret) return;
     System::Delay(15);
 
-    busWrite(dev, ICM42605_RA_ACCEL_CONFIG0, (0x00) << 5 | (config->gyroConfigValues[1] & 0x0F));    /* 16 G deg/s */
+    ret = busWriteVerify(dev, ICM42605_RA_ACCEL_CONFIG0, (0x00) << 5 | (config->gyroConfigValues[1] & 0x0F));    /* 16 G deg/s */
+    if (!ret) return;
     System::Delay(15);
 
     /* LPF bandwidth */
     // low latency, same as BF
-    busWrite(dev, ICM42605_RA_GYRO_ACCEL_CONFIG0, ICM42605_ACCEL_UI_FILT_BW_LOW_LATENCY | ICM42605_GYRO_UI_FILT_BW_LOW_LATENCY);
+    ret = busWriteVerify(dev, ICM42605_RA_GYRO_ACCEL_CONFIG0, ICM42605_ACCEL_UI_FILT_BW_LOW_LATENCY | ICM42605_GYRO_UI_FILT_BW_LOW_LATENCY);
+    if (!ret) return;
     System::Delay(15);
 
     if (gyro->lpf != GYRO_LPF_NONE) {
         // Configure gyro Anti-Alias Filter (see section 5.3 "ANTI-ALIAS FILTER")
-        const aafConfig_t *aafConfig = getGyroAafConfig(is42688P, gyro->lpf);
-    
+        const aafConfig_t* aafConfig = getGyroAafConfig(is42688P, gyro->lpf);
+
         setUserBank(dev, ICM426XX_BANK_SELECT1);
-        busWrite(dev, ICM426XX_RA_GYRO_CONFIG_STATIC3, aafConfig->delt);
-        busWrite(dev, ICM426XX_RA_GYRO_CONFIG_STATIC4, aafConfig->deltSqr & 0xFF);
-        busWrite(dev, ICM426XX_RA_GYRO_CONFIG_STATIC5, (aafConfig->deltSqr >> 8) | (aafConfig->bitshift << 4));
+        ret = busWriteVerify(dev, ICM426XX_RA_GYRO_CONFIG_STATIC3, aafConfig->delt);
+        if (!ret) return;
+        ret = busWriteVerify(dev, ICM426XX_RA_GYRO_CONFIG_STATIC4, aafConfig->deltSqr & 0xFF);
+        if (!ret) return;
+        ret = busWriteVerify(dev, ICM426XX_RA_GYRO_CONFIG_STATIC5, (aafConfig->deltSqr >> 8) | (aafConfig->bitshift << 4));
+        if (!ret) return;
 
         aafConfig = getGyroAafConfig(is42688P, 256);  // This was hard coded on BF
         setUserBank(dev, ICM426XX_BANK_SELECT2);
-        busWrite(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC2, aafConfig->delt << 1);
-        busWrite(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC3, aafConfig->deltSqr & 0xFF);
-        busWrite(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC4, (aafConfig->deltSqr >> 8) | (aafConfig->bitshift << 4));
+        ret = busWriteVerify(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC2, aafConfig->delt << 1);
+        if (!ret) return;
+        ret = busWriteVerify(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC3, aafConfig->deltSqr & 0xFF);
+        if (!ret) return;
+        ret = busWriteVerify(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC4, (aafConfig->deltSqr >> 8) | (aafConfig->bitshift << 4));
+        if (!ret) return;
     }
 
     setUserBank(dev, ICM426XX_BANK_SELECT0);
-    busWrite(dev, ICM42605_RA_INT_CONFIG, ICM42605_INT1_MODE_PULSED | ICM42605_INT1_DRIVE_CIRCUIT_PP | ICM42605_INT1_POLARITY_ACTIVE_HIGH);
+    ret = busWriteVerify(dev, ICM42605_RA_INT_CONFIG, ICM42605_INT1_MODE_PULSED | ICM42605_INT1_DRIVE_CIRCUIT_PP | ICM42605_INT1_POLARITY_ACTIVE_HIGH);
+    if (!ret) return;
     System::Delay(15);
 
-    busWrite(dev, ICM42605_RA_INT_CONFIG0, ICM42605_UI_DRDY_INT_CLEAR_ON_SBR);
+    ret = busWriteVerify(dev, ICM42605_RA_INT_CONFIG0, ICM42605_UI_DRDY_INT_CLEAR_ON_SBR);
+    if (!ret) return;
     System::Delay(100);
 
     uint8_t intConfig1Value;
 
-    busWrite(dev, ICM42605_RA_INT_SOURCE0, ICM42605_UI_DRDY_INT1_EN_ENABLED);
+    ret = busWriteVerify(dev, ICM42605_RA_INT_SOURCE0, ICM42605_UI_DRDY_INT1_EN_ENABLED);
+    if (!ret) return;
 
     // Datasheet says: "User should change setting to 0 from default setting of 1, for proper INT1 and INT2 pin operation"
     busRead(dev, ICM42605_RA_INT_CONFIG1, &intConfig1Value);
@@ -465,7 +511,8 @@ void icm42605AccAndGyroInit(gyroDev_t *gyro)
     intConfig1Value &= ~(1 << ICM42605_INT_ASYNC_RESET_BIT);
     intConfig1Value |= (ICM42605_INT_TPULSE_DURATION_8 | ICM42605_INT_TDEASSERT_DISABLED);
 
-    busWrite(dev, ICM42605_RA_INT_CONFIG1, intConfig1Value);
+    ret = busWriteVerify(dev, ICM42605_RA_INT_CONFIG1, intConfig1Value);
+    if (!ret) return;
     System::Delay(15);
 
     //Disable AFSR as in BF and Ardupilot
@@ -473,7 +520,8 @@ void icm42605AccAndGyroInit(gyroDev_t *gyro)
     busRead(dev, ICM42605_INTF_CONFIG1, &intfConfig1Value);
     intfConfig1Value &= ~ICM42605_INTF_CONFIG1_AFSR_MASK;
     intfConfig1Value |= ICM42605_INTF_CONFIG1_AFSR_DISABLE;
-    busWrite(dev, ICM42605_INTF_CONFIG1, intfConfig1Value);
+    ret = busWriteVerify(dev, ICM42605_INTF_CONFIG1, intfConfig1Value);
+    if (!ret) return;
 
     System::Delay(15);
 
