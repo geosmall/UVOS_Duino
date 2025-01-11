@@ -253,6 +253,27 @@ bool spiBusReadRegister(const busDevice_t* dev, uint8_t reg, uint8_t* data)
     return true;
 }
 
+bool spiBusReadRegisters(const busDevice_t* dev, uint8_t addr, uint8_t count, uint8_t* data)
+{
+    SpiHandle::Config cfg = dev->spi.spiBus.GetConfig();
+    SPI_TypeDef* instance = SpiHandle::PeripheralToHAL(cfg.periph);
+
+    if (!(dev->flags & DEVFLAGS_USE_MANUAL_DEVICE_SELECT)) {
+        spiBusSelectDevice(dev);
+    }
+
+    spiTransferByte(instance, (addr | 0x80));
+    for (uint8_t i = 0; i < count; i++) {
+        spiTransfer(instance, &data[i], NULL, 1);
+    }
+
+    if (!(dev->flags & DEVFLAGS_USE_MANUAL_DEVICE_SELECT)) {
+        spiBusDeselectDevice(dev);
+    }
+
+    return true;
+}
+
 bool spiBusWriteRegister(const busDevice_t* dev, uint8_t reg, uint8_t data)
 {
     SpiHandle::Config cfg = dev->spi.spiBus.GetConfig();
@@ -279,6 +300,11 @@ bool busRead(const busDevice_t* dev, uint8_t reg, uint8_t* data)
     } else {
         return spiBusReadRegister(dev, reg | 0x80, data);
     }
+}
+
+bool busReadRegisters(const busDevice_t* dev, uint8_t addr, uint8_t count, uint8_t* data)
+{
+    return spiBusReadRegisters(dev, addr, count, data);
 }
 
 bool busWrite(const busDevice_t* dev, uint8_t reg, uint8_t data)
@@ -432,6 +458,324 @@ static const aafConfig_t* getGyroAafConfig(bool is42688, const uint16_t desiredL
     //             candidate->delt, candidate->deltSqr, candidate->bitshift);
 
     return candidate;
+}
+
+// User Bank 0
+static constexpr uint8_t UB0_REG_PWR_MGMT0            = 0x4E;
+static constexpr uint8_t UB0_REG_GYRO_CONFIG0         = 0x4F;
+static constexpr uint8_t UB0_REG_ACCEL_CONFIG0        = 0x50;
+static constexpr uint8_t UB0_REG_GYRO_CONFIG1         = 0x51;
+static constexpr uint8_t UB0_REG_GYRO_ACCEL_CONFIG0   = 0x52;
+
+static constexpr uint8_t UB0_REG_TEMP_DATA1           = 0x1D;
+
+// User Bank 1
+static constexpr uint8_t UB1_REG_GYRO_CONFIG_STATIC2  = 0x0B;
+// User Bank 2
+static constexpr uint8_t UB2_REG_ACCEL_CONFIG_STATIC2 = 0x03;
+
+enum GyroFS : uint8_t {
+    dps2000   = 0x00,
+    dps1000   = 0x01,
+    dps500    = 0x02,
+    dps250    = 0x03,
+    dps125    = 0x04,
+    dps62_5   = 0x05,
+    dps31_25  = 0x06,
+    dps15_625 = 0x07
+};
+
+enum AccelFS : uint8_t {
+    gpm16 = 0x00,
+    gpm8  = 0x01,
+    gpm4  = 0x02,
+    gpm2  = 0x03
+};
+
+// buffer for reading from sensor
+uint8_t _buffer[15] = {};
+
+// data buffer
+float _t      = 0.0f;
+float _acc[3] = {};
+float _gyr[3] = {};
+
+int16_t _rawT      = 0;
+int16_t _rawAcc[3] = {};
+int16_t _rawGyr[3] = {};
+
+///\brief Raw Gyro and Accelerometer Bias
+int32_t _rawAccBias[3] = {0, 0, 0};
+int32_t _rawGyrBias[3] = {0, 0, 0};
+
+///\brief Raw Gyro and Accelerometer Offsets
+int16_t _AccOffset[3] = {0, 0, 0};
+int16_t _GyrOffset[3] = {0, 0, 0};
+
+///\brief Full scale resolution factors
+float _accelScale = 0.0f;
+float _gyroScale  = 0.0f;
+
+///\brief Full scale selections
+AccelFS _accelFS = gpm16;
+GyroFS  _gyroFS  = dps2000;
+
+///\brief Accel calibration
+float _accBD[3]  = {};
+float _accB[3]   = {};
+float _accS[3]   = {1.0f, 1.0f, 1.0f};
+float _accMax[3] = {};
+float _accMin[3] = {};
+
+///\brief Gyro calibration
+float _gyroBD[3] = {};
+float _gyrB[3]   = {};
+
+///\brief Constants
+static constexpr int     NUM_CALIB_SAMPLES = 1000;  ///< for gyro/accel bias calib
+
+///\brief Conversion formula to get temperature in Celsius (Sec 4.13)
+static constexpr float TEMP_DATA_REG_SCALE = 132.48f;
+static constexpr float TEMP_OFFSET         = 25.0f;
+
+// BANK 1
+// const uint8_t GYRO_CONFIG_STATIC2 = 0x0B;
+const uint8_t GYRO_NF_ENABLE = 0x00;
+const uint8_t GYRO_NF_DISABLE = 0x01;
+const uint8_t GYRO_AAF_ENABLE = 0x00;
+const uint8_t GYRO_AAF_DISABLE = 0x02;
+
+// BANK 2
+// const uint8_t ACCEL_CONFIG_STATIC2 = 0x03;
+const uint8_t ACCEL_AAF_ENABLE = 0x00;
+const uint8_t ACCEL_AAF_DISABLE = 0x01;
+
+float accX() { return _acc[0]; }
+float accY() { return _acc[1]; }
+float accZ() { return _acc[2]; }
+
+float gyrX() { return _gyr[0]; }
+float gyrY() { return _gyr[1]; }
+float gyrZ() { return _gyr[2]; }
+
+float temp() { return _t; }
+
+/* sets the accelerometer full scale range to values other than default */
+bool setAccelFS(const busDevice_t *dev, AccelFS fssel)
+{
+    // setBank(0);
+    setUserBank(dev, ICM426XX_BANK_SELECT0);
+
+    // read current register value
+    uint8_t reg;
+    // if (readRegisters(UB0_REG_ACCEL_CONFIG0, 1, &reg) < 0) {
+    //     return -1;
+    // }
+    busRead(dev, UB0_REG_ACCEL_CONFIG0, &reg);
+
+    // only change FS_SEL in reg
+    reg = (fssel << 5) | (reg & 0x1F);
+
+    // if (writeRegister(UB0_REG_ACCEL_CONFIG0, reg) < 0) {
+    //     return -2;
+    // }
+    if (busWriteVerify(dev, UB0_REG_ACCEL_CONFIG0, reg) != true) {
+        return false;
+    }
+
+    _accelScale = static_cast<float>(1 << (4 - fssel)) / 32768.0f;
+    _accelFS    = fssel;
+
+    return true;
+}
+
+/* sets the gyro full scale range to values other than default */
+bool setGyroFS(const busDevice_t *dev, GyroFS fssel)
+{
+    // setBank(0);
+    setUserBank(dev, ICM426XX_BANK_SELECT0);
+
+    // read current register value
+    uint8_t reg;
+    // if (readRegisters(UB0_REG_GYRO_CONFIG0, 1, &reg) < 0) {
+    //     return -1;
+    // }
+    busRead(dev, UB0_REG_GYRO_CONFIG0, &reg);
+
+    // only change FS_SEL in reg
+    reg = (fssel << 5) | (reg & 0x1F);
+
+    // if (writeRegister(UB0_REG_GYRO_CONFIG0, reg) < 0) {
+    //     return -2;
+    // }
+    if (busWriteVerify(dev, UB0_REG_GYRO_CONFIG0, reg) != true) {
+        return false;
+    }
+
+    _gyroScale = (2000.0f / static_cast<float>(1 << fssel)) / 32768.0f;
+    _gyroFS    = fssel;
+
+    return true;
+}
+
+bool setFilters(const busDevice_t *dev, bool gyroFilters, bool accFilters)
+{
+    // if (setBank(1) < 0) {
+    //     return -1;
+    // }
+    setUserBank(dev, ICM426XX_BANK_SELECT1);
+
+    if (gyroFilters == true) {
+        if (busWriteVerify(dev, UB1_REG_GYRO_CONFIG_STATIC2, GYRO_NF_ENABLE | GYRO_AAF_ENABLE) != true) {
+            return false;
+        }
+    } else {
+        if (busWriteVerify(dev, UB1_REG_GYRO_CONFIG_STATIC2, GYRO_NF_DISABLE | GYRO_AAF_DISABLE) != true) {
+            return false;
+        }
+    }
+
+    // if (setBank(2) < 0) {
+    //     return -4;
+    // }
+    setUserBank(dev, ICM426XX_BANK_SELECT2);
+
+    if (accFilters == true) {
+        if (busWriteVerify(dev, UB2_REG_ACCEL_CONFIG_STATIC2, ACCEL_AAF_ENABLE) != true) {
+            return false;
+        }
+    } else {
+        if (busWriteVerify(dev, UB2_REG_ACCEL_CONFIG_STATIC2, ACCEL_AAF_DISABLE) != true) {
+            return false;
+        }
+    }
+    // if (setBank(0) < 0) {
+    //     return -7;
+    // }
+    setUserBank(dev, ICM426XX_BANK_SELECT0);
+
+    return true;
+}
+
+/* reads the most current data from ICM42688 and stores in buffer */
+int getRawAGT(const busDevice_t *dev)
+{
+    // _useSPIHS = true;          // use the high speed SPI for data readout
+
+    // grab the data from the ICM42688
+    if (busReadRegisters(dev, UB0_REG_TEMP_DATA1, 14, _buffer) != true) {
+        return false;
+    }
+
+    // combine bytes into 16 bit values
+    int16_t rawMeas[7];  // temp, accel xyz, gyro xyz
+    for (size_t i = 0; i < 7; i++) {
+        rawMeas[i] = ((int16_t)_buffer[i * 2] << 8) | _buffer[i * 2 + 1];
+    }
+
+    _rawT      = rawMeas[0];
+    _rawAcc[0] = rawMeas[1];
+    _rawAcc[1] = rawMeas[2];
+    _rawAcc[2] = rawMeas[3];
+    _rawGyr[0] = rawMeas[4];
+    _rawGyr[1] = rawMeas[5];
+    _rawGyr[2] = rawMeas[6];
+
+    return 1;
+}
+
+
+/* reads the most current data from ICM42688 and stores in buffer */
+int getAGT(const busDevice_t *dev)
+{
+    if (getRawAGT(dev) < 0) {
+        return -1;
+    }
+
+    _t = (static_cast<float>(_rawT) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
+
+    _acc[0] = ((_rawAcc[0] * _accelScale) - _accB[0]) * _accS[0];
+    _acc[1] = ((_rawAcc[1] * _accelScale) - _accB[1]) * _accS[1];
+    _acc[2] = ((_rawAcc[2] * _accelScale) - _accB[2]) * _accS[2];
+
+    _gyr[0] = (_rawGyr[0] * _gyroScale) - _gyrB[0];
+    _gyr[1] = (_rawGyr[1] * _gyroScale) - _gyrB[1];
+    _gyr[2] = (_rawGyr[2] * _gyroScale) - _gyrB[2];
+
+    return 1;
+}
+
+/* estimates the gyro biases */
+int calibrateGyro(const busDevice_t *dev)
+{
+    // set at a lower range (more resolution) since IMU not moving
+    const GyroFS current_fssel = _gyroFS;
+    if (setGyroFS(dev, dps250) < 0) {
+        return -1;
+    }
+
+    // take samples and find bias
+    _gyroBD[0] = 0;
+    _gyroBD[1] = 0;
+    _gyroBD[2] = 0;
+    for (size_t i = 0; i < NUM_CALIB_SAMPLES; i++) {
+        getAGT(dev);
+        _gyroBD[0] += (gyrX() + _gyrB[0]) / NUM_CALIB_SAMPLES;
+        _gyroBD[1] += (gyrY() + _gyrB[1]) / NUM_CALIB_SAMPLES;
+        _gyroBD[2] += (gyrZ() + _gyrB[2]) / NUM_CALIB_SAMPLES;
+        System::Delay(1);
+    }
+    _gyrB[0] = _gyroBD[0];
+    _gyrB[1] = _gyroBD[1];
+    _gyrB[2] = _gyroBD[2];
+
+    // recover the full scale setting
+    if (setGyroFS(dev, current_fssel) < 0) {
+        return -4;
+    }
+    return 1;
+}
+
+// finani/ICM42688 lib style Init()
+bool icm42688Init(gyroDev_t* gyro)
+{
+    bool ret = false;
+
+    busDevice_t* dev = gyro->busDev;
+
+    // reset the ICM42688
+    icm42605DeviceReset(dev);
+
+    // check the WHO AM I byte
+    bool isSensor = icm42605DeviceDetect(dev);
+    if (isSensor != true) return false;
+
+    // turn on accel and gyro in Low Noise (LN) Mode
+    // if (writeRegister(UB0_REG_PWR_MGMT0, 0x0F) < 0) {
+    //     return -4;
+    // }
+    ret = busWriteVerify(dev, UB0_REG_PWR_MGMT0, 0x0F);
+    if (!ret) return false;
+
+    // 16G is default -- do this to set up accel resolution scaling
+    ret = setAccelFS(dev, gpm16);
+    if (!ret) return false;
+
+    // 2000DPS is default -- do this to set up gyro resolution scaling
+    ret = setGyroFS(dev, dps2000);
+    if (!ret) return false;
+
+    // disable inner filters (Notch filter, Anti-alias filter, UI filter block)
+    if (setFilters(dev, false, false) != true) {
+        return false;
+    }
+
+    // estimate gyro bias
+    if (calibrateGyro(dev) != true) {
+        return false;
+    }
+    // successful init, return 1
+    return true;
 }
 
 // INav style Init()

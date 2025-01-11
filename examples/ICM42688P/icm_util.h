@@ -143,4 +143,15 @@ typedef struct accDev_s {
 void spiIcmBusInit(const busDevice_t* dev);
 bool icm42605DeviceDetect(const busDevice_t* dev);
 void icm42605AccAndGyroInit(gyroDev_t *gyro);
+bool icm42688Init(gyroDev_t* gyro);
+int getAGT(const busDevice_t *dev);
 
+float accX();
+float accY();
+float accZ();
+
+float gyrX();
+float gyrY();
+float gyrZ();
+
+float temp();

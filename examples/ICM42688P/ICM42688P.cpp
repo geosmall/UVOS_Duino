@@ -222,23 +222,30 @@ int main(void)
         .gyroAlign = CW0_DEG_FLIP
     };
 
-    icm42605AccAndGyroInit(&gyroDev);
-
-    // Initialize the ICM-42688P IMU
-    if (imu.Init(spi_handle) != ICM42688::Result::OK)
+    // icm42605AccAndGyroInit(&gyroDev);
+    if (icm42688Init(&gyroDev) != true)
     {
         Error_Handler();
     }
+
+
+    // Initialize the ICM-42688P IMU
+    // if (imu.Init(spi_handle) != ICM42688::Result::OK)
+    // {
+    //     Error_Handler();
+    // }
 
     // Get IMU error to zero accelerometer and gyro readings, assuming sensor is level when powered up
     Calculate_IMU_Error();
 
     char buf[128];
-#if defined(PRINT_ACCEL)
-    int str_len = sprintf(buf, "ax,ay,az\r\n");
-#else
-    int str_len = sprintf(buf, "gx,gy,gz\r\n");
-#endif /* defined(PRINT_ACCEL) */
+// #if defined(PRINT_ACCEL)
+//     int str_len = sprintf(buf, "ax,ay,az\r\n");
+// #else
+//     int str_len = sprintf(buf, "gx,gy,gz\r\n");
+// #endif /* defined(PRINT_ACCEL) */
+    int str_len = sprintf(buf, "ax,ay,az,gx,gy,gz\n");
+
     uart.BlockingTransmit((uint8_t*)buf, str_len);
 
     // Loop forever
@@ -251,26 +258,38 @@ int main(void)
         led_state = !led_state;
 
         // Read the sensor
-        getIMUdata(); // Pulls raw gyro, accel data from IMU and LP filter to remove noise
+        // getIMUdata(); // Pulls raw gyro, accel data from IMU and LP filter to remove noise
+        getAGT(&spi_dev);
 
         // Format the data into the buffer
-#if defined(PRINT_ACCEL)
+// #if defined(PRINT_ACCEL)
+//         int prn_buflen = snprintf(buf,
+//                                   sizeof(buf),
+//                                   "%.6f\t%.6f\t%.6f\n",
+//                                   AccX,
+//                                   AccY,
+//                                   AccZ);
+// #else
+//         int prn_buflen = snprintf(buf,
+//                                   sizeof(buf),
+//                                   "%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",
+//                                   GyroX,
+//                                   GyroY,
+//                                   GyroZ,
+//                                   -2000.0,
+//                                   2000.0);
+// #endif /* defined(PRINT_ACCEL) */
+
         int prn_buflen = snprintf(buf,
                                   sizeof(buf),
-                                  "%.6f\t%.6f\t%.6f\n",
-                                  AccX,
-                                  AccY,
-                                  AccZ);
-#else
-        int prn_buflen = snprintf(buf,
-                                  sizeof(buf),
-                                  "%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",
-                                  GyroX,
-                                  GyroY,
-                                  GyroZ,
-                                  -2000.0,
-                                  2000.0);
-#endif /* defined(PRINT_ACCEL) */
+                                  "%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",
+                                  accX(),
+                                  accY(),
+                                  accZ(),
+                                  gyrX(),
+                                  gyrY(),
+                                  gyrZ());
+
         // Print out formatted data
         uart.BlockingTransmit((uint8_t*) buf, prn_buflen);
 
