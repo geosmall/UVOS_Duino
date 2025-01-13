@@ -313,6 +313,19 @@ uint32_t System::GetTickHAL()
     return HAL_GetTick();
 }
 
+uint32_t System::GetMs()
+{
+    return tim_.GetMs();
+}
+uint32_t System::GetUs()
+{
+    return tim_.GetUs();
+}
+uint32_t System::GetTick()
+{
+    return tim_.GetTick();
+}
+
 void System::Delay(uint32_t delay_ms)
 {
     HAL_Delay(delay_ms);
