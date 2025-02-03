@@ -1,7 +1,6 @@
 #include "gpio.h"
 #include "stm32h7xx_hal.h"
-#include <cstdint>
-#include <cstring>  // For memset
+#include <string.h> // For memset
 
 using namespace uvos;
 
