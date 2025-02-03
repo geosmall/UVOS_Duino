@@ -28,7 +28,11 @@ class GPIO
         OUTPUT_OD, /**< Output w/ open-drain configuration */
         ANALOG,    /**< Analog for connection to ADC or DAC peripheral */
         AF_PP,     /**< Alternate Function Push-Pull */
-        AF_OD      /**< Alternate Function Open-Drain */
+        AF_OD,     /**< Alternate Function Open-Drain */
+        // --- Interrupt-capable modes (new):
+        INPUT_IT_RISING,         /**< Input with interrupt on rising edge */
+        INPUT_IT_FALLING,        /**< Input with interrupt on falling edge */
+        INPUT_IT_RISING_FALLING  /**< Input with interrupt on both edges */
     };
 
     /** @brief Configures whether an internal Pull up or Pull down resistor is used. 
@@ -121,6 +125,27 @@ class GPIO
     /** Return a reference to the internal Config struct */
     Config &GetConfig() { return cfg_; }
 
+    /* --- New Interrupt Callback Support --- */
+
+    /** @brief Type for the interrupt callback function.
+     *
+     * This is a C function pointer that takes no parameters and returns void.
+     */
+    typedef void (*InterruptCallback)(void);
+
+    /** @brief Register an interrupt callback for EXTI events.
+     *
+     * When the GPIO is configured in an interrupt mode (INPUT_IT_RISING, INPUT_IT_FALLING,
+     * or INPUT_IT_RISING_FALLING), this callback will be invoked when an EXTI event occurs.
+     */
+    void SetInterruptCallback(InterruptCallback cb);
+
+    /** @brief Dispatch EXTI callback to the appropriate GPIO instance.
+     *
+     * This function is called by the global HAL_GPIO_EXTI_Callback.
+     */
+    static void DispatchExtiCallback(uint16_t GPIO_Pin);
+
   private:
     /** This will internally be cast to the 
      *  STM32H7 GPIO_Typedef* type, which 
@@ -130,13 +155,24 @@ class GPIO
      *  This prevents us needing to have an internal
      *  Impl class just to store the GPIO_Typedef* 
      */
-    uint32_t *GetGPIOBaseRegister();
+    uint32_t* GetGPIOBaseRegister();
 
     /** Internal copy of the Configuration of the given pin */
     Config cfg_;
 
     /** Internal pointer to base address of relavent GPIO register */
-    uint32_t *port_base_addr_;
+    uint32_t* port_base_addr_;
+
+    /* --- New Private Members for Interrupt Support --- */
+
+    /** User-registered interrupt callback for EXTI events */
+    InterruptCallback interruptCallback_;
+
+    /** @brief Handle the interrupt event (invokes the user callback if set)
+     *
+     * This function is called internally by DispatchExtiCallback.
+     */
+    void HandleInterrupt();
 };
 
 } // namespace uvos
