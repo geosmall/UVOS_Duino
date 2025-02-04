@@ -1,7 +1,13 @@
 #include "gpio.h"
 #include "stm32h7xx_hal.h"
+#include <string.h> // For memset
 
 using namespace uvos;
+
+//------------------------------------------------------------------------------
+// Static registry for mapping EXTI lines (0–15) to GPIO instances.
+//------------------------------------------------------------------------------
+static GPIO* extiHandlers[16] = { nullptr };
 
 void GPIO::Init(const Config &cfg)
 {
@@ -12,6 +18,8 @@ void GPIO::Init(const Config &cfg)
         return;
 
     GPIO_InitTypeDef ginit;
+    memset(&ginit, 0, sizeof(ginit));
+
     switch(cfg_.mode)
     {
         case Mode::OUTPUT: ginit.Mode = GPIO_MODE_OUTPUT_PP; break;
@@ -19,9 +27,14 @@ void GPIO::Init(const Config &cfg)
         case Mode::ANALOG: ginit.Mode = GPIO_MODE_ANALOG; break;
         case Mode::AF_PP: ginit.Mode = GPIO_MODE_AF_PP; break;
         case Mode::AF_OD: ginit.Mode = GPIO_MODE_AF_OD; break;
+        // --- Interrupt-capable modes (new):
+        case Mode::INPUT_IT_RISING: ginit.Mode = GPIO_MODE_IT_RISING; break;
+        case Mode::INPUT_IT_FALLING: ginit.Mode = GPIO_MODE_IT_FALLING; break;
+        case Mode::INPUT_IT_RISING_FALLING: ginit.Mode = GPIO_MODE_IT_RISING_FALLING; break;
         case Mode::INPUT:
         default: ginit.Mode = GPIO_MODE_INPUT; break;
     }
+
     switch(cfg_.pull)
     {
         case Pull::PULLUP: ginit.Pull = GPIO_PULLUP; break;
@@ -29,6 +42,7 @@ void GPIO::Init(const Config &cfg)
         case Pull::NOPULL:
         default: ginit.Pull = GPIO_NOPULL;
     }
+
     switch(cfg_.speed)
     {
         case Speed::VERY_HIGH: ginit.Speed = GPIO_SPEED_FREQ_VERY_HIGH; break;
@@ -66,8 +80,45 @@ void GPIO::Init(const Config &cfg)
     }
     /** Set pin based on stm32 schema */
     ginit.Pin = (1 << cfg_.pin.pin);
-    HAL_GPIO_Init((GPIO_TypeDef *)port_base_addr_, &ginit);
+    HAL_GPIO_Init(reinterpret_cast<GPIO_TypeDef *>(port_base_addr_), &ginit);
+
+    // If configured for interrupts, register this instance and configure NVIC.
+    if (cfg_.mode == Mode::INPUT_IT_RISING ||
+        cfg_.mode == Mode::INPUT_IT_FALLING ||
+        cfg_.mode == Mode::INPUT_IT_RISING_FALLING)
+    {
+        if (cfg_.pin.pin < 16)
+        {
+            extiHandlers[cfg_.pin.pin] = this;
+        }
+
+        // Determine the correct IRQ for the given pin.
+        IRQn_Type irq;
+        if (cfg_.pin.pin <= 4)
+        {
+            switch (cfg_.pin.pin)
+            {
+                case 0: irq = EXTI0_IRQn; break;
+                case 1: irq = EXTI1_IRQn; break;
+                case 2: irq = EXTI2_IRQn; break;
+                case 3: irq = EXTI3_IRQn; break;
+                case 4: irq = EXTI4_IRQn; break;
+                default: irq = EXTI0_IRQn; break; // fallback (should not occur)
+            }
+        }
+        else if (cfg_.pin.pin <= 9)
+        {
+            irq = EXTI9_5_IRQn;
+        }
+        else  // pins 10 to 15
+        {
+            irq = EXTI15_10_IRQn;
+        }
+        HAL_NVIC_SetPriority(irq, 2, 0);
+        HAL_NVIC_EnableIRQ(irq);
+    }
 }
+
 void GPIO::Init(Pin p, const Config &cfg)
 {
     /** Copy config */
@@ -76,6 +127,7 @@ void GPIO::Init(Pin p, const Config &cfg)
     cfg_.pin = p;
     Init(cfg_);
 }
+
 void GPIO::Init(Pin p, Mode m, Pull pu, Speed sp, uint32_t alt)
 {
     // Populate Config struct, and init with overload
@@ -90,47 +142,146 @@ void GPIO::Init(Pin p, Mode m, Pull pu, Speed sp, uint32_t alt)
 void GPIO::DeInit()
 {
     if(cfg_.pin.IsValid())
-        HAL_GPIO_DeInit((GPIO_TypeDef *)port_base_addr_, (1 << cfg_.pin.pin));
+        HAL_GPIO_DeInit(reinterpret_cast<GPIO_TypeDef *>(port_base_addr_), (1 << cfg_.pin.pin));
 }
+
 bool GPIO::Read()
 {
-    return HAL_GPIO_ReadPin((GPIO_TypeDef *)port_base_addr_,
-                            (1 << cfg_.pin.pin));
+    return HAL_GPIO_ReadPin(reinterpret_cast<GPIO_TypeDef *>(port_base_addr_),
+                              (1 << cfg_.pin.pin)) == GPIO_PIN_SET;
 }
+
 void GPIO::Write(bool state)
 {
-    HAL_GPIO_WritePin((GPIO_TypeDef *)port_base_addr_,
+    HAL_GPIO_WritePin(reinterpret_cast<GPIO_TypeDef *>(port_base_addr_),
                       (1 << cfg_.pin.pin),
-                      (GPIO_PinState)state);
+                      state ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
+
 void GPIO::Toggle()
 {
-    HAL_GPIO_TogglePin((GPIO_TypeDef *)port_base_addr_, (1 << cfg_.pin.pin));
+    HAL_GPIO_TogglePin(reinterpret_cast<GPIO_TypeDef *>(port_base_addr_), (1 << cfg_.pin.pin));
 }
 
 uint32_t *GPIO::GetGPIOBaseRegister()
 {
     switch(cfg_.pin.port)
     {
-        case PORTA: return (uint32_t *)GPIOA;
-        case PORTB: return (uint32_t *)GPIOB;
-        case PORTC: return (uint32_t *)GPIOC;
-        case PORTD: return (uint32_t *)GPIOD;
-        case PORTE: return (uint32_t *)GPIOE;
-        case PORTF: return (uint32_t *)GPIOF;
-        case PORTG: return (uint32_t *)GPIOG;
-        case PORTH: return (uint32_t *)GPIOH;
-        case PORTI: return (uint32_t *)GPIOI;
-        case PORTJ: return (uint32_t *)GPIOJ;
-        case PORTK: return (uint32_t *)GPIOK;
-        default: return NULL;
+        case PORTA: return reinterpret_cast<uint32_t*>(GPIOA);
+        case PORTB: return reinterpret_cast<uint32_t*>(GPIOB);
+        case PORTC: return reinterpret_cast<uint32_t*>(GPIOC);
+        case PORTD: return reinterpret_cast<uint32_t*>(GPIOD);
+        case PORTE: return reinterpret_cast<uint32_t*>(GPIOE);
+        case PORTF: return reinterpret_cast<uint32_t*>(GPIOF);
+        case PORTG: return reinterpret_cast<uint32_t*>(GPIOG);
+        case PORTH: return reinterpret_cast<uint32_t*>(GPIOH);
+        case PORTI: return reinterpret_cast<uint32_t*>(GPIOI);
+        case PORTJ: return reinterpret_cast<uint32_t*>(GPIOJ);
+        case PORTK: return reinterpret_cast<uint32_t*>(GPIOK);
+        default:    return nullptr;
     }
 }
 
-// #include "stm32h7xx_hal.h"
-// #include "per/gpio.h"
+/* --- New Interrupt Callback Support --- */
 
-/** OLD C Stuff */
+/* Register the user interrupt callback */
+void GPIO::SetInterruptCallback(InterruptCallback cb)
+{
+    interruptCallback_ = cb;
+}
+
+/* Private method to handle the interrupt event (invokes the user callback if set) */
+void GPIO::HandleInterrupt()
+{
+    if (interruptCallback_)
+    {
+        interruptCallback_();
+    }
+}
+
+/* Public static method that dispatches EXTI events to the proper GPIO instance */
+void GPIO::DispatchExtiCallback(uint16_t GPIO_Pin)
+{
+    for (uint8_t pin = 0; pin < 16; pin++)
+    {
+        if (GPIO_Pin & (1 << pin))
+        {
+            if (extiHandlers[pin] != nullptr)
+            {
+                extiHandlers[pin]->HandleInterrupt();
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+// EXTI IRQ Handlers (all provided here within the driver).
+//------------------------------------------------------------------------------
+
+extern "C" {
+
+void EXTI0_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(1 << 0);
+}
+
+void EXTI1_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(1 << 1);
+}
+
+void EXTI2_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(1 << 2);
+}
+
+void EXTI3_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(1 << 3);
+}
+
+void EXTI4_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(1 << 4);
+}
+
+void EXTI9_5_IRQHandler(void)
+{
+    // Handle EXTI lines 5 to 9.
+    for (uint32_t pin = 5; pin <= 9; pin++)
+    {
+        if (__HAL_GPIO_EXTI_GET_IT(1 << pin) != RESET)
+        {
+            HAL_GPIO_EXTI_IRQHandler(1 << pin);
+        }
+    }
+}
+
+void EXTI15_10_IRQHandler(void)
+{
+    // Handle EXTI lines 10 to 15.
+    for (uint32_t pin = 10; pin <= 15; pin++)
+    {
+        if (__HAL_GPIO_EXTI_GET_IT(1 << pin) != RESET)
+        {
+            HAL_GPIO_EXTI_IRQHandler(1 << pin);
+        }
+    }
+}
+
+/**
+ * Global HAL callback for EXTI events.
+ * This function dispatches the event to our driver via DispatchExtiCallback().
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    GPIO::DispatchExtiCallback(GPIO_Pin);
+}
+
+} // extern "C"
+
+/* --- Deprecated C API Implementations (unchanged) --- */
+
 extern "C"
 {
 #include "util/hal_map.h"
