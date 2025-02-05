@@ -57,7 +57,7 @@ class UVOSboard
      */
     void SetTestPoint(bool state);
 
-#if 1 // gls
+#if 0 // gls
 
     /** Print formatted debug log message
      */
@@ -124,14 +124,14 @@ class UVOSboard
   private:
     /** Local shorthand for debug log destination
     */
-    using Log = Logger<LOGGER_INTERNAL>;
+    // using Log = Logger<LOGGER_INTERNAL>;
 
     // void ConfigureQspi();
     // void ConfigureAudio();
     // void ConfigureAdc();
     // void ConfigureDac();
     //void     ConfigureI2c();
-    float callback_rate_;
+    // float callback_rate_;
 
     // SaiHandle sai_1_handle_;
 };
