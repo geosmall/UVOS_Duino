@@ -224,8 +224,8 @@ void System::Init(const System::Config& config)
     }
     uvs_dma_init();
     // uvs_i2c_global_init();
-    // uvs_spi_global_init();
-    // uvs_uart_global_init();
+    uvs_spi_global_init();
+    uvs_uart_global_init();
 
     // Initialize Caches
     if(config.use_dcache)
@@ -311,6 +311,19 @@ void System::JumpToQspi()
 uint32_t System::GetTickHAL()
 {
     return HAL_GetTick();
+}
+
+uint32_t System::GetMs()
+{
+    return tim_.GetMs();
+}
+uint32_t System::GetUs()
+{
+    return tim_.GetUs();
+}
+uint32_t System::GetTick()
+{
+    return tim_.GetTick();
 }
 
 void System::Delay(uint32_t delay_ms)
