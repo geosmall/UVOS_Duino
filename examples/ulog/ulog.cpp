@@ -2,6 +2,18 @@
 #include "util/ulog.h"
 #include <cstdio>
 
+/* Output should something look like this:
+
+console: 32 [INFO]: Info, arg=42
+file: 3067 [CRITICAL]: Critical, arg=42
+console: 6634 [CRITICAL]: Critical, arg=42
+console: 10464 [INFO]: Info, arg=42
+console: 13687 [INFO]: Info, arg=42
+
+*/
+
+#define USE_DMA
+
 #include "ulog_test.h"
 
 // Use the uvos namespace to prevent having to type
@@ -23,31 +35,51 @@ extern "C" void __assert_func(const char *file, int line, const char *func, cons
     while (1) {}
 }
 
-char buf[128];
-int str_len;
+#define BUFF_SIZE 128
+
+static uint8_t DMA_BUFFER_MEM_SECTION buf_console[BUFF_SIZE];
+static uint8_t DMA_BUFFER_MEM_SECTION buf_file[BUFF_SIZE];
+static uint8_t buf[BUFF_SIZE];
+static int str_len;
+
+bool dma_ready = true;
+
+// dma end callback, will start a new DMA transfer
+void RestartUart(void* state, UartHandler::Result res)
+{
+    dma_ready = true;
+}
 
 void my_console_logger(ulog_level_t severity, char* msg)
 {
     uint32_t timestamp = System::GetUs(); // Retrieve the timestamp
-
-    str_len = sprintf(buf, "console: %u [%s]: %s\r\n",
+    str_len = sprintf((char*)buf_console, "console: %u [%s]: %s\r\n",
                       timestamp, // Use the timestamp directly
                       ulog_level_name(severity),
                       msg);
-
-    uart.BlockingTransmit((uint8_t*)buf, str_len);
+#ifdef USE_DMA
+    uart.DmaTransmit(buf_console, str_len, NULL, RestartUart, NULL);
+    dma_ready = false;
+    while (!dma_ready) {} // spin until dma ready
+#else
+    uart.BlockingTransmit(buf_console, str_len);
+#endif /* USE_DMA */
 }
 
 void my_file_logger(ulog_level_t severity, char* msg)
 {
     uint32_t timestamp = System::GetUs(); // Retrieve the timestamp
-
-    str_len = sprintf(buf, "file: %u [%s]: %s\r\n",
+    str_len = sprintf((char*)buf_file, "file: %u [%s]: %s\r\n",
                       timestamp, // Use the timestamp directly
                       ulog_level_name(severity),
                       msg);
-
-    uart.BlockingTransmit((uint8_t*)buf, str_len);
+#ifdef USE_DMA
+    uart.DmaTransmit(buf_file, str_len, NULL, RestartUart, NULL);
+    dma_ready = false;
+    while (dma_ready == false) {} // spin until dma ready
+#else
+    uart.BlockingTransmit(buf_file, str_len);
+#endif /* USE_DMA */
 }
 
 int main(void)
@@ -71,6 +103,10 @@ int main(void)
 
     // Initialize the uart peripheral and start the DMA transmit
     uart.Init(uart_conf);
+    // uart.DmaTransmit(buff, BUFF_SIZE, NULL, RestartUart, NULL);
+
+    // loop forever
+    // while(1) {}
 
     int arg = 42;
 
@@ -101,8 +137,8 @@ int main(void)
     ulog_test();
 
     // test passed if we get to here
-    str_len = sprintf(buf, "uLog test passed...");
-    uart.BlockingTransmit((uint8_t*)buf, str_len);
+    str_len = sprintf((char*)buf, "uLog test passed...");
+    uart.BlockingTransmit(buf, str_len);
 
     // Loop forever
     for (;;) {

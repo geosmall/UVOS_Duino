@@ -12,10 +12,10 @@ int main(void)
 
     // Configure the Uart Peripheral
     UartHandler::Config uart_conf;
-    uart_conf.periph        = UartHandler::Config::Peripheral::USART_1;
+    uart_conf.periph        = UartHandler::Config::Peripheral::USART_3;
     uart_conf.mode          = UartHandler::Config::Mode::TX;
-    uart_conf.pin_config.tx = Pin(PORTB, 6);
-    uart_conf.pin_config.rx = Pin(PORTB, 7);
+    uart_conf.pin_config.tx = Pin(PORTD, 8);
+    uart_conf.pin_config.rx = Pin(PORTD, 9);
 
     // Initialize the uart peripheral and start the DMA transmit
     uart.Init(uart_conf);
