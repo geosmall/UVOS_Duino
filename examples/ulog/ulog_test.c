@@ -31,18 +31,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <assert.h>
 #include <string.h>
 
-// The __attribute__((noreturn)) tells the compiler that this function never returns.
-// void __assert_func(const char *file, int line, const char *func, const char *expr) __attribute__((noreturn));
-
-void __assert_func(const char *file, int line, const char *func, const char *expr)
-{
-    // If you're using a debugger, trigger a breakpoint.
-    __asm__("BKPT #0");
-
-    // Infinite loop to halt the system.
-    while (1) {}
-}
-
 int fn_calls[6];
 
 void logger_fn0(ulog_level_t severity, char *msg) {

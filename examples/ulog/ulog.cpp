@@ -12,6 +12,17 @@ using namespace uvos;
 UVOSboard hw;
 UartHandler uart;
 
+// Assert function called from ulog_test.c
+// If any test assert fails, we end up here
+extern "C" void __assert_func(const char *file, int line, const char *func, const char *expr)
+{
+    // If you're using a debugger, trigger a breakpoint.
+    __asm__("BKPT #0");
+
+    // Infinite loop to halt the system.
+    while (1) {}
+}
+
 char buf[128];
 int str_len;
 
@@ -88,6 +99,10 @@ int main(void)
     ULOG_INFO("Info, arg=%d", arg); // logs to console only
 
     ulog_test();
+
+    // test passed if we get to here
+    str_len = sprintf(buf, "uLog test passed...");
+    uart.BlockingTransmit((uint8_t*)buf, str_len);
 
     // Loop forever
     for (;;) {
