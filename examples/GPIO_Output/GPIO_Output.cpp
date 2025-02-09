@@ -21,7 +21,7 @@ int main(void)
     GPIO my_led;
 
     // Create an LED pin as my_led_pin = Pin(PORTA, 1)
-    Pin my_led_pin = Pin(PORTA, 1);
+    Pin my_led_pin = Pin(PORTE, 1);
 
     // Initialize it to pin PA1 as an OUTPUT
     my_led.Init(my_led_pin, GPIO::Mode::OUTPUT);
@@ -43,5 +43,7 @@ int main(void)
         System::Delay(500);
         // And once more to flip it back
         my_led.Toggle();
+        // Wait another half a second (500ms)
+        System::Delay(500);        
     }
 }

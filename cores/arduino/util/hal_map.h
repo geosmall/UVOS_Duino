@@ -1,8 +1,11 @@
 #pragma once
-#ifndef UVS_HAL_MAP_H
-#define UVS_HAL_MAP_H
+
 #include "stm32h7xx_hal.h"
 #include "uvos_core.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** @addtogroup utility
     @{
@@ -30,5 +33,6 @@ uint16_t uvs_hal_map_get_pin(const uvs_gpio_pin *p);
 */
 void uvs_hal_map_gpio_clk_enable(uvs_gpio_port port);
 
+#ifdef __cplusplus
+}
 #endif
-/** @} */

@@ -6,23 +6,14 @@
 #include <cstdint>
 #include "per/tim.h"
 
+#if defined(USE_NOP_TICK_DELAY)
 #define DELAY_TICKS(t)                                              \
     do {                                                            \
         if (__builtin_constant_p(t)) {                              \
             /* t is known at compile time */                        \
-            if ((t) <= 20) {                                        \
+            if ((t) <= 10) {                                        \
                 /* Direct NOP-based delay */                        \
                 switch (t) {                                        \
-                    case 20: __NOP();                               \
-                    case 19: __NOP();                               \
-                    case 18: __NOP();                               \
-                    case 17: __NOP();                               \
-                    case 16: __NOP();                               \
-                    case 15: __NOP();                               \
-                    case 14: __NOP();                               \
-                    case 13: __NOP();                               \
-                    case 12: __NOP();                               \
-                    case 11: __NOP();                               \
                     case 10: __NOP();                               \
                     case 9: __NOP();                                \
                     case 8: __NOP();                                \
@@ -48,6 +39,14 @@
             while ((DWT->CYCCNT - __start) < __ticks) {}            \
         }                                                           \
     } while (0)
+#else
+#define DELAY_TICKS(t)                                              \
+    do {                                                            \
+        uint32_t __ticks = (t);                                     \
+        uint32_t __start = DWT->CYCCNT;                             \
+        while ((DWT->CYCCNT - __start) < __ticks) {}                \
+    } while (0)
+#endif // defined(USE_NOP_TICK_DELAY)
 
 namespace uvos
 {
