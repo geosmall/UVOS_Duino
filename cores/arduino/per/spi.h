@@ -108,6 +108,7 @@ class SpiHandle
         NSS           nss;
         NSSPulseMode  nss_pulse;
         BaudPrescaler baud_prescaler;
+        unsigned long disable_delay_;
     };
 
     SpiHandle() : pimpl_(nullptr) {}
@@ -228,6 +229,18 @@ class SpiHandle
                                       uint8_t* rx_buff,
                                       size_t   size,
                                       uint32_t timeout = 100);
+
+    /** Blocking transmit and receive using LL driver
+    \param tx_buff the transmit buffer
+    \param rx_buff the receive buffer
+    \param size the length of the transaction
+    \param timeout how long in counts (not mSec) the function will wait 
+                   before returning without successful communication
+    */
+    Result BlockingTransferLL(uint8_t* tx_buff,
+                              uint8_t* rx_buff,
+                              size_t   size,
+                              uint32_t timeout = 1000);
 
     /** DMA-based transmit 
     \param *buff input buffer
