@@ -7,14 +7,17 @@ using namespace uvos;
 // Declare a UVOSboard object called hw
 UVOSboard hw;
 
-volatile bool led_state = false;
+typedef struct {
+    volatile bool led_state;   // Flag toggled when event fires
+} BTN_Context_t;
 
-
-void exti_callback(void)
+void exti_callback(void* context)
 {
-    // Toggle the LED state from EXTI callback
-    led_state = !led_state;
+    (void)context;
+    BTN_Context_t *btn = (BTN_Context_t *)context;  // Cast back to correct type
 
+    // Toggle the LED state from EXTI callback
+    btn->led_state = !btn->led_state;
 }
 
 int main(void)
@@ -25,17 +28,20 @@ int main(void)
     hw.Configure();
     hw.Init();
 
+    // Create and initialize the button context
+    BTN_Context_t btnCtx = {false};
+
     GPIO myGpio;
     myGpio.Init(Pin(PORTB, 2), GPIO::Mode::INPUT_IT_RISING, GPIO::Pull::NOPULL);
-    myGpio.SetInterruptCallback(exti_callback);
+    myGpio.SetInterruptCallback(exti_callback, &btnCtx);
 
     // Loop forever
     for(;;)
     {
         // Set the onboard LED based on led_state variable
-        hw.SetLed(led_state);
+        hw.SetLed(btnCtx.led_state);
 
         // Wait a bit
-        System::Delay(10);
+        System::Delay(100);
     }
 }
