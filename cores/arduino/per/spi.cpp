@@ -1,5 +1,7 @@
 #include "per/spi.h"
+#include "sys/system.h"
 #include "util/scopedirqblocker.h"
+#include "stm32h7xx_ll_spi.h"
 
 extern "C"
 {
@@ -53,6 +55,11 @@ class SpiHandle::Impl
                                       uint8_t* rx_buff,
                                       size_t   size,
                                       uint32_t timeout);
+    Result BlockingTransferLL(uint8_t* tx_buff,
+                              uint8_t* rx_buff,
+                              size_t   size,
+                              uint32_t timeout);
+
     Result DmaTransmit(uint8_t*                            buff,
                        size_t                              size,
                        SpiHandle::StartCallbackFunctionPtr start_callback,
@@ -269,6 +276,9 @@ SpiHandle::Result SpiHandle::Impl::Init(const Config& config)
         return SpiHandle::Result::ERR;
     }
 
+    // Compute delay used below in inv_spi_transfer()
+    config_.disable_delay_ = spi_compute_disable_delay_us(hspi_.Instance);
+
     return SpiHandle::Result::OK;
 }
 
@@ -306,7 +316,7 @@ SpiHandle::Result SpiHandle::Impl::GetBaudHz(const Config::Peripheral periph,
     // Check that HAL SPI peripheral instance is valid
     if (!(IS_SPI_ALL_INSTANCE(instance))) return SpiHandle::Result::ERR;
 
-    uint32_t spi_freq = getClkFreqInst(instance);
+    uint32_t spi_freq = spi_get_clk_freq_inst(instance);
 
     // clang-format off
     if (speed >= (spi_freq / SPI_SPEED_CLOCK_DIV2_MHZ)) {
@@ -752,6 +762,54 @@ SpiHandle::Result SpiHandle::Impl::BlockingTransmitAndReceive(uint8_t* tx_buff,
     {
         return SpiHandle::Result::ERR;
     }
+    return SpiHandle::Result::OK;
+}
+
+SpiHandle::Result SpiHandle::Impl::BlockingTransferLL(uint8_t* tx_buff,
+                                                      uint8_t* rx_buff,
+                                                      size_t   size,
+                                                      uint32_t timeout)
+
+// int inv_spi_transfer(SPI_TypeDef *instance, uint8_t *rxData, const uint8_t *txData, int len)
+{
+    SPI_TypeDef* instance = hspi_.Instance;
+
+    LL_SPI_SetTransferSize(instance, size);
+    LL_SPI_Enable(instance);
+    LL_SPI_StartMasterTransfer(instance);
+    while (size) {
+        uint32_t spiTimeout = timeout;
+        while (!LL_SPI_IsActiveFlag_TXP(instance)) {
+            if ((spiTimeout--) == 0) {
+                // spiTimeoutUserCallback(instance); gls
+                return SpiHandle::Result::ERR;
+            }
+        }
+        uint8_t b = tx_buff ? *(tx_buff++) : 0xFF;
+        LL_SPI_TransmitData8(instance, b);
+
+        spiTimeout = timeout;
+        while (!LL_SPI_IsActiveFlag_RXP(instance)) {
+            if ((spiTimeout--) == 0) {
+                // spiTimeoutUserCallback(instance); gls
+                return SpiHandle::Result::ERR;
+            }
+        }
+        b = LL_SPI_ReceiveData8(instance);
+        if (rx_buff) {
+            *(rx_buff++) = b;
+        }
+        --size;
+    }
+    while (!LL_SPI_IsActiveFlag_EOT(instance));
+    // Add a delay before disabling SPI otherwise last-bit/last-clock may be truncated
+    // See https://github.com/stm32duino/Arduino_Core_STM32/issues/1294
+    // Computed delay is half SPI clock
+    System::DelayUs(config_.disable_delay_);
+
+    LL_SPI_ClearFlag_TXTF(instance);
+    LL_SPI_Disable(instance);
+
     return SpiHandle::Result::OK;
 }
 
@@ -1274,4 +1332,12 @@ SpiHandle::Result SpiHandle::BlockingTransmitAndReceive(uint8_t* tx_buff,
                                                         uint32_t timeout)
 {
     return pimpl_->BlockingTransmitAndReceive(tx_buff, rx_buff, size, timeout);
+}
+
+SpiHandle::Result SpiHandle::BlockingTransferLL(uint8_t* tx_buff,
+                                                uint8_t* rx_buff,
+                                                size_t   size,
+                                                uint32_t timeout)
+{
+    return pimpl_->BlockingTransferLL(tx_buff, rx_buff, size, timeout);
 }
