@@ -125,20 +125,23 @@ class GPIO
     /** Return a reference to the internal Config struct */
     Config &GetConfig() { return cfg_; }
 
-    /* --- New Interrupt Callback Support --- */
-
     /** @brief Type for the interrupt callback function.
      *
-     * This is a C function pointer that takes no parameters and returns void.
+     * This callback now accepts a context pointer, which allows the user to pass
+     * instance-specific data to the callback.
      */
-    typedef void (*InterruptCallback)(void);
+    typedef void (*InterruptCallback)(void* context);
 
     /** @brief Register an interrupt callback for EXTI events.
+     *
+     * @param cb      The user-defined callback function.
+     * @param context A pointer to user-specific data that will be passed to the callback.
      *
      * When the GPIO is configured in an interrupt mode (INPUT_IT_RISING, INPUT_IT_FALLING,
      * or INPUT_IT_RISING_FALLING), this callback will be invoked when an EXTI event occurs.
      */
-    void SetInterruptCallback(InterruptCallback cb);
+    void SetInterruptCallback(InterruptCallback cb, void* context);
+
 
     /** @brief Dispatch EXTI callback to the appropriate GPIO instance.
      *
@@ -163,10 +166,13 @@ class GPIO
     /** Internal pointer to base address of relavent GPIO register */
     uint32_t* port_base_addr_;
 
-    /* --- New Private Members for Interrupt Support --- */
+    /* --- Private Members for Interrupt Support --- */
 
     /** User-registered interrupt callback for EXTI events */
     InterruptCallback interruptCallback_;
+
+    /** Pointer to a user context for the interrupt callback */
+    void* interruptCallbackContext_;
 
     /** @brief Handle the interrupt event (invokes the user callback if set)
      *
