@@ -43,7 +43,7 @@ int main(void)
         {TimPeriph::TIM_5, TimChannel::CH_3, Pin(PORTA, 2), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM5},
         {TimPeriph::TIM_5, TimChannel::CH_4, Pin(PORTA, 3), init_pulse_servo, TimPolarity::HIGH, GPIO_AF2_TIM5},
     };
-    constexpr size_t NUM_SERVO_OUTPUTS = SIZEOF_ARRAY(servo_outputs);
+    constexpr size_t NUM_SERVO_OUTPUTS = ARRAYLEN(servo_outputs);
 
     // Define ESC outputs (S7-S10)
     static PWMOutputChannel esc_outputs[] = {
@@ -55,7 +55,7 @@ int main(void)
         {TimPeriph::TIM_15, TimChannel::CH_1, Pin(PORTE, 5), init_pulse_esc, TimPolarity::HIGH, GPIO_AF4_TIM15},
         {TimPeriph::TIM_15, TimChannel::CH_2, Pin(PORTE, 6), init_pulse_esc, TimPolarity::HIGH, GPIO_AF4_TIM15},
     };
-    constexpr size_t NUM_ESC_OUTPUTS = SIZEOF_ARRAY(esc_outputs);
+    constexpr size_t NUM_ESC_OUTPUTS = ARRAYLEN(esc_outputs);
 
     // Create and initialize servo PWMOutput object,
     // check for initialization errors

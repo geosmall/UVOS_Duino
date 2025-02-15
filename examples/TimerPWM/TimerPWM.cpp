@@ -48,7 +48,7 @@ int main(void)
     pwm_ch1[0].pulse = duty_cycle_to_pulse(timer_cfg.period, 50); // 50% duty cycle
     pwm_ch1[1].pulse = duty_cycle_to_pulse(timer_cfg.period, 37); // 37% duty cycle
 
-    timer1.InitPWM(timer_cfg, pwm_ch1, SIZEOF_ARRAY(pwm_ch1));
+    timer1.InitPWM(timer_cfg, pwm_ch1, ARRAYLEN(pwm_ch1));
 
     timer1.StartPWM();
 
@@ -68,7 +68,7 @@ int main(void)
     pwm_ch2[2].pulse = duty_cycle_to_pulse(timer_cfg.period, 65); // 65% duty cycle
     pwm_ch2[3].pulse = duty_cycle_to_pulse(timer_cfg.period, 55); // 55% duty cycle
 
-    timer2.InitPWM(timer_cfg, pwm_ch2, SIZEOF_ARRAY(pwm_ch2));
+    timer2.InitPWM(timer_cfg, pwm_ch2, ARRAYLEN(pwm_ch2));
 
     timer2.StartPWM();
 

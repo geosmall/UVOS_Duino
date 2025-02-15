@@ -4,8 +4,8 @@
 // uvos:: before all libuvos functions
 using namespace uvos;
 
-// Declare a UVOSboard object called hardware
-UVOSboard hardware;
+// Declare a UVOSboard object called hw
+UVOSboard hw;
 
 int main(void)
 {
@@ -16,14 +16,14 @@ int main(void)
     // Configure and Initialize the UVOS board
     // These are separate to allow reconfiguration of any of the internal
     // components before initialization.
-    hardware.Configure();
-    hardware.Init();
+    hw.Configure();
+    hw.Init();
 
     // Loop forever
     for(;;)
     {
         // Set the onboard LED
-        hardware.SetLed(led_state);
+        hw.SetLed(led_state);
 
         // Toggle the LED state for the next time around.
         led_state = !led_state;
