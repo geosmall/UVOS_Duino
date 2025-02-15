@@ -20,39 +20,48 @@
  * OF THE SOFTWARE.
  * ________________________________________________________________________________________________________
  */
-
-/** @defgroup common common
- *  @brief    Implementation of API shared by several modules
- *
- *	@ingroup  Low_Level_Driver
- *  @{
-*/
-
-#ifndef __INV_COMMON_H__
-#define __INV_COMMON_H__
+#ifndef _SYSTEM_INTERFACE_H_
+#define _SYSTEM_INTERFACE_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void inv_board_hal_init(void);
+// #include "uart.h"
+#include "Invn/Drivers/Icm426xx/Icm426xxTransport.h"
 
-/**
-  * @brief  Disable core interrupts while supporting nested interrupts.
-  * To fully support nesting, interrupts must be enabled with enable_irq() function.
-  */
-void inv_disable_irq(void);
+#ifndef TO_MASK
+#define TO_MASK(a) (1U << (unsigned)(a))
+#endif
 
-/**
-  * @brief  Enable core interrupts while supporting nested interrupts.
-  * To fully support nesting, interrupts must be enabled with disable_irq() function.
-  */
-void inv_enable_irq(void);
+/** @brief define all supported board revisions types*/
+// #define SM_REVB_DB 0
+// #define SM_REVB_OB 1
+// #define SM_REVG    2
+
+// void config_uart(inv_uart_num_t log_uart_id);
+// void config_command_uart(inv_uart_num_t cmd_uart_id);
+
+/** @brief I3C context definition
+ */
+// typedef struct {
+// 	int (*idd_io_hal_i3c_detect_soft_reset)(uint8_t, const uint8_t *);
+// } idd_io_hal_i3c_context_t;
+
+void inv_io_hal_board_init(void);
+/* /!\ When used, the below function be should called before inv_io_hal_board_init */
+void inv_io_hal_configure_spi_speed(uint8_t spi_freq_mhz);
+int  inv_io_hal_init(struct inv_icm426xx_serif* serif);
+int  inv_io_hal_configure(struct inv_icm426xx_serif* serif);
+int  inv_io_hal_read_reg(struct inv_icm426xx_serif* serif, uint8_t reg, uint8_t* rbuffer, uint32_t rlen);
+int  inv_io_hal_write_reg(struct inv_icm426xx_serif* serif, uint8_t reg, const uint8_t* wbuffer, uint32_t wlen);
+
+// int akm_io_hal_init(void *serif);
+// int akm_io_hal_read_reg(void *serif, uint8_t reg, uint8_t *rbuffer, uint32_t rlen);
+// int akm_io_hal_write_reg(void *serif, uint8_t reg, const uint8_t *wbuffer, uint32_t wlen);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //__INV_COMMON_H__
-
-/** @} */
+#endif /* !_SYSTEM_INTERFACE_H_ */

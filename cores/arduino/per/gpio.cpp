@@ -182,12 +182,11 @@ uint32_t *GPIO::GetGPIOBaseRegister()
     }
 }
 
-/* --- New Interrupt Callback Support --- */
-
 /* Register the user interrupt callback */
-void GPIO::SetInterruptCallback(InterruptCallback cb)
+void GPIO::SetInterruptCallback(InterruptCallback cb, void *context)
 {
     interruptCallback_ = cb;
+    interruptCallbackContext_ = context;
 }
 
 /* Private method to handle the interrupt event (invokes the user callback if set) */
@@ -195,7 +194,7 @@ void GPIO::HandleInterrupt()
 {
     if (interruptCallback_)
     {
-        interruptCallback_();
+        interruptCallback_(interruptCallbackContext_);
     }
 }
 

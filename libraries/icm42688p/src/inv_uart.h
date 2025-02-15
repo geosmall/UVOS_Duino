@@ -28,6 +28,10 @@
 #ifndef __INV_UART_H__
 #define __INV_UART_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 /**
@@ -195,6 +199,10 @@ inv_uart_state_t inv_uart_tx_get_state(inv_uart_num_t uart);
  *  @return     The state of the RX module as defined by the inv_uart_state_t enum
  */
 inv_uart_state_t inv_uart_rx_get_state(inv_uart_num_t uart);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __INV_UART_H__
 
