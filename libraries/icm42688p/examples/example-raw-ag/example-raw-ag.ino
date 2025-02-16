@@ -59,7 +59,7 @@ int main(void)
     // Initialize the UVOS board hardware
     hw.Init();
 
-    int str_len = sprintf(buf, "Initializing Example SelfTest...\n");
+    int str_len = sprintf(buf, "Initializing Example RawAccGyro...\n");
     uart.BlockingTransmit((uint8_t*)buf, str_len);
 
     // Create Invn serial spi interface
