@@ -27,26 +27,11 @@
 extern "C" {
 #endif
 
-// #include "uart.h"
 #include "Invn/Drivers/Icm426xx/Icm426xxTransport.h"
 
 #ifndef TO_MASK
 #define TO_MASK(a) (1U << (unsigned)(a))
 #endif
-
-/** @brief define all supported board revisions types*/
-// #define SM_REVB_DB 0
-// #define SM_REVB_OB 1
-// #define SM_REVG    2
-
-// void config_uart(inv_uart_num_t log_uart_id);
-// void config_command_uart(inv_uart_num_t cmd_uart_id);
-
-/** @brief I3C context definition
- */
-// typedef struct {
-// 	int (*idd_io_hal_i3c_detect_soft_reset)(uint8_t, const uint8_t *);
-// } idd_io_hal_i3c_context_t;
 
 void inv_io_hal_board_init(void);
 /* /!\ When used, the below function be should called before inv_io_hal_board_init */
@@ -55,10 +40,6 @@ int  inv_io_hal_init(struct inv_icm426xx_serif* serif);
 int  inv_io_hal_configure(struct inv_icm426xx_serif* serif);
 int  inv_io_hal_read_reg(struct inv_icm426xx_serif* serif, uint8_t reg, uint8_t* rbuffer, uint32_t rlen);
 int  inv_io_hal_write_reg(struct inv_icm426xx_serif* serif, uint8_t reg, const uint8_t* wbuffer, uint32_t wlen);
-
-// int akm_io_hal_init(void *serif);
-// int akm_io_hal_read_reg(void *serif, uint8_t reg, uint8_t *rbuffer, uint32_t rlen);
-// int akm_io_hal_write_reg(void *serif, uint8_t reg, const uint8_t *wbuffer, uint32_t wlen);
 
 #ifdef __cplusplus
 }
