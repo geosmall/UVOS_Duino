@@ -157,24 +157,3 @@ void msg_printer(int level, const char *str, va_list ap)
 
 	inv_uart_mngr_puts(LOG_UART_ID, out_str, (unsigned short)idx);
 }
-
-/* --------------------------------------------------------------------------------------
- *  Extern functions definition
- * -------------------------------------------------------------------------------------- */
-
-/*
- * Icm426xx driver needs to get time in us. Let's give its implementation here.
- */
-// uint64_t inv_icm426xx_get_time_us(void)
-// {
-// 	return inv_timer_get_counter(TIMEBASE_TIMER);
-// }
-
-/*
- * Icm426xx driver needs a sleep feature from external device. Thus inv_icm426xx_sleep_us
- * is defined as extern symbol in driver. Let's give its implementation here.
- */
-// void inv_icm426xx_sleep_us(uint32_t us)
-// {
-// 	inv_delay_us(us);
-// }

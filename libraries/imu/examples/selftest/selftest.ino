@@ -61,11 +61,6 @@ int main(void)
     int str_len = sprintf(buf, "Initializing Example SelfTest...\n");
     uart.BlockingTransmit((uint8_t*)buf, str_len);
 
-    // Create Invn serial spi interface
-    inv_icm426xx_serif spi_if = {
-        .context = &spi_handle,
-    };
-
     // Give ICM-42688P some time to stabilize
     System::Delay(5);
 

@@ -88,23 +88,23 @@ int inv_io_hal_init(struct inv_icm426xx_serif* serif)
 //     }
 // }
 
-int inv_io_hal_read_reg(struct inv_icm426xx_serif *serif, uint8_t reg, uint8_t *rbuffer, uint32_t rlen)
-{
-    return inv_spi_bus_read_registers(reg, (uint8_t)rlen, rbuffer);
-}
+// int inv_io_hal_read_reg(struct inv_icm426xx_serif *serif, uint8_t reg, uint8_t *rbuffer, uint32_t rlen)
+// {
+//     return inv_spi_bus_read_registers(reg, (uint8_t)rlen, rbuffer);
+// }
 
-int inv_io_hal_write_reg(struct inv_icm426xx_serif * serif, uint8_t reg, const uint8_t* wbuffer, uint32_t wlen)
-{
-    int rc;
+// int inv_io_hal_write_reg(struct inv_icm426xx_serif * serif, uint8_t reg, const uint8_t* wbuffer, uint32_t wlen)
+// {
+//     int rc;
 
-    for (uint32_t i = 0; i < wlen; i++) {
-        rc = inv_spi_bus_write_register(reg + i, &wbuffer[i]);
-        if (rc) {
-            return rc;
-        }
-    }
-    return 0;
-}
+//     for (uint32_t i = 0; i < wlen; i++) {
+//         rc = inv_spi_bus_write_register(reg + i, &wbuffer[i]);
+//         if (rc) {
+//             return rc;
+//         }
+//     }
+//     return 0;
+// }
 
 // void inv_spi_chip_select_setup_delay(void)
 // {
@@ -132,40 +132,40 @@ int inv_io_hal_write_reg(struct inv_icm426xx_serif * serif, uint8_t reg, const u
 //     csPin_.Write(GPIO_PIN_SET);
 // }
 
-uint8_t inv_spi_transfer_byte(uint8_t txByte)
-{
-    uint8_t value = 0xFF;
-    if (spi_handle.BlockingTransferLL(&txByte, &value, 1) != SpiHandle::Result::OK) {
-        return 0xFF;
-    }
-    return value;
-}
+// uint8_t inv_spi_transfer_byte(uint8_t txByte)
+// {
+//     uint8_t value = 0xFF;
+//     if (spi_handle.BlockingTransferLL(&txByte, &value, 1) != SpiHandle::Result::OK) {
+//         return 0xFF;
+//     }
+//     return value;
+// }
 
-int inv_spi_bus_read_registers(uint8_t addr, uint8_t count, uint8_t* data)
-{
-    inv_spi_bus_select_device();
+// int inv_spi_bus_read_registers(uint8_t addr, uint8_t count, uint8_t* data)
+// {
+//     inv_spi_bus_select_device();
 
-    inv_spi_transfer_byte((addr | 0x80));
-    for (uint8_t i = 0; i < count; i++) {
-        spi_handle.BlockingTransferLL(NULL, &data[i], 1);
-    }
+//     inv_spi_transfer_byte((addr | 0x80));
+//     for (uint8_t i = 0; i < count; i++) {
+//         spi_handle.BlockingTransferLL(NULL, &data[i], 1);
+//     }
 
-    inv_spi_bus_deselect_device();
+//     inv_spi_bus_deselect_device();
 
-    return 0;
-}
+//     return 0;
+// }
 
-int inv_spi_bus_write_register(uint8_t reg, const uint8_t* data)
-{
-    inv_spi_bus_select_device();
+// int inv_spi_bus_write_register(uint8_t reg, const uint8_t* data)
+// {
+//     inv_spi_bus_select_device();
 
-    inv_spi_transfer_byte(reg);
-    inv_spi_transfer_byte(*data);
+//     inv_spi_transfer_byte(reg);
+//     inv_spi_transfer_byte(*data);
 
-    inv_spi_bus_deselect_device();
+//     inv_spi_bus_deselect_device();
 
-    return 0;
-}
+//     return 0;
+// }
 
 #ifdef __cplusplus
 }
