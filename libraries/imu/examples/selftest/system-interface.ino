@@ -12,14 +12,14 @@ GPIO csPin_;
 extern "C" {
 #endif
 
-void inv_board_hal_init(void);
+// void inv_board_hal_init(void);
 // void inv_spi_chip_select_setup_delay(void);
 // void inv_spi_chip_select_hold_time(void);
 // void inv_spi_bus_select_device(void);
 // void inv_spi_bus_deselect_device(void);
-uint8_t inv_spi_transfer_byte(uint8_t txByte);
-int inv_spi_bus_read_registers(uint8_t addr, uint8_t count, uint8_t* data);
-int inv_spi_bus_write_register(uint8_t reg, const uint8_t* data);
+// uint8_t inv_spi_transfer_byte(uint8_t txByte);
+// int inv_spi_bus_read_registers(uint8_t addr, uint8_t count, uint8_t* data);
+// int inv_spi_bus_write_register(uint8_t reg, const uint8_t* data);
 
 /******************************************************/
 /* Low-level serial interface function implementation */

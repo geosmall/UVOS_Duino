@@ -61,7 +61,10 @@ int SetupInvDevice(struct inv_icm426xx_serif *icm_serif)
 	if (rc != INV_ERROR_SUCCESS) {
 		INV_MSG(INV_MSG_LEVEL_ERROR, "!!! ERROR : failed to read Icm426xx whoami value.");
 		return rc;
+	} else {
+		INV_MSG(INV_MSG_LEVEL_INFO, "Icm426xx whoami value PASS");
 	}
+
 
 	if (who_am_i != ICM_WHOAMI) {
 		INV_MSG(INV_MSG_LEVEL_ERROR, "!!! ERROR :  bad WHOAMI value. Got 0x%02x (expected: 0x%02x)",

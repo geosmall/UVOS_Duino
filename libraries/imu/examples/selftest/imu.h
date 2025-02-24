@@ -138,7 +138,9 @@ private:
     /**
      * @brief IMU chip select pin (using software driven CS).
      */
-    uvs_gpio_pin csPin_;
+    GPIO csPin_;
+
+    // uvs_gpio_pin uvs_cs_pin_;
     GPIO_TypeDef* p_cs_port_;
     uint16_t cs_pin_;
 
