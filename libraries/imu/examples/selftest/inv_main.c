@@ -133,27 +133,27 @@ static void check_rc(int rc, const char *msg_context)
 /*
  * Printer function for message facility
  */
-void msg_printer(int level, const char *str, va_list ap)
-{
-    static char out_str[256]; /* static to limit stack usage */
-    unsigned idx = 0;
-	const char *s[INV_MSG_LEVEL_MAX] = {
-		"", // INV_MSG_LEVEL_OFF
-		"[E] ", // INV_MSG_LEVEL_ERROR
-		"[W] ", // INV_MSG_LEVEL_WARNING
-		"[I] ", // INV_MSG_LEVEL_INFO
-		"[V] ", // INV_MSG_LEVEL_VERBOSE
-		"[D] ", // INV_MSG_LEVEL_DEBUG
-	};
-	idx += snprintf(&out_str[idx], sizeof(out_str) - idx, "%s", s[level]);
-	if (idx >= (sizeof(out_str)))
-		return;
-	idx += vsnprintf(&out_str[idx], sizeof(out_str) - idx, str, ap);
-	if (idx >= (sizeof(out_str)))
-		return;
-	idx += snprintf(&out_str[idx], sizeof(out_str) - idx, "\r\n");
-	if (idx >= (sizeof(out_str)))
-		return;
+// void msg_printer(int level, const char *str, va_list ap)
+// {
+//     static char out_str[256]; /* static to limit stack usage */
+//     unsigned idx = 0;
+// 	const char *s[INV_MSG_LEVEL_MAX] = {
+// 		"", // INV_MSG_LEVEL_OFF
+// 		"[E] ", // INV_MSG_LEVEL_ERROR
+// 		"[W] ", // INV_MSG_LEVEL_WARNING
+// 		"[I] ", // INV_MSG_LEVEL_INFO
+// 		"[V] ", // INV_MSG_LEVEL_VERBOSE
+// 		"[D] ", // INV_MSG_LEVEL_DEBUG
+// 	};
+// 	idx += snprintf(&out_str[idx], sizeof(out_str) - idx, "%s", s[level]);
+// 	if (idx >= (sizeof(out_str)))
+// 		return;
+// 	idx += vsnprintf(&out_str[idx], sizeof(out_str) - idx, str, ap);
+// 	if (idx >= (sizeof(out_str)))
+// 		return;
+// 	idx += snprintf(&out_str[idx], sizeof(out_str) - idx, "\r\n");
+// 	if (idx >= (sizeof(out_str)))
+// 		return;
 
-	inv_uart_mngr_puts(LOG_UART_ID, out_str, (unsigned short)idx);
-}
+// 	inv_uart_mngr_puts(LOG_UART_ID, out_str, (unsigned short)idx);
+// }

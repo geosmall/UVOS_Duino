@@ -3,13 +3,20 @@
 
 #include "inv_main.h"
 #include "inv_uart.h"
+
+extern "C" {
 #include "Invn/EmbUtils/Message.h"
+#include "Invn/EmbUtils/ErrorHelper.h"
+#include "example-selftest.h"
+}
 
 #include <cstring>
 
 // Use the uvos namespace to prevent having to type
 // uvos:: before all libuvos functions
 using namespace uvos;
+
+#define MSG_LEVEL INV_MSG_LEVEL_DEBUG
 
 // Uncomment to use software driven NSS
 #define USE_SOFT_NSS
@@ -71,8 +78,12 @@ int main(void)
     // Initialize the uart peripheral and start the DMA transmit
     uart.Init(uart_conf);
 
-    int str_len = sprintf(buf, "Initializing Example SelfTest...\n");
-    uart.BlockingTransmit((uint8_t*)buf, str_len);
+    /* Setup message facility to see internal traces from FW */
+    INV_MSG_SETUP(MSG_LEVEL, msg_printer);
+
+    INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
+    INV_MSG(INV_MSG_LEVEL_INFO, "#   Example Self-Test   #");
+    INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
 
     SpiHandle::Config spi_conf;   // Structure to configure the IMU SPI instance
 
@@ -106,19 +117,51 @@ int main(void)
     IMU imu(spi_handle);
 
     if (imu.Init() != INV_ERROR_SUCCESS) {
-        str_len = sprintf(buf, "!!! ERROR : failed to initialize Icm426xx.\n");
+        INV_MSG(INV_MSG_LEVEL_INFO, "!!! ERROR : failed to initialize Icm426xx.");
     } else {
-        str_len = sprintf(buf, "Initialize Icm426xx PASS\n");
+        INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx PASS");
     }
-    uart.BlockingTransmit((uint8_t*)buf, str_len);
 
-    // Call the main function of the Invensense example
-    inv_main();
+    // Perform Self-Test
+    int rc = 0;
+    int st_result = 0;
+    int raw_bias[6] = {0};
+    rc = imu.RunSelfTest(&st_result, raw_bias);
+
+    if (rc < 0) {
+        INV_MSG(INV_MSG_LEVEL_ERROR, "An error occured while running selftest");
+    } else {
+        /* Check for GYR success (1 << 0) and ACC success (1 << 1) */
+        if (st_result & 0x1) {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Gyro Selftest PASS");
+        } else {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Gyro Selftest FAIL");
+        }
+
+        if (st_result & 0x2) {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Accel Selftest PASS");
+        } else {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Accel Selftest FAIL");
+        }
+
+        INV_MSG(INV_MSG_LEVEL_INFO, "GYR LN bias (dps): x=%f, y=%f, z=%f",
+                (float)(raw_bias[0]) / (float)(1 << 16), (float)(raw_bias[1]) / (float)(1 << 16),
+                (float)(raw_bias[2]) / (float)(1 << 16));
+        INV_MSG(INV_MSG_LEVEL_INFO, "ACC LN bias (g): x=%f, y=%f, z=%f",
+                (float)(raw_bias[0 + 3] / (float)(1 << 16)),
+                (float)(raw_bias[1 + 3] / (float)(1 << 16)),
+                (float)(raw_bias[2 + 3] / (float)(1 << 16)));
+    }
 
     // Infinite loop
     while(1) {
         // Do nothing
     }
+}
+
+void hw_init()
+{
+
 }
 
 /* --------------------------------------------------------------------------------------
@@ -128,6 +171,43 @@ int main(void)
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Printer function for message facility */
+void msg_printer(int level, const char *str, va_list ap)
+{
+    static char out_str[256]; /* static to limit stack usage */
+    unsigned idx = 0;
+    const char *s[INV_MSG_LEVEL_MAX] = {
+        "", // INV_MSG_LEVEL_OFF
+        "[E] ", // INV_MSG_LEVEL_ERROR
+        "[W] ", // INV_MSG_LEVEL_WARNING
+        "[I] ", // INV_MSG_LEVEL_INFO
+        "[V] ", // INV_MSG_LEVEL_VERBOSE
+        "[D] ", // INV_MSG_LEVEL_DEBUG
+    };
+    idx += snprintf(&out_str[idx], sizeof(out_str) - idx, "%s", s[level]);
+    if (idx >= (sizeof(out_str)))
+        return;
+    idx += vsnprintf(&out_str[idx], sizeof(out_str) - idx, str, ap);
+    if (idx >= (sizeof(out_str)))
+        return;
+    idx += snprintf(&out_str[idx], sizeof(out_str) - idx, "\r\n");
+    if (idx >= (sizeof(out_str)))
+        return;
+
+    // inv_uart_mngr_puts(LOG_UART_ID, out_str, (unsigned short)idx);
+    uart.BlockingTransmit((uint8_t*)out_str, idx);
+}
+
+/* Helper function to check RC value and block programm execution */
+void check_rc(int rc, const char *msg_context)
+{
+    if (rc < 0) {
+        INV_MSG(INV_MSG_LEVEL_ERROR, "%s: error %d (%s)\r\n", msg_context, rc, inv_error_str(rc));
+        while (1)
+            ;
+    }
+}
 
 /* This variable contains the number of nested calls to disable_irq */
 static uint32_t sDisableIntCount = 0;

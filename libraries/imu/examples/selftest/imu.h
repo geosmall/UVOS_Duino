@@ -99,6 +99,14 @@ public:
     int SetGyroFSR(ICM426XX_GYRO_CONFIG0_FS_SEL_t fsr);
 
     /**
+     * @brief Perform IMU self-test.
+     * @param result (ACCEL_SUCCESS<<1 | GYRO_SUCCESS), 3 means both passed.
+     * @return 0 on success, negative error code on failure.
+     */
+	// int RunSelfTest(int* result);
+    int RunSelfTest(int* result, int* bias = nullptr);
+
+    /**
      * @brief Read sensor data directly from registers (bypassing FIFO).
      * @return 0 on success, negative error code on failure.
      */

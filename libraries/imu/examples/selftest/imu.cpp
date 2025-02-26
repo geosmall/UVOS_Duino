@@ -353,6 +353,22 @@ int IMU::SetGyroFSR(ICM426XX_GYRO_CONFIG0_FS_SEL_t fsr)
 }
 
 //------------------------------------------------------------------------------
+// IMU self test and bias retrieval function
+//------------------------------------------------------------------------------
+int IMU::RunSelfTest(int* result, int* bias)
+{
+    int rc = 0;
+
+    rc = inv_icm426xx_run_selftest(&driver_, result);
+
+    if (rc == 0 && bias != nullptr) {
+        rc = inv_icm426xx_get_st_bias(&driver_, bias);
+    }
+
+    return rc;
+}
+
+//------------------------------------------------------------------------------
 // Read data from registers or FIFO
 //------------------------------------------------------------------------------
 int IMU::ReadDataFromRegisters()
