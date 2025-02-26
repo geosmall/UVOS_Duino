@@ -1,13 +1,9 @@
 #include "uvos_brd.h"
 #include "imu.h"
 
-#include "inv_main.h"
-#include "inv_uart.h"
-
 extern "C" {
 #include "Invn/EmbUtils/Message.h"
 #include "Invn/EmbUtils/ErrorHelper.h"
-#include "example-selftest.h"
 }
 
 #include <cstring>
@@ -68,15 +64,7 @@ int main(void)
     // Initialize the UVOS board hardware
     hw.Init();
 
-    // Configure the Uart Peripheral to print out results
-    UartHandler::Config uart_conf;
-    uart_conf.periph        = UART_NUM;
-    uart_conf.mode          = UartHandler::Config::Mode::TX;
-    uart_conf.pin_config.tx = TX_PIN;
-    uart_conf.pin_config.rx = RX_PIN;
-
-    // Initialize the uart peripheral and start the DMA transmit
-    uart.Init(uart_conf);
+    hw_configure();
 
     /* Setup message facility to see internal traces from FW */
     INV_MSG_SETUP(MSG_LEVEL, msg_printer);
@@ -84,31 +72,6 @@ int main(void)
     INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
     INV_MSG(INV_MSG_LEVEL_INFO, "#   Example Self-Test   #");
     INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
-
-    SpiHandle::Config spi_conf;   // Structure to configure the IMU SPI instance
-
-    spi_conf.periph = SpiHandle::Config::Peripheral::SPI_1;
-    spi_conf.mode = SpiHandle::Config::Mode::MASTER;
-    spi_conf.direction = SpiHandle::Config::Direction::TWO_LINES;
-    spi_conf.clock_polarity = SpiHandle::Config::ClockPolarity::HIGH;
-    spi_conf.clock_phase = SpiHandle::Config::ClockPhase::TWO_EDGE;
-
-#ifdef USE_SOFT_NSS
-    spi_conf.nss = SpiHandle::Config::NSS::SOFT;
-#else
-    spi_conf.nss = SpiHandle::Config::NSS::HARD_OUTPUT;
-#endif /* USE_SOFT_NSS */
-
-    spi_conf.pin_config.nss = CS_PIN;
-    spi_conf.pin_config.sclk = SCLK_PIN;
-    spi_conf.pin_config.miso = MISO_PIN;
-    spi_conf.pin_config.mosi = MOSI_PIN;
-
-    // spi_conf.baud_prescaler = SpiHandle::Config::BaudPrescaler::PS_32;
-    spi_handle.GetBaudHz(spi_conf.periph, (spi_freq_mhz * 1'000'000), spi_conf.baud_prescaler);
-
-    // Initialize the IMU SPI instance
-    spi_handle.Init(spi_conf);
 
     // Give ICM-42688P some time to stabilize
     System::Delay(5);
@@ -159,9 +122,42 @@ int main(void)
     }
 }
 
-void hw_init()
+void hw_configure()
 {
+    // Configure the Uart Peripheral to print out results
+    UartHandler::Config uart_conf;
+    uart_conf.periph        = UART_NUM;
+    uart_conf.mode          = UartHandler::Config::Mode::TX;
+    uart_conf.pin_config.tx = TX_PIN;
+    uart_conf.pin_config.rx = RX_PIN;
 
+    // Initialize the uart peripheral and start the DMA transmit
+    uart.Init(uart_conf);
+
+    SpiHandle::Config spi_conf;   // Structure to configure the IMU SPI instance
+
+    spi_conf.periph = SpiHandle::Config::Peripheral::SPI_1;
+    spi_conf.mode = SpiHandle::Config::Mode::MASTER;
+    spi_conf.direction = SpiHandle::Config::Direction::TWO_LINES;
+    spi_conf.clock_polarity = SpiHandle::Config::ClockPolarity::HIGH;
+    spi_conf.clock_phase = SpiHandle::Config::ClockPhase::TWO_EDGE;
+
+#ifdef USE_SOFT_NSS
+    spi_conf.nss = SpiHandle::Config::NSS::SOFT;
+#else
+    spi_conf.nss = SpiHandle::Config::NSS::HARD_OUTPUT;
+#endif /* USE_SOFT_NSS */
+
+    spi_conf.pin_config.nss = CS_PIN;
+    spi_conf.pin_config.sclk = SCLK_PIN;
+    spi_conf.pin_config.miso = MISO_PIN;
+    spi_conf.pin_config.mosi = MOSI_PIN;
+
+    // spi_conf.baud_prescaler = SpiHandle::Config::BaudPrescaler::PS_32;
+    spi_handle.GetBaudHz(spi_conf.periph, (spi_freq_mhz * 1'000'000), spi_conf.baud_prescaler);
+
+    // Initialize the IMU SPI instance
+    spi_handle.Init(spi_conf);
 }
 
 /* --------------------------------------------------------------------------------------
@@ -207,44 +203,6 @@ void check_rc(int rc, const char *msg_context)
         while (1)
             ;
     }
-}
-
-/* This variable contains the number of nested calls to disable_irq */
-static uint32_t sDisableIntCount = 0;
-
-void inv_disable_irq(void)
-{
-    if(sDisableIntCount == 0) {
-        __disable_irq();
-    }
-    sDisableIntCount ++;
-}
-
-void inv_enable_irq(void)
-{
-    sDisableIntCount --;
-    if(sDisableIntCount == 0) {
-        __enable_irq();
-    }
-}
-
-int inv_uart_mngr_puts(inv_uart_num_t uart_num, const char* s, unsigned short l)
-{
-    if (uart.BlockingTransmit((uint8_t*)s, l) == UartHandler::Result::ERR) {
-        return 0;
-    } else {
-        return 1;
-    }
-}
-
-uint64_t inv_timer_get_counter(unsigned timer_num)
-{
-    return System::GetUs();
-}
-
-void inv_delay_us(uint32_t us)
-{
-    System::DelayUs(us);
 }
 
 #ifdef __cplusplus

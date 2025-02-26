@@ -103,7 +103,6 @@ public:
      * @param result (ACCEL_SUCCESS<<1 | GYRO_SUCCESS), 3 means both passed.
      * @return 0 on success, negative error code on failure.
      */
-	// int RunSelfTest(int* result);
     int RunSelfTest(int* result, int* bias = nullptr);
 
     /**
