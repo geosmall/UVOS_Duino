@@ -151,6 +151,15 @@ private:
     GPIO_TypeDef* p_cs_port_;
     uint16_t cs_pin_;
 
+    // CS->CLK delay, MPU6000 - 8ns
+    // CS->CLK delay, ICM42688P - 39ns
+    static constexpr uint32_t SETUP_TIME_NS  = 39;   // For ICM42688P
+    static constexpr uint32_t HOLD_TIME_NS   = 18;   // For ICM42688P
+
+    void SelectDevice();
+
+    void DeselectDevice();
+
     /**
      * @brief The TDK driver calls this function when new sensor data arrives.
      */

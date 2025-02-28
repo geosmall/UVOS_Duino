@@ -2,9 +2,8 @@
 
 // CS->CLK delay, MPU6000 - 8ns
 // CS->CLK delay, ICM42688P - 39ns
-constexpr uint32_t SETUP_TIME_NS  = 39;   // For ICM42688P
-constexpr uint32_t HOLD_TIME_NS   = 18;   // For ICM42688P
-constexpr uint8_t  READ_BIT_MASK  = 0x80; // High bit for read
+constexpr uint32_t SETUP_TIME_NS_LOCAL  = 39;   // For ICM42688P
+constexpr uint32_t HOLD_TIME_NS_LOCAL   = 18;   // For ICM42688P
 
 using namespace uvos;
 
@@ -61,12 +60,12 @@ void inv_icm426xx_sleep_us(uint32_t us)
 
 static void inv_spi_chip_select_setup_delay(void)
 {
-    System::DelayNs(SETUP_TIME_NS);
+    System::DelayNs(SETUP_TIME_NS_LOCAL);
 }
 
 static void inv_spi_chip_select_hold_time(void)
 {
-    System::DelayNs(HOLD_TIME_NS);
+    System::DelayNs(HOLD_TIME_NS_LOCAL);
 }
 
 static void inv_spi_bus_select_device(void)
@@ -140,13 +139,13 @@ static inline void spiSelect(GPIO_TypeDef *CS_Port, uint16_t CS_Pin)
     HAL_GPIO_WritePin(CS_Port, CS_Pin, GPIO_PIN_RESET);
 
     // Min setup delay for IMU CS per datasheet
-    System::DelayNs(SETUP_TIME_NS);
+    System::DelayNs(SETUP_TIME_NS_LOCAL);
 }
 
 static inline void spiDeselect(GPIO_TypeDef *CS_Port, uint16_t CS_Pin)
 {
     // Min hold time for IMU CS deselect per datasheet
-    System::DelayNs(HOLD_TIME_NS);
+    System::DelayNs(HOLD_TIME_NS_LOCAL);
 
     // Drive CS high
     HAL_GPIO_WritePin(CS_Port, CS_Pin, GPIO_PIN_SET);
@@ -405,8 +404,8 @@ void IMU::DriverEventCb(inv_icm426xx_sensor_event_t *event)
 
 /**
  * @brief  Called when TDK code needs to read 'len' bytes from 'reg'.
- *         Must match signature: int foo(struct inv_icm426xx_serif *serif, uint8_t reg,
- *                                       uint8_t *buf, uint32_t len);
+ *         Must match signature:
+ *         int (*read_reg)(struct inv_icm426xx_serif *serif, uint8_t reg, uint8_t *buf, uint32_t len)
  */
 int IMU::spiReadRegs(struct inv_icm426xx_serif *serif,
                      uint8_t                    reg,
@@ -414,45 +413,105 @@ int IMU::spiReadRegs(struct inv_icm426xx_serif *serif,
                      uint32_t                   len)
 {
     if (!serif || !buf) {
-        return INV_ERROR_BAD_ARG;
+        return -1;
     }
 
     IMU *obj = reinterpret_cast<IMU*>(serif->context);
     if (!obj) {
-        return INV_ERROR_BAD_ARG;
+        return -1;
     }
 
-    return spiReadBytes(obj->spi_,
-                        obj->p_cs_port_,
-                        obj->cs_pin_,
-                        reg,
-                        buf, len);
+    // Enforce the maximum byte read
+    if (len > IMU::IMU_MAX_READ) {
+        return -1;
+    }
+
+    // Set the high (read) bit of the register address
+    reg |= 0x80;
+
+    obj->SelectDevice();
+
+    // First send the register address with high bit set
+    if (obj->spi_.BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK)
+    {
+        return -1;
+    }
+
+    // Read 'len' bytes
+    if (obj->spi_.BlockingTransferLL(nullptr, const_cast<uint8_t*>(buf), len) != SpiHandle::Result::OK)
+    {
+        return -1;
+    }
+
+    obj->DeselectDevice();
+
+    return 0;
 }
 
 /**
  * @brief  Called when TDK code needs to write 'len' bytes to 'reg'.
- *         Must match signature: int foo(struct inv_icm426xx_serif *serif, uint8_t reg,
- *                                       const uint8_t *buf, uint32_t len);
+ *         Must match signature:
+ *         int (*write_reg)(struct inv_icm426xx_serif *serif, uint8_t reg, const uint8_t *buf, uint32_t len)
  */
 int IMU::spiWriteRegs(struct inv_icm426xx_serif * serif,
                       uint8_t                     reg,
                       const uint8_t*              buf,
                       uint32_t                    len)
 {
-    if (!serif || !buf) {
-        return INV_ERROR_BAD_ARG;
+    if (!serif || !buf)
+    {
+        return -1;
     }
 
+    // Retrieve pointer to IMU object from serial interface context
     IMU* obj = reinterpret_cast<IMU*>(serif->context);
-    if (!obj) {
-        return INV_ERROR_BAD_ARG;
+    if (!obj)
+    {
+        return -1;
     }
 
-    return spiWriteBytes(obj->spi_,
-                         obj->p_cs_port_,
-                         obj->cs_pin_,
-                         reg,
-                         const_cast<uint8_t*>(buf), len);
+    // Enforce the maximum byte write
+    if (len > IMU::IMU_MAX_WRITE)
+    {
+        return -1;
+    }
+
+    // Verify Bit7 = 0 for write
+    reg &= 0x7F;
+
+    obj->SelectDevice();
+
+    // First send the register address
+    if (obj->spi_.BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK)
+    {
+        return -1;
+    }
+
+    // Write 'len' bytes
+    if (obj->spi_.BlockingTransferLL(const_cast<uint8_t*>(buf), nullptr, len)  != SpiHandle::Result::OK)
+    {
+        return -1;
+    }
+
+    obj->DeselectDevice();
+
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Private SPI functions
+//------------------------------------------------------------------------------
+
+void IMU::SelectDevice()
+{
+    csPin_.Write(GPIO_PIN_RESET);
+    System::DelayNs(SETUP_TIME_NS);
+}
+
+void IMU::DeselectDevice()
+{
+    System::DelayNs(HOLD_TIME_NS);
+    csPin_local.Write(GPIO_PIN_SET);
 }
 
 } // namespace uvos
