@@ -36,16 +36,13 @@ IMU::IMU(SpiHandle &spi) : spi_(spi)
     // Convert to GPIO::Pin
     Pin initPin(static_cast<uvos::GPIOPort>(nss_pin.port), nss_pin.pin);
 
+    // Configure CS pin for output w/ pullup
     GPIO::Config config;
     config.pin = initPin;
     config.mode = uvos::GPIO::Mode::OUTPUT;
-    config.pull = uvos::GPIO::Pull::NOPULL;
-    config.speed = uvos::GPIO::Speed::LOW;
+    config.pull = uvos::GPIO::Pull::PULLUP;
+    config.speed = uvos::GPIO::Speed::MEDIUM;
     csPin_.Init(config);
-
-    // Save the CS pin port and pin number for quick access
-    p_cs_port_ = uvs_hal_map_get_port(&uvs_cs_pin);
-    cs_pin_ = uvs_hal_map_get_pin(&uvs_cs_pin);
 }
 
 //------------------------------------------------------------------------------
@@ -66,34 +63,26 @@ int IMU::Init()
     imu_serif.max_read  = IMU_MAX_READ;
     imu_serif.max_write = IMU_MAX_WRITE;
 
-    // Indicate SPI 4-wire interface
+    // Config TDK driver for SPI 4-wire interface
     imu_serif.serif_type = ICM426XX_UI_SPI4;
 
     // Give IMU some time to stabilize
     System::Delay(5);
 
-    /* Initialize device */
-    // INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx");
-
-    // TDK driver will set up internal data, check device IDs, etc.
+    // Initialize device
     rc = inv_icm426xx_init(&driver_, &imu_serif, &IMU::DriverEventCb);
     if (rc != INV_ERROR_SUCCESS) {
-        // INV_MSG(INV_MSG_LEVEL_ERROR, "!!! ERROR : failed to initialize Icm426xx.");
         return rc;
     }
 
-    /* Check WHOAMI */
-    // INV_MSG(INV_MSG_LEVEL_INFO, "Check Icm426xx whoami value");
-
+    // Retrieve device ID
     rc = inv_icm426xx_get_who_am_i(&driver_, &who_am_i);
     if (rc != INV_ERROR_SUCCESS) {
-        // INV_MSG(INV_MSG_LEVEL_ERROR, "!!! ERROR : failed to read Icm426xx whoami value.");
         return rc;
     }
 
+    // Verify expected ID
     if (who_am_i != ICM_WHOAMI) {
-        // INV_MSG(INV_MSG_LEVEL_ERROR, "!!! ERROR :  bad WHOAMI value. Got 0x%02x (expected: 0x%02x)",
-                // who_am_i, ICM_WHOAMI);
         return INV_ERROR;
     }
 
@@ -160,14 +149,14 @@ int IMU::SetGyroFSR(ICM426XX_GYRO_CONFIG0_FS_SEL_t fsr)
 //------------------------------------------------------------------------------
 // IMU self test and bias retrieval function
 //------------------------------------------------------------------------------
-int IMU::RunSelfTest(int* result, int* bias)
+int IMU::RunSelfTest(int* result, std::array<int, 6>* bias)
 {
     int rc = 0;
 
     rc = inv_icm426xx_run_selftest(&driver_, result);
 
     if (rc == 0 && bias != nullptr) {
-        rc = inv_icm426xx_get_st_bias(&driver_, bias);
+        rc = inv_icm426xx_get_st_bias(&driver_, bias->data());
     }
 
     return rc;

@@ -88,8 +88,8 @@ int main(void)
     // Perform Self-Test
     int rc = 0;
     int st_result = 0;
-    int raw_bias[6] = {0};
-    rc = imu.RunSelfTest(&st_result, raw_bias);
+    std::array<int, 6> raw_bias = {0};
+    rc = imu.RunSelfTest(&st_result, &raw_bias);
 
     if (rc < 0) {
         INV_MSG(INV_MSG_LEVEL_ERROR, "An error occured while running selftest");

@@ -3,16 +3,12 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <array>
 #include "uvos.h"
 
 // TDK high-level driver API (includes Icm426xxTransport.h references)
 extern "C" {
 #include "icm42688p.h"
-
-void inv_spi_chip_select_setup_delay(void);
-void inv_spi_chip_select_hold_time(void);
-void inv_spi_bus_select_device(void);
-void inv_spi_bus_deselect_device(void);
 }
 
 // Use the uvos namespace to prevent having to type uvos:: before all calls
@@ -101,9 +97,11 @@ public:
     /**
      * @brief Perform IMU self-test.
      * @param result (ACCEL_SUCCESS<<1 | GYRO_SUCCESS), 3 means both passed.
+     * @param bias Optional array of 6 int, stores bias values (3 for accel, 3 for gyro).
      * @return 0 on success, negative error code on failure.
      */
-    int RunSelfTest(int* result, int* bias = nullptr);
+    // int RunSelfTest(int* result, int* bias = nullptr);
+    int RunSelfTest(int* result, std::array<int, 6>* bias = nullptr);
 
     /**
      * @brief Read sensor data directly from registers (bypassing FIFO).
@@ -146,10 +144,6 @@ private:
      * @brief IMU chip select pin (using software driven CS).
      */
     GPIO csPin_;
-
-    // uvs_gpio_pin uvs_cs_pin_;
-    GPIO_TypeDef* p_cs_port_;
-    uint16_t cs_pin_;
 
     // CS->CLK delay, MPU6000 - 8ns
     // CS->CLK delay, ICM42688P - 39ns
