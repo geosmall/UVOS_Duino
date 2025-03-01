@@ -10,11 +10,16 @@ using namespace uvos;
 namespace uvos {
 
 //------------------------------------------------------------------------------
-// External delay function used by TDK library
+// External time functions used by TDK library
 //------------------------------------------------------------------------------
 extern "C" void inv_icm426xx_sleep_us(uint32_t us)
 {
     System::DelayUs(us);    
+}
+
+extern "C" uint64_t inv_icm426xx_get_time_us(void)
+{
+    System::GetUs();
 }
 
 //------------------------------------------------------------------------------
@@ -71,6 +76,12 @@ int IMU::Init()
 
     // Initialize device
     rc = inv_icm426xx_init(&driver_, &imu_serif, &IMU::DriverEventCb);
+    if (rc != INV_ERROR_SUCCESS) {
+        return rc;
+    }
+
+    /* Disable fifo usage, data will be read from sensors registers*/
+    rc |= inv_icm426xx_configure_fifo(&driver_, INV_ICM426XX_FIFO_DISABLED);
     if (rc != INV_ERROR_SUCCESS) {
         return rc;
     }
@@ -158,6 +169,37 @@ int IMU::RunSelfTest(int* result, std::array<int, 6>* bias)
     if (rc == 0 && bias != nullptr) {
         rc = inv_icm426xx_get_st_bias(&driver_, bias->data());
     }
+
+    return rc;
+}
+
+int IMU::ConfigureInvDevice(bool is_low_noise_mode, ICM426XX_ACCEL_CONFIG0_FS_SEL_t acc_fsr_g,
+                           ICM426XX_GYRO_CONFIG0_FS_SEL_t gyr_fsr_dps,
+                           ICM426XX_ACCEL_CONFIG0_ODR_t acc_freq, ICM426XX_GYRO_CONFIG0_ODR_t gyr_freq)
+{
+    int rc = 0;
+
+    rc |= inv_icm426xx_enable_clkin_rtc(&driver_, 0);
+
+    rc |= inv_icm426xx_set_accel_fsr(&driver_, acc_fsr_g);
+    rc |= inv_icm426xx_set_gyro_fsr(&driver_, gyr_fsr_dps);
+
+    rc |= inv_icm426xx_set_accel_frequency(&driver_, acc_freq);
+    rc |= inv_icm426xx_set_gyro_frequency(&driver_, gyr_freq);
+
+    if (is_low_noise_mode)
+    {
+        rc |= inv_icm426xx_enable_accel_low_noise_mode(&driver_);
+    } else {
+        rc |= inv_icm426xx_enable_accel_low_power_mode(&driver_);
+    }
+
+    rc |= inv_icm426xx_enable_gyro_low_noise_mode(&driver_);
+
+    /* Wait Max of ICM426XX_GYR_STARTUP_TIME_US and ICM426XX_ACC_STARTUP_TIME_US*/
+    (ICM426XX_GYR_STARTUP_TIME_US > ICM426XX_ACC_STARTUP_TIME_US) ?
+    inv_icm426xx_sleep_us(ICM426XX_GYR_STARTUP_TIME_US) :
+    inv_icm426xx_sleep_us(ICM426XX_ACC_STARTUP_TIME_US);
 
     return rc;
 }

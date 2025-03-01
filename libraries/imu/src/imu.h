@@ -104,6 +104,19 @@ public:
     int RunSelfTest(int* result, std::array<int, 6>* bias = nullptr);
 
     /**
+     * @brief Configure the device for modes, scales and frequencies.
+     * @param is_low_noise_mode Enable low noise mode.
+     * @param acc_fsr_g Accelerometer full-scale range.
+     * @param gyr_fsr_dps Gyroscope full-scale range.
+     * @param acc_freq Accelerometer Output Data Rate.
+     * @param gyr_freq Gyroscope Output Data Rate.
+     * @return 0 on success, negative error code on failure. 
+     */
+    int ConfigureInvDevice(bool is_low_noise_mode, ICM426XX_ACCEL_CONFIG0_FS_SEL_t acc_fsr_g,
+                           ICM426XX_GYRO_CONFIG0_FS_SEL_t gyr_fsr_dps,
+                           ICM426XX_ACCEL_CONFIG0_ODR_t acc_freq, ICM426XX_GYRO_CONFIG0_ODR_t gyr_freq);
+
+    /**
      * @brief Read sensor data directly from registers (bypassing FIFO).
      * @return 0 on success, negative error code on failure.
      */
