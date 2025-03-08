@@ -23,6 +23,48 @@ namespace uvos {
 class IMU
 {
 public:
+
+    enum PwrState : bool
+    {
+        POWER_OFF = false,
+        POWER_ON = true,
+    };
+
+    enum AccelFS : uint8_t
+    {
+        gpm16 = ICM426XX_ACCEL_CONFIG0_FS_SEL_16g, // (default)
+        gpm8 = ICM426XX_ACCEL_CONFIG0_FS_SEL_8g,
+        gpm4 = ICM426XX_ACCEL_CONFIG0_FS_SEL_4g,
+        gpm2 = ICM426XX_ACCEL_CONFIG0_FS_SEL_2g
+    };
+
+    enum GyroFS : uint8_t
+    {
+        dps2000 = ICM426XX_GYRO_CONFIG0_FS_SEL_2000dps, // (default)
+        dps1000 = ICM426XX_GYRO_CONFIG0_FS_SEL_1000dps,
+        dps500 = ICM426XX_GYRO_CONFIG0_FS_SEL_500dps,
+        dps250 = ICM426XX_GYRO_CONFIG0_FS_SEL_250dps
+    };
+
+    enum AccelODR : uint8_t
+    {
+        accel_odr500 = ICM426XX_ACCEL_CONFIG0_ODR_500_HZ, /*!< 500 Hz (2 ms)*/
+        accel_odr1k = ICM426XX_ACCEL_CONFIG0_ODR_1_KHZ, /*!< 1 KHz (1 ms)*/
+        accel_odr2k = ICM426XX_ACCEL_CONFIG0_ODR_2_KHZ, /*!< 2 KHz (500 us)*/
+        accel_odr4k = ICM426XX_ACCEL_CONFIG0_ODR_4_KHZ, /*!< 4 KHz (250 us)*/
+        accel_odr8k = ICM426XX_ACCEL_CONFIG0_ODR_8_KHZ, /*!< 8 KHz (125 us)*/
+    };
+
+    enum GyroODR : uint8_t
+    {
+        gyr_odr500 = ICM426XX_GYRO_CONFIG0_ODR_500_HZ, /*!< 500 Hz (2 ms)*/
+        gyr_odr1k = ICM426XX_GYRO_CONFIG0_ODR_1_KHZ, /*!< 1 KHz (1 ms)*/
+        gyr_odr2k = ICM426XX_GYRO_CONFIG0_ODR_2_KHZ, /*!< 2 KHz (500 us)*/
+        gyr_odr4k = ICM426XX_GYRO_CONFIG0_ODR_4_KHZ, /*!< 4 KHz (250 us)*/
+        gyr_odr8k = ICM426XX_GYRO_CONFIG0_ODR_8_KHZ, /*!< 8 KHz (125 us)*/
+    };
+
+
     /**
      * @brief Construct an IMU object bound to a particular SpiHandle.
      *
@@ -37,10 +79,26 @@ public:
     int Init();
 
     /**
+     * @brief Configure the device full scales and output frequencies.
+     * @param acc_fsr_g Accelerometer full-scale range.
+     * @param gyr_fsr_dps Gyroscope full-scale range.
+     * @param acc_freq Accelerometer Output Data Rate.
+     * @param gyr_freq Gyroscope Output Data Rate.
+     * @return 0 on success, negative error code on failure. 
+     */
+    int ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_freq, GyroODR gyr_freq);
+
+    /**
      * @brief Perform a soft reset of the device.
      * @return 0 on success, negative error code on failure.
      */
     int Reset();
+
+    /**
+     * @brief Set power state of device on or off.
+     * @return 0 on success, negative error code on failure.
+     */
+    int SetPwrState(PwrState state);
 
     /**
      * @brief Enable accelerometer in Low Noise mode.
@@ -71,28 +129,40 @@ public:
      * @param frequency e.g. ICM426XX_ACCEL_CONFIG0_ODR_1_KHZ
      * @return 0 on success, negative error code on failure.
      */
-    int SetAccelODR(ICM426XX_ACCEL_CONFIG0_ODR_t frequency);
+    int SetAccelODR(AccelODR frequency);
 
     /**
      * @brief Configure the gyroscope Output Data Rate.
      * @param frequency e.g. ICM426XX_GYRO_CONFIG0_ODR_1_KHZ
      * @return 0 on success, negative error code on failure.
      */
-    int SetGyroODR(ICM426XX_GYRO_CONFIG0_ODR_t frequency);
+    int SetGyroODR(GyroODR frequency);
 
     /**
      * @brief Set the accelerometer full-scale range.
      * @param fsr e.g. ICM426XX_ACCEL_CONFIG0_FS_SEL_4g
      * @return 0 on success, negative error code on failure.
      */
-    int SetAccelFSR(ICM426XX_ACCEL_CONFIG0_FS_SEL_t fsr);
+    int SetAccelFSR(AccelFS fsr);
 
     /**
      * @brief Set the gyroscope full-scale range.
      * @param fsr e.g. ICM426XX_GYRO_CONFIG0_FS_SEL_2000dps
      * @return 0 on success, negative error code on failure.
      */
-    int SetGyroFSR(ICM426XX_GYRO_CONFIG0_FS_SEL_t fsr);
+    int SetGyroFSR(GyroFS fsr);
+
+    /**
+     * @brief Enable the data ready interrupt on INT1 pin.
+     * @return 0 on success, negative error code on failure.
+     */
+    int EnableDataReadyInt1();
+
+    /**
+     * @brief Enable the data ready interrupt on INT1 pin.
+     * @return 0 on success, negative error code on failure.
+     */
+    int DisableDataReadyInt1();
 
     /**
      * @brief Perform IMU self-test.
@@ -104,23 +174,17 @@ public:
     int RunSelfTest(int* result, std::array<int, 6>* bias = nullptr);
 
     /**
-     * @brief Configure the device for modes, scales and frequencies.
-     * @param is_low_noise_mode Enable low noise mode.
-     * @param acc_fsr_g Accelerometer full-scale range.
-     * @param gyr_fsr_dps Gyroscope full-scale range.
-     * @param acc_freq Accelerometer Output Data Rate.
-     * @param gyr_freq Gyroscope Output Data Rate.
-     * @return 0 on success, negative error code on failure. 
-     */
-    int ConfigureInvDevice(bool is_low_noise_mode, ICM426XX_ACCEL_CONFIG0_FS_SEL_t acc_fsr_g,
-                           ICM426XX_GYRO_CONFIG0_FS_SEL_t gyr_fsr_dps,
-                           ICM426XX_ACCEL_CONFIG0_ODR_t acc_freq, ICM426XX_GYRO_CONFIG0_ODR_t gyr_freq);
-
-    /**
-     * @brief Read sensor data directly from registers (bypassing FIFO).
+     * @brief Read sensor data from registers (bypassing FIFO).
      * @return 0 on success, negative error code on failure.
      */
     int ReadDataFromRegisters();
+
+    /**
+     * @brief Read Acc/Gyro data direct from registers (bypassing transport read for speed).
+     * @return 0 on success, negative error code on failure.
+     */
+    // int ReadIMU6(uint8_t *buf);
+    int ReadIMU6(std::array<uint8_t, 6>& buf);
 
     /**
      * @brief Read sensor data from FIFO.

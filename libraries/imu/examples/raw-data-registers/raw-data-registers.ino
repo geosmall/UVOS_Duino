@@ -13,14 +13,6 @@ extern "C" {
 // uvos:: before all libuvos functions
 using namespace uvos;
 
-/*
- * Set power mode flag
- * Set this flag as true to run example in low-noise mode.
- * Set this flag as false to run example in low-power mode.
- * Note : low-noise mode is not available with sensor data frequencies less than 12.5Hz.
- */
-#define IS_LOW_NOISE_MODE true
-
 #define MSG_LEVEL INV_MSG_LEVEL_DEBUG
 
 /*
@@ -137,9 +129,7 @@ int main(void)
 
     /* Configure IMU object */
     /* /!\ In this example, the data output frequency will be the faster  between Accel and Gyro odr */
-    rc = imu.ConfigureInvDevice((uint8_t)IS_LOW_NOISE_MODE, ICM426XX_ACCEL_CONFIG0_FS_SEL_4g,
-                                ICM426XX_GYRO_CONFIG0_FS_SEL_2000dps, ICM426XX_ACCEL_CONFIG0_ODR_1_KHZ,
-                                ICM426XX_GYRO_CONFIG0_ODR_1_KHZ);
+    rc = imu.ConfigureInvDevice(IMU::gpm4, IMU::dps2000, IMU::accel_odr1k, IMU::gyr_odr1k);
 
     RINGBUFFER_CLEAR(&timestamp_buffer);
 
