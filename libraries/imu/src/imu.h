@@ -11,6 +11,44 @@ extern "C" {
 #include "icm42688p.h"
 }
 
+/*
+ * ============================================================
+ * Accelerometer Sensitivity (LSB per g)
+ * ------------------------------------------------------------
+ * The scale factor depends on the full-scale range (FSR),
+ * which is configured in the ACCEL_CONFIG0 register.
+ *
+ *  |  Accel Range (g)  | Sensitivity (LSB/g)  |
+ *  |-------------------|----------------------|
+ *  |       ±16g        |         2048         |
+ *  |        ±8g        |         4096         |
+ *  |        ±4g        |         8192         |
+ *  |        ±2g        |        16384         |
+ *
+ * ============================================================
+ * Gyroscope Sensitivity (LSB per dps)
+ * ------------------------------------------------------------
+ * The scale factor depends on the full-scale range (FSR),
+ * which is configured in the GYRO_CONFIG0 register.
+ *
+ *  |  Gyro Range (dps) | Sensitivity (LSB/dps) |
+ *  |-------------------|-----------------------|
+ *  |      ±2000        |          164          |
+ *  |      ±1000        |          328          |
+ *  |      ±500         |          655          |
+ *  |      ±250         |         1311          |
+ *
+ * ============================================================
+ * Note:
+ * - The raw sensor output is a signed 16-bit integer.
+ * - To convert raw values to physical units:
+ *      Accel (g)  = raw_value / sensitivity (LSB/g)
+ *      Gyro (dps) = raw_value / sensitivity (LSB/dps)
+ * - Make sure the FSR is correctly configured before using
+ *   the sensitivity values in calculations.
+ * ============================================================
+ */
+
 // Use the uvos namespace to prevent having to type uvos:: before all calls
 using namespace uvos;
 
@@ -153,6 +191,18 @@ public:
     int SetGyroFSR(GyroFS fsr);
 
     /**
+     * @brief Get the accelerometer full-scale range.
+     * @return Accel sensitivity value (updated upon change to FS value).
+     */
+    float GetAccelSensitivity() const { return accel_sensitivity_; }
+
+    /**
+     * @brief Get the gyroscope full-scale range.
+     * @return Gyro sensitivity value (updated upon change to FS value).
+     */
+    float GetGyroSensitivity()  const { return gyro_sensitivity_; }
+
+    /**
      * @brief Enable the data ready interrupt on INT1 pin.
      * @return 0 on success, negative error code on failure.
      */
@@ -184,7 +234,7 @@ public:
      * @return 0 on success, negative error code on failure.
      */
     // int ReadIMU6(uint8_t *buf);
-    int ReadIMU6(std::array<uint8_t, 6>& buf);
+    int ReadIMU6(std::array<int16_t, 6>& buf);
 
     /**
      * @brief Read sensor data from FIFO.
@@ -221,6 +271,9 @@ private:
      * @brief IMU chip select pin (using software driven CS).
      */
     GPIO csPin_;
+
+    float accel_sensitivity_{-1.0f};
+    float gyro_sensitivity_{-1.0f};
 
     // CS->CLK delay, MPU6000 - 8ns
     // CS->CLK delay, ICM42688P - 39ns

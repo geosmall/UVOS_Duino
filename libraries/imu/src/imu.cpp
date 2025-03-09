@@ -9,6 +9,15 @@ using namespace uvos;
 
 namespace uvos {
 
+/* Default implementation converts ICM endian to little endian */
+static void inv_icm426xx_format_data(const uint8_t endian, const uint8_t *in, uint16_t *out)
+{
+    if (endian == ICM426XX_INTF_CONFIG0_DATA_BIG_ENDIAN)
+        *out = (in[0] << 8) | in[1];
+    else
+        *out = (in[1] << 8) | in[0];
+}
+
 //------------------------------------------------------------------------------
 // External time functions used by TDK library
 //------------------------------------------------------------------------------
@@ -80,15 +89,6 @@ int IMU::Init()
         return rc;
     }
 
-    // Set to Bank 0 for reminder of Init
-    // Turn off ACC and GYRO so they can be configured
-    // See section 12.9 in ICM-42688-P datasheet v1.8
-    // rc |= inv_icm426xx_set_reg_bank(&driver_, 0);
-    // rc |= SetPwrState(PwrState::POWER_OFF);
-    // if (rc != INV_ERROR_SUCCESS) {
-    //     return rc;
-    // }
-
     // Config INT_CONFIG1 as int pulse 8 µs, disable de-assert duration, leave async off (disabled)
     uint8_t int_config1_val;
     rc |= inv_icm426xx_read_reg(&driver_, MPUREG_INT_CONFIG1, 1, &int_config1_val);
@@ -105,17 +105,11 @@ int IMU::Init()
     System::Delay(15);
 
     // Disable fifo usage, data will be read from sensor registers, and
-    // int1 is configured on Data Ready by inv_icm426xx_configure_fifo()
+    // Int1 is configured for Data Ready by inv_icm426xx_configure_fifo()
     rc |= inv_icm426xx_configure_fifo(&driver_, INV_ICM426XX_FIFO_DISABLED);
     if (rc != INV_ERROR_SUCCESS) {
         return rc;
     }
-
-    // Turn ACC and GYRO back on
-    // rc |= SetPwrState(PwrState::POWER_ON);
-    // if (rc != INV_ERROR_SUCCESS) {
-    //     return rc;
-    // }
 
     // Retrieve device ID
     rc = inv_icm426xx_get_who_am_i(&driver_, &who_am_i);
@@ -166,8 +160,8 @@ int IMU::ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_
 
     /* Wait Max of ICM426XX_GYR_STARTUP_TIME_US and ICM426XX_ACC_STARTUP_TIME_US*/
     (ICM426XX_GYR_STARTUP_TIME_US > ICM426XX_ACC_STARTUP_TIME_US) ?
-    inv_icm426xx_sleep_us(ICM426XX_GYR_STARTUP_TIME_US) :
-    inv_icm426xx_sleep_us(ICM426XX_ACC_STARTUP_TIME_US);
+        inv_icm426xx_sleep_us(ICM426XX_GYR_STARTUP_TIME_US) :
+        inv_icm426xx_sleep_us(ICM426XX_ACC_STARTUP_TIME_US);
 
     return rc;
 }
@@ -221,12 +215,68 @@ int IMU::SetGyroODR(GyroODR freq)
 
 int IMU::SetAccelFSR(AccelFS fsr)
 {
-    return inv_icm426xx_set_accel_fsr(&driver_, static_cast<ICM426XX_ACCEL_CONFIG0_FS_SEL_t>(fsr));
+    // Write FSR to hardware
+    int rc = inv_icm426xx_set_accel_fsr(&driver_,
+    static_cast<ICM426XX_ACCEL_CONFIG0_FS_SEL_t>(fsr));
+
+    if (rc != 0) {
+        accel_sensitivity_ = -1.0f;
+        return rc;
+    }
+
+    // Update sensitivity (LSB/g) based on the FSR
+    switch (fsr) {
+    case gpm16:
+        accel_sensitivity_ = 2048.0f;
+        break;
+    case gpm8:
+        accel_sensitivity_ = 4096.0f;
+        break;
+    case gpm4:
+        accel_sensitivity_ = 8192.0f;
+        break;
+    case gpm2:
+        accel_sensitivity_ = 16384.0f;
+        break;
+    default:
+        accel_sensitivity_ = -1.0f; // Should not occur
+        break;
+    }
+
+    return rc;
 }
 
 int IMU::SetGyroFSR(GyroFS fsr)
 {
-    return inv_icm426xx_set_gyro_fsr(&driver_, static_cast<ICM426XX_GYRO_CONFIG0_FS_SEL_t>(fsr));
+    // Write FSR to hardware
+    int rc = inv_icm426xx_set_gyro_fsr(&driver_,
+                                       static_cast<ICM426XX_GYRO_CONFIG0_FS_SEL_t>(fsr));
+
+    if (rc != 0) {
+        gyro_sensitivity_ = -1.0f;
+        return rc;
+    }
+
+    // Update sensitivity (LSB/dps) based on FSR
+    switch (fsr) {
+    case dps2000:
+        gyro_sensitivity_ = 164.0f;   // ±2000 dps
+        break;
+    case dps1000:
+        gyro_sensitivity_ = 328.0f;   // ±1000 dps
+        break;
+    case dps500:
+        gyro_sensitivity_ = 655.0f;   // ±500 dps
+        break;
+    case dps250:
+        gyro_sensitivity_ = 1311.0f;  // ±250 dps
+        break;
+    default:
+        gyro_sensitivity_ = -1.0f;
+        break;
+    }
+
+    return rc;
 }
 
 int IMU::SetPwrState(PwrState state)
@@ -316,26 +366,39 @@ int IMU::ReadDataFromRegisters()
     return inv_icm426xx_get_data_from_registers(&driver_);
 }
 
-// int IMU::ReadIMU6(uint8_t* buf)
-int IMU::ReadIMU6(std::array<uint8_t, 6>& buf)
+int IMU::ReadIMU6(std::array<int16_t, 6>& buf)
 {
-    int rc = 0;
-    uint8_t int_status;
+    int                         status = 0;
+    uint8_t                     int_status;
+    uint8_t                     temperature[2];
+    uint8_t                     accel[ACCEL_DATA_SIZE];
+    uint8_t                     gyro[GYRO_DATA_SIZE];
+
+    struct inv_icm426xx *s = &driver_;
 
     // First field of driver_ (struct inv_icm426xx) is struct inv_icm426xx_transport object.
     // Therefore, cast address of driver to struct inv_icm426xx_transport to access serif.
     // struct inv_icm426xx_transport* t = (struct inv_icm426xx_transport*) &driver_;
-    struct inv_icm426xx_transport* t = reinterpret_cast<struct inv_icm426xx_transport*>(&driver_);
+    // struct inv_icm426xx_transport* t = reinterpret_cast<struct inv_icm426xx_transport*>(&driver_);
 
     /* Ensure data ready status bit is set */
-    rc |= inv_icm426xx_read_reg(&driver_, MPUREG_INT_STATUS, 1, &int_status);
-    if (rc) { return rc; }
+    status |= inv_icm426xx_read_reg(s, MPUREG_INT_STATUS, 1, &int_status);
+    if (status)
+        return status;
 
     if (int_status & BIT_INT_STATUS_DRDY) {
-        rc |= t->serif.read_reg(&(t->serif), MPUREG_ACCEL_DATA_X0_UI, buf.data(), buf.size());
+        status |= inv_icm426xx_read_reg(s, MPUREG_ACCEL_DATA_X0_UI, ACCEL_DATA_SIZE, accel);
+        buf[0] = (accel[0] << 8) | accel[1];
+        buf[1] = (accel[2] << 8) | accel[3];
+        buf[2] = (accel[4] << 8) | accel[5];
+
+        status |= inv_icm426xx_read_reg(s, MPUREG_GYRO_DATA_X0_UI, GYRO_DATA_SIZE, gyro);
+        buf[3] = (gyro[0] << 8) | gyro[1];
+        buf[4] = (gyro[2] << 8) | gyro[3];
+        buf[5] = (gyro[4] << 8) | gyro[5];
     }
 
-    return rc;
+    return status;
 }
 
 int IMU::ReadDataFromFifo()
