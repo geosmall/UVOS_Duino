@@ -134,8 +134,6 @@ int main(void)
 
     RINGBUFFER_CLEAR(&timestamp_buffer);
 
-    // imu.SetSensorEventCallback(HandleInvDeviceDataRegisters);
-
     intGpio.SetInterruptCallback(ext_interrupt_cb, nullptr);
     intGpio.Init(INT1_PIN, GPIO::Mode::INPUT_IT_RISING, GPIO::Pull::NOPULL);
 
@@ -199,40 +197,6 @@ void hw_configure()
     // Initialize the IMU SPI instance
     spi_handle.Init(spi_conf);
 }
-
-// void HandleInvDeviceDataRegisters(inv_icm426xx_sensor_event_t *event)
-// {
-//     uint64_t irq_timestamp = 0;
-
-//     /*
-//      * Extract the timestamp that was buffered when current packet IRQ fired. See 
-//      * ext_interrupt_cb() in main.c for more details.
-//      * As timestamp buffer is filled in interrupt handler, we should pop it with
-//      * interrupts disabled to avoid any concurrent access.
-//      */
-//     inv_disable_irq();
-//     if (!RINGBUFFER_EMPTY(&timestamp_buffer))
-//         RINGBUFFER_POP(&timestamp_buffer, &irq_timestamp);
-//     inv_enable_irq();
-
-//     apply_mounting_matrix(icm_mounting_matrix, event->accel);
-//     apply_mounting_matrix(icm_mounting_matrix, event->gyro);
-
-//     /*
-//      * Output data on UART link
-//      */
-//     if ((event->accel[0] != INVALID_VALUE_FIFO) && (event->gyro[0] != INVALID_VALUE_FIFO))
-//         INV_MSG(INV_MSG_LEVEL_INFO, "%u: %d, %d, %d, %d, %d, %d, %d", (uint32_t)irq_timestamp,
-//                 event->accel[0], event->accel[1], event->accel[2], event->temperature,
-//                 event->gyro[0], event->gyro[1], event->gyro[2]);
-//     else if (event->gyro[0] != INVALID_VALUE_FIFO)
-//         INV_MSG(INV_MSG_LEVEL_INFO, "%u: NA, NA, NA, %d, %d, %d, %d", (uint32_t)irq_timestamp,
-//                 event->temperature, event->gyro[0], event->gyro[1], event->gyro[2]);
-//     else if (event->accel[0] != INVALID_VALUE_FIFO)
-//         INV_MSG(INV_MSG_LEVEL_INFO, "%u: %d, %d, %d, %d, NA, NA, NA", (uint32_t)irq_timestamp,
-//                 event->accel[0], event->accel[1], event->accel[2], event->temperature);
-// }
-
 
 /* --------------------------------------------------------------------------------------
  *  Static functions definition
