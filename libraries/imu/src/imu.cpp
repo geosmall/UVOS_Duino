@@ -227,16 +227,16 @@ int IMU::SetAccelFSR(AccelFS fsr)
     // Update sensitivity (LSB/g) based on the FSR
     switch (fsr) {
     case gpm16:
-        accel_sensitivity_ = 2048.0f;
+        accel_sensitivity_ = 2048.0f; // ±16 G's
         break;
     case gpm8:
-        accel_sensitivity_ = 4096.0f;
+        accel_sensitivity_ = 4096.0f; // ±8 G's
         break;
     case gpm4:
-        accel_sensitivity_ = 8192.0f;
+        accel_sensitivity_ = 8192.0f; // ±4 G's
         break;
     case gpm2:
-        accel_sensitivity_ = 16384.0f;
+        accel_sensitivity_ = 16384.0f; // ±2 G's
         break;
     default:
         accel_sensitivity_ = -1.0f; // Should not occur
@@ -272,7 +272,7 @@ int IMU::SetGyroFSR(GyroFS fsr)
         gyro_sensitivity_ = 1311.0f;  // ±250 dps
         break;
     default:
-        gyro_sensitivity_ = -1.0f;
+        gyro_sensitivity_ = -1.0f; // Should not occur
         break;
     }
 
@@ -368,37 +368,28 @@ int IMU::ReadDataFromRegisters()
 
 int IMU::ReadIMU6(std::array<int16_t, 6>& buf)
 {
-    int                         status = 0;
-    uint8_t                     int_status;
-    uint8_t                     temperature[2];
-    uint8_t                     accel[ACCEL_DATA_SIZE];
-    uint8_t                     gyro[GYRO_DATA_SIZE];
+    int rc = 0;
+    uint8_t int_status;
+    uint8_t data[NUM_DATA_BYTES];
 
-    struct inv_icm426xx *s = &driver_;
-
-    // First field of driver_ (struct inv_icm426xx) is struct inv_icm426xx_transport object.
-    // Therefore, cast address of driver to struct inv_icm426xx_transport to access serif.
-    // struct inv_icm426xx_transport* t = (struct inv_icm426xx_transport*) &driver_;
-    // struct inv_icm426xx_transport* t = reinterpret_cast<struct inv_icm426xx_transport*>(&driver_);
+    // struct inv_icm426xx *s = &driver_;
 
     /* Ensure data ready status bit is set */
-    status |= inv_icm426xx_read_reg(s, MPUREG_INT_STATUS, 1, &int_status);
-    if (status)
-        return status;
-
-    if (int_status & BIT_INT_STATUS_DRDY) {
-        status |= inv_icm426xx_read_reg(s, MPUREG_ACCEL_DATA_X0_UI, ACCEL_DATA_SIZE, accel);
-        buf[0] = (accel[0] << 8) | accel[1];
-        buf[1] = (accel[2] << 8) | accel[3];
-        buf[2] = (accel[4] << 8) | accel[5];
-
-        status |= inv_icm426xx_read_reg(s, MPUREG_GYRO_DATA_X0_UI, GYRO_DATA_SIZE, gyro);
-        buf[3] = (gyro[0] << 8) | gyro[1];
-        buf[4] = (gyro[2] << 8) | gyro[3];
-        buf[5] = (gyro[4] << 8) | gyro[5];
+    rc |= inv_icm426xx_read_reg(&driver_, MPUREG_INT_STATUS, 1, &int_status);
+    if (rc) {
+        return rc;
     }
 
-    return status;
+    if (int_status & BIT_INT_STATUS_DRDY) {
+        rc |= inv_icm426xx_read_reg(&driver_, MPUREG_ACCEL_DATA_X0_UI, NUM_DATA_BYTES, data);
+        buf[0] = (data[0] << 8) | data[1];
+        buf[1] = (data[2] << 8) | data[3];
+        buf[2] = (data[4] << 8) | data[5];
+        buf[3] = (data[6] << 8) | data[7];
+        buf[4] = (data[8] << 8) | data[9];
+        buf[5] = (data[10] << 8) | data[11];
+    }
+    return rc;
 }
 
 int IMU::ReadDataFromFifo()

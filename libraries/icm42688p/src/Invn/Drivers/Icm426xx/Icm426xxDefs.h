@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#include "icm_options.h"
+
 /** @file Icm426xxDefs.h
  * File exposing the device register map
  */

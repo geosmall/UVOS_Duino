@@ -253,6 +253,7 @@ public:
     // Define maximum read and write sizes for IMU as private static constants
     static constexpr uint32_t IMU_MAX_READ = 255;
     static constexpr uint32_t IMU_MAX_WRITE = 255;
+    static constexpr uint32_t NUM_DATA_BYTES = (ACCEL_DATA_SIZE + GYRO_DATA_SIZE);
 
 private:
     /**
