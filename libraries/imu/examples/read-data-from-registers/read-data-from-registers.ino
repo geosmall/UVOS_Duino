@@ -67,6 +67,10 @@ UartHandler uart;
 SpiHandle spi_handle;         // Handle we'll use to interact with IMU SPI
 SpiHandle::Config spi_conf;   // Structure to configure the IMU SPI instance
 
+// Create the IMU object
+IMU imu{};
+
+// INT1 Interrupt pin
 GPIO intGpio;
 
 // Global print buffer
@@ -118,10 +122,7 @@ int main(void)
     // Give ICM-42688P some time to stabilize
     System::Delay(5);
 
-    // Create the IMU object
-    IMU imu(spi_handle);
-
-    if (imu.Init() != INV_ERROR_SUCCESS) {
+    if (imu.Init(spi_handle) != INV_ERROR_SUCCESS) {
         INV_MSG(INV_MSG_LEVEL_INFO, "!!! ERROR : failed to initialize Icm426xx.");
     } else {
         INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx PASS");

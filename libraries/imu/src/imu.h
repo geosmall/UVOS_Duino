@@ -105,16 +105,14 @@ public:
 
     /**
      * @brief Construct an IMU object bound to a particular SpiHandle.
-     *
-     * @param spi Reference to a valid, already-initialized SpiHandle.
      */
-    IMU(SpiHandle& spi);
+    IMU();
 
     /**
      * @brief Initialize the IMU hardware and driver.
      * @return 0 on success, negative error code on failure.
      */
-    int Init();
+    int Init(SpiHandle& spi);
 
     /**
      * @brief Configure the device full scales and output frequencies.
@@ -264,9 +262,12 @@ private:
     struct inv_icm426xx driver_{};
 
     /**
-     * @brief Pointer to the SPI handle your code uses for all SPI transactions.
+     * @brief Pointer to the SPI handle used for IMU SPI transactions.
+     * Initialized to null, to be bound in Init()
      */
-    SpiHandle& spi_;
+    SpiHandle* p_spi_ = nullptr;
+
+    bool initialized_ = false;
 
     /**
      * @brief IMU chip select pin (using software driven CS).

@@ -37,15 +37,32 @@ extern "C" uint64_t inv_icm426xx_get_time_us(void)
 void (*IMU::userEventCb_)(inv_icm426xx_sensor_event_t *event) = nullptr;
 
 //------------------------------------------------------------------------------
-// Constructor: store the spi reference, capture chip-select pin from SPI config,
-// and set up the TDK transport structure.
+// Constructor: empty
 //------------------------------------------------------------------------------
-IMU::IMU(SpiHandle &spi) : spi_(spi)
-{
-    // Retrieve the CS pin from the SPI config
-    uvs_gpio_pin nss_pin = spi_.GetConfig().pin_config.nss;
+IMU::IMU() : p_spi_(nullptr) {}
 
-    uvs_gpio_pin uvs_cs_pin = spi_.GetConfig().pin_config.nss;
+//------------------------------------------------------------------------------
+// Store the spi reference, capture chip-select pin from SPI config,
+// set up the TDK transport structure and Initialize the sensor via
+// the TDK driver init function.
+//------------------------------------------------------------------------------
+int IMU::Init(SpiHandle& spi)
+{
+    int rc = 0;
+    uint8_t who_am_i;
+    struct inv_icm426xx_serif imu_serif;
+
+    // Save the handle to the spi object
+    if (&spi != nullptr) {
+        p_spi_ = &spi;
+        initialized_ = true;
+    } else {
+        initialized_ = false;
+        return INV_ERROR;
+    }
+
+    // Retrieve the CS pin from the SPI config
+    uvs_gpio_pin nss_pin = p_spi_->GetConfig().pin_config.nss;
 
     // Convert to GPIO::Pin
     Pin initPin(static_cast<uvos::GPIOPort>(nss_pin.port), nss_pin.pin);
@@ -57,16 +74,6 @@ IMU::IMU(SpiHandle &spi) : spi_(spi)
     config.pull = uvos::GPIO::Pull::PULLUP;
     config.speed = uvos::GPIO::Speed::MEDIUM;
     csPin_.Init(config);
-}
-
-//------------------------------------------------------------------------------
-// Initialize the sensor via the TDK driver init function
-//------------------------------------------------------------------------------
-int IMU::Init()
-{
-    int rc = 0;
-    uint8_t who_am_i;
-    struct inv_icm426xx_serif imu_serif;
 
     // Initialize the TDK transport fields
     imu_serif.context   = this;
@@ -452,6 +459,11 @@ int IMU::spiReadRegs(struct inv_icm426xx_serif* serif,
         return -1;
     }
 
+    // Verify object has been properly initialized with a pointer to spi obj
+    if (!obj->initialized_ || (obj->p_spi_ == nullptr)) {
+        return -1;
+    }
+
     // Enforce the maximum byte read
     if (len > IMU::IMU_MAX_READ) {
         return -1;
@@ -463,12 +475,12 @@ int IMU::spiReadRegs(struct inv_icm426xx_serif* serif,
     obj->SelectDevice();
 
     // First send the register address with high bit set
-    if (obj->spi_.BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK) {
+    if (obj->p_spi_->BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK) {
         return -1;
     }
 
     // Read 'len' bytes
-    if (obj->spi_.BlockingTransferLL(nullptr, const_cast<uint8_t*>(buf), len) != SpiHandle::Result::OK) {
+    if (obj->p_spi_->BlockingTransferLL(nullptr, const_cast<uint8_t*>(buf), len) != SpiHandle::Result::OK) {
         return -1;
     }
 
@@ -497,6 +509,11 @@ int IMU::spiWriteRegs(struct inv_icm426xx_serif * serif,
         return -1;
     }
 
+    // Verify object has been properly initialized with a pointer to spi obj
+    if (!obj->initialized_ || (obj->p_spi_ == nullptr)) {
+        return -1;
+    }
+
     // Enforce the maximum byte write
     if (len > IMU::IMU_MAX_WRITE) {
         return -1;
@@ -508,12 +525,12 @@ int IMU::spiWriteRegs(struct inv_icm426xx_serif * serif,
     obj->SelectDevice();
 
     // First send the register address
-    if (obj->spi_.BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK) {
+    if (obj->p_spi_->BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK) {
         return -1;
     }
 
     // Write 'len' bytes
-    if (obj->spi_.BlockingTransferLL(const_cast<uint8_t*>(buf), nullptr, len)  != SpiHandle::Result::OK) {
+    if (obj->p_spi_->BlockingTransferLL(const_cast<uint8_t*>(buf), nullptr, len)  != SpiHandle::Result::OK) {
         return -1;
     }
 

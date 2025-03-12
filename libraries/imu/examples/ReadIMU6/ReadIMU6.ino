@@ -67,6 +67,10 @@ UartHandler uart;
 SpiHandle spi_handle;         // Handle we'll use to interact with IMU SPI
 SpiHandle::Config spi_conf;   // Structure to configure the IMU SPI instance
 
+// Create the IMU object
+IMU imu{};
+
+// INT1 Interrupt pin
 GPIO intGpio;
 
 // Global print buffer
@@ -119,10 +123,7 @@ int main(void)
     // Give ICM-42688P some time to stabilize
     System::Delay(5);
 
-    // Create the IMU object
-    IMU imu(spi_handle);
-
-    if (imu.Init() != INV_ERROR_SUCCESS) {
+    if (imu.Init(spi_handle) != INV_ERROR_SUCCESS) {
         INV_MSG(INV_MSG_LEVEL_INFO, "!!! ERROR : failed to initialize Icm426xx.");
     } else {
         INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx PASS");
@@ -224,25 +225,6 @@ static void apply_mounting_matrix(const int32_t matrix[9], int16_t raw[3])
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* This variable contains the number of nested calls to disable_irq */
-static uint32_t sDisableIntCount = 0;
-
-void inv_disable_irq(void)
-{
-    if(sDisableIntCount == 0) {
-        __disable_irq();
-    }
-    sDisableIntCount ++;
-}
-
-void inv_enable_irq(void)
-{
-    sDisableIntCount --;
-    if(sDisableIntCount == 0) {
-        __enable_irq();
-    }
-}
 
 /* Printer function for message facility */
 void msg_printer(int level, const char *str, va_list ap)
