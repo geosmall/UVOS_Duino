@@ -23,7 +23,7 @@ static int32_t icm_mounting_matrix[9] = { (1 << 30), 0, 0, 0, (1 << 30), 0, 0, 0
 
 // Uncomment to use software driven NSS
 #define USE_SOFT_NSS
-#define DESIRED_SPI_FREQ 1000000
+#define DESIRED_SPI_FREQ 1'000'000
 
 #if defined(ARDUINO_FC_MatekH743)
     constexpr Pin CS_PIN = Pin(PORTC, 15);
@@ -76,8 +76,6 @@ GPIO intGpio;
 // Global print buffer
 char buf[128];
 
-static uint8_t spi_freq_mhz = 1;
-
 /* Buffer to keep track of the timestamp when icm426xx data ready interrupt fires. */
 RINGBUFFER(timestamp_buffer, 64, uint64_t);
 
@@ -123,7 +121,7 @@ int main(void)
     // Give ICM-42688P some time to stabilize
     System::Delay(5);
 
-    if (imu.Init(spi_handle) != INV_ERROR_SUCCESS) {
+    if (imu.Init(spi_handle) != IMU::Result::OK) {
         INV_MSG(INV_MSG_LEVEL_INFO, "!!! ERROR : failed to initialize Icm426xx.");
     } else {
         INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx PASS");
@@ -192,8 +190,7 @@ void hw_configure()
     spi_conf.pin_config.miso = MISO_PIN;
     spi_conf.pin_config.mosi = MOSI_PIN;
 
-    // spi_conf.baud_prescaler = SpiHandle::Config::BaudPrescaler::PS_32;
-    spi_handle.GetBaudHz(spi_conf.periph, (spi_freq_mhz * 1'000'000), spi_conf.baud_prescaler);
+    spi_handle.GetBaudHz(spi_conf.periph, DESIRED_SPI_FREQ, spi_conf.baud_prescaler);
 
     // Initialize the IMU SPI instance
     spi_handle.Init(spi_conf);

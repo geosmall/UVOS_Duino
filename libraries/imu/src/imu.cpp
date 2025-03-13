@@ -46,7 +46,7 @@ IMU::IMU() : p_spi_(nullptr) {}
 // set up the TDK transport structure and Initialize the sensor via
 // the TDK driver init function.
 //------------------------------------------------------------------------------
-int IMU::Init(SpiHandle& spi)
+IMU::Result IMU::Init(SpiHandle& spi)
 {
     int rc = 0;
     uint8_t who_am_i;
@@ -58,7 +58,7 @@ int IMU::Init(SpiHandle& spi)
         initialized_ = true;
     } else {
         initialized_ = false;
-        return INV_ERROR;
+        return Result::ERR;
     }
 
     // Retrieve the CS pin from the SPI config
@@ -93,7 +93,7 @@ int IMU::Init(SpiHandle& spi)
     // Initialize device (exits with PWR_MGMT0 = 0)
     rc = inv_icm426xx_init(&driver_, &imu_serif, &IMU::DriverEventCb);
     if (rc != INV_ERROR_SUCCESS) {
-        return rc;
+        return Result::ERR;
     }
 
     // Config INT_CONFIG1 as int pulse 8 µs, disable de-assert duration, leave async off (disabled)
@@ -106,7 +106,7 @@ int IMU::Init(SpiHandle& spi)
     inv_icm426xx_interrupt_parameter_t config_int1 = {INV_ICM426XX_DISABLE};
     rc |= inv_icm426xx_set_config_int1(&driver_, &config_int1);
     if (rc != INV_ERROR_SUCCESS) {
-        return rc;
+        return Result::ERR;
     }
 
     System::Delay(15);
@@ -115,21 +115,21 @@ int IMU::Init(SpiHandle& spi)
     // Int1 is configured for Data Ready by inv_icm426xx_configure_fifo()
     rc |= inv_icm426xx_configure_fifo(&driver_, INV_ICM426XX_FIFO_DISABLED);
     if (rc != INV_ERROR_SUCCESS) {
-        return rc;
+        return Result::ERR;
     }
 
     // Retrieve device ID
     rc = inv_icm426xx_get_who_am_i(&driver_, &who_am_i);
     if (rc != INV_ERROR_SUCCESS) {
-        return rc;
+        return Result::ERR;
     }
 
     // Verify expected ID
     if (who_am_i != ICM_WHOAMI) {
-        return INV_ERROR;
+        return Result::ERR;
     }
 
-    return rc;
+    return Result::OK;
 }
 
 // Undocumented feature "AFSR", auto-switches between low-noise low range and

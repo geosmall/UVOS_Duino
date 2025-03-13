@@ -103,6 +103,12 @@ public:
     };
 
 
+     enum class Result
+     {
+         OK,
+         ERR,
+     };
+
     /**
      * @brief Construct an IMU object bound to a particular SpiHandle.
      */
@@ -112,7 +118,7 @@ public:
      * @brief Initialize the IMU hardware and driver.
      * @return 0 on success, negative error code on failure.
      */
-    int Init(SpiHandle& spi);
+    Result Init(SpiHandle& spi);
 
     /**
      * @brief Configure the device full scales and output frequencies.
