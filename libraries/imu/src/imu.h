@@ -102,12 +102,11 @@ public:
         gyr_odr8k = ICM426XX_GYRO_CONFIG0_ODR_8_KHZ, /*!< 8 KHz (125 us)*/
     };
 
-
-     enum class Result
-     {
-         OK,
-         ERR,
-     };
+    enum class Result
+    {
+        OK,
+        ERR,
+    };
 
     /**
      * @brief Construct an IMU object bound to a particular SpiHandle.
