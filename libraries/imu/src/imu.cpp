@@ -140,7 +140,7 @@ IMU::Result IMU::Init(SpiHandle& spi)
 //------------------------------------------------------------------------------
 // Configure the device full scales and output frequencies
 //------------------------------------------------------------------------------
-int IMU::ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_freq, GyroODR gyr_freq)
+IMU::Result IMU::ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_freq, GyroODR gyr_freq)
 {
     int rc = 0;
 
@@ -170,7 +170,7 @@ int IMU::ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_
         inv_icm426xx_sleep_us(ICM426XX_GYR_STARTUP_TIME_US) :
         inv_icm426xx_sleep_us(ICM426XX_ACC_STARTUP_TIME_US);
 
-    return rc;
+    return (rc == 0) ? Result::OK : Result::ERR;
 }
 
 //------------------------------------------------------------------------------

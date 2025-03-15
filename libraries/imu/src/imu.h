@@ -115,7 +115,7 @@ public:
 
     /**
      * @brief Initialize the IMU hardware and driver.
-     * @return 0 on success, negative error code on failure.
+     * @return IMU::OK on success, IMU::ERR on failure.
      */
     Result Init(SpiHandle& spi);
 
@@ -125,9 +125,9 @@ public:
      * @param gyr_fsr_dps Gyroscope full-scale range.
      * @param acc_freq Accelerometer Output Data Rate.
      * @param gyr_freq Gyroscope Output Data Rate.
-     * @return 0 on success, negative error code on failure. 
+     * @return IMU::OK on success, IMU::ERR on failure.
      */
-    int ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_freq, GyroODR gyr_freq);
+    Result ConfigureInvDevice(AccelFS acc_fsr_g, GyroFS gyr_fsr_dps, AccelODR acc_freq, GyroODR gyr_freq);
 
     /**
      * @brief Perform a soft reset of the device.
