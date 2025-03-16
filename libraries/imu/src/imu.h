@@ -234,6 +234,7 @@ public:
 
     /**
      * @brief Read Acc/Gyro data direct from registers (bypassing transport read for speed).
+     * @param buf filled with Accel X Y Z followed by Gyro X Y Z
      * @return 0 on success, negative error code on failure.
      */
     // int ReadIMU6(uint8_t *buf);
