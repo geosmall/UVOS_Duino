@@ -276,7 +276,7 @@ SpiHandle::Result SpiHandle::Impl::Init(const Config& config)
         return SpiHandle::Result::ERR;
     }
 
-    // Compute delay used below in inv_spi_transfer()
+    // Compute delay used below in BlockingTransferLL()
     config_.disable_delay_ = spi_compute_disable_delay_us(hspi_.Instance);
 
     return SpiHandle::Result::OK;

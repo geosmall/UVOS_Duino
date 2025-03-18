@@ -2,11 +2,11 @@
 
 using namespace uvos;
 
-#define UVS_LED_PORT UVS_GPIOB
-#define UVS_LED_PIN 0
+#define UVS_LED_PORT UVS_GPIOE
+#define UVS_LED_PIN 1
 
-#define UVS_TEST_POINT_PORT UVS_GPIOE
-#define UVS_TEST_POINT_PIN 1
+#define UVS_TEST_POINT_PORT UVS_GPIOB
+#define UVS_TEST_POINT_PIN 14
 
 // Public Initialization
 
