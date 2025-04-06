@@ -1,9 +1,41 @@
+#include "uvos.h"
 #include "uvos_brd.h"
-#include "dev/serial_rx.h"
 #include <cstring>
 
 /** This prevents us from having to type "uvos::" in front of a lot of things. */
 using namespace uvos;
+
+// Uncomment to use software driven NSS
+#define USE_SOFT_NSS
+#define DESIRED_SPI_FREQ 1'000'000
+
+#if defined(ARDUINO_FC_MatekH743) || defined(ARDUINO_NUCLEO_H753ZI)
+  constexpr SpiHandle::Config::Peripheral IMU_SPI_NUM = SpiHandle::Config::Peripheral::SPI_1;
+  constexpr Pin IMU_CS_PIN = Pin(PORTC, 15);
+  constexpr Pin IMU_SCLK_PIN = Pin(PORTA, 5);
+  constexpr Pin IMU_MISO_PIN = Pin(PORTA, 6);
+  constexpr Pin IMU_MOSI_PIN = Pin(PORTD, 7);
+  constexpr Pin IMU_INT1_PIN = Pin(PORTB, 2);
+  constexpr UartHandler::Config::Peripheral DBG_UART_NUM = UartHandler::Config::Peripheral::USART_3;
+  constexpr Pin DBG_TX_PIN = Pin(PORTD, 8);
+  constexpr Pin DBG_RX_PIN = Pin(PORTD, 9);
+  constexpr UartHandler::Config::Peripheral SER_RX_UART_NUM = UartHandler::Config::Peripheral::USART_6;
+  constexpr Pin SER_RX_TX_PIN = Pin(PORTC, 6);
+  constexpr Pin SER_RX_RX_PIN = Pin(PORTC, 7);
+#else // defined(DevEBoxH743VI)
+  constexpr SpiHandle::Config::Peripheral IMU_SPI_NUM = SpiHandle::Config::Peripheral::SPI_1;
+  constexpr Pin IMU_CS_PIN = Pin(PORTA, 4);
+  constexpr Pin IMU_SCLK_PIN = Pin(PORTA, 5);
+  constexpr Pin IMU_MISO_PIN = Pin(PORTA, 6);
+  constexpr Pin IMU_MOSI_PIN = Pin(PORTA, 7);
+  constexpr Pin IMU_INT1_PIN = Pin(PORTA, 0);
+  constexpr UartHandler::Config::Peripheral DBG_UART_NUM = UartHandler::Config::Peripheral::USART_1;
+  constexpr Pin DBG_TX_PIN = Pin(PORTA, 9);
+  constexpr Pin DBG_RX_PIN = Pin(PORTA, 10);
+  constexpr UartHandler::Config::Peripheral SER_RX_UART_NUM = UartHandler::Config::Peripheral::USART_6;
+  constexpr Pin SER_RX_TX_PIN = Pin(PORTC, 6);
+  constexpr Pin SER_RX_RX_PIN = Pin(PORTC, 7);  
+#endif /* ARDUINO_FC_MatekH743 */
 
 /** Global Hardware access */
 UVOSboard         hw;
@@ -43,9 +75,9 @@ int main(void)
 
     // Config SerialReceiver object UART and initialize it
     SerialReceiver::Config ser_rx_config;
-    ser_rx_config.periph = UartHandler::Config::Peripheral::USART_6;
-    ser_rx_config.rx = {UVS_GPIOC, 7};
-    ser_rx_config.tx = {UVS_GPIOC, 6};
+    ser_rx_config.periph = SER_RX_UART_NUM;
+    ser_rx_config.rx = SER_RX_RX_PIN;
+    ser_rx_config.tx = SER_RX_TX_PIN;
 
     ibus_rx.Init(ser_rx_config);
 

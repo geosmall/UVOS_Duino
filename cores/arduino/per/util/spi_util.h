@@ -20,15 +20,19 @@
 #define SPI_TRANSFER_TIMEOUT 100
 
 ///@brief SPI errors
-typedef enum { SPI_OK = 0, SPI_TIMEOUT = 1, SPI_ERROR = 2 } spi_status_e;
+typedef enum {
+    SPI_OK = 0,
+    SPI_TIMEOUT = 1,
+    SPI_ERROR = 2
+} spi_status_e;
 
 // Add C++ guard
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint32_t spi_get_clk_freq_inst(SPI_TypeDef *spi_inst);
-uint32_t spi_compute_disable_delay_us(SPI_TypeDef *spi_inst);
+uint32_t spi_get_clk_freq_inst(SPI_TypeDef* spi_inst);
+uint32_t spi_compute_disable_delay_us(SPI_TypeDef* spi_inst);
 
 // Add C++ guard
 #ifdef __cplusplus

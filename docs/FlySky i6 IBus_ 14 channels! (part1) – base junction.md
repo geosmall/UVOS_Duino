@@ -37,6 +37,7 @@ We take the whole frame and group the bytes by 2:
 > xDCx05  = 1500
 > x54xF3  = Checksum: 0xF354 -> calculated by adding up all previous bytes, total must be FFFF
 ```
+$20$40$DC$05$DB$05$EF$03$DD$05$D0$07$D0$07$DC$05$DC$05$DC$05$DC$05$DC$05$DC$05$DC$05$DC$05$54$F3
 
 We see a header of 2 bytes, then 12 bytes for our 6 channels and at the end 2 bytes of footer, with a checksum at the end. Between the end and the 6 channels we see 8 more channels, fixed at 1500. This brings the total numer of channels to 14.
 
