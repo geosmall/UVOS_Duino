@@ -223,7 +223,7 @@ void System::Init(const System::Config& config)
         ConfigureMpu();
     }
     uvs_dma_init();
-    // uvs_i2c_global_init();
+    uvs_i2c_global_init();
     uvs_spi_global_init();
     uvs_uart_global_init();
 

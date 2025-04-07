@@ -17,7 +17,7 @@
 // #include "hid/audio.h"
 // #include "util/unique_id.h"
 #ifdef __cplusplus
-// #include "per/i2c.h"
+#include "per/i2c.h"
 // #include "per/adc.h"
 #include "per/uart.h"
 // #include "hid/midi.h"
