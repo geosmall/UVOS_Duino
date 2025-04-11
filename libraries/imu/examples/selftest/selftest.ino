@@ -18,15 +18,7 @@ using namespace uvos;
 #define USE_SOFT_NSS
 #define DESIRED_SPI_FREQ 1'000'000
 
-#if defined(ARDUINO_FC_MatekH743)
-    constexpr Pin CS_PIN = Pin(PORTC, 15);
-    constexpr Pin SCLK_PIN = Pin(PORTA, 5);
-    constexpr Pin MISO_PIN = Pin(PORTA, 6);
-    constexpr Pin MOSI_PIN = Pin(PORTD, 7);
-    constexpr UartHandler::Config::Peripheral UART_NUM = UartHandler::Config::Peripheral::USART_1;
-    constexpr Pin TX_PIN = Pin(PORTA, 9);
-    constexpr Pin RX_PIN = Pin(PORTA, 10);
-#elif defined(ARDUINO_NUCLEO_H753ZI)
+#if defined(ARDUINO_NUCLEO_H753ZI) || defined(ARDUINO_FC_MatekH743)
     constexpr Pin CS_PIN = Pin(PORTC, 15);
     constexpr Pin SCLK_PIN = Pin(PORTA, 5);
     constexpr Pin MISO_PIN = Pin(PORTA, 6);
@@ -34,7 +26,7 @@ using namespace uvos;
     constexpr UartHandler::Config::Peripheral UART_NUM = UartHandler::Config::Peripheral::USART_3;
     constexpr Pin TX_PIN = Pin(PORTD, 8);
     constexpr Pin RX_PIN = Pin(PORTD, 9);
-#else // defined(DevEBoxH743VI)
+#else // DevEBoxH743VI
     constexpr Pin CS_PIN = Pin(PORTA, 4);
     constexpr Pin SCLK_PIN = Pin(PORTA, 5);
     constexpr Pin MISO_PIN = Pin(PORTA, 6);
@@ -42,7 +34,7 @@ using namespace uvos;
     constexpr UartHandler::Config::Peripheral UART_NUM = UartHandler::Config::Peripheral::USART_1;
     constexpr Pin TX_PIN = Pin(PORTA, 9);
     constexpr Pin RX_PIN = Pin(PORTA, 10);
-#endif /* ARDUINO_FC_MatekH743 */
+#endif /* ARDUINO_NUCLEO_H753ZI or ARDUINO_FC_MatekH743 */
 
 constexpr bool off = 0;
 constexpr bool on = 1;

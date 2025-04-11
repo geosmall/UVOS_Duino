@@ -15,6 +15,10 @@ class I2CHandle::Impl
     I2CHandle::Result        Init(const I2CHandle::Config& config);
     const I2CHandle::Config& GetConfig() const { return config_; }
 
+    I2CHandle::Result IsDeviceReady(uint16_t address,
+                                    uint32_t trials,
+                                    uint32_t timeout);
+
     I2CHandle::Result TransmitBlocking(uint16_t address,
                                        uint8_t* data,
                                        uint16_t size,
@@ -281,6 +285,22 @@ I2CHandle::Result I2CHandle::Impl::Init(const I2CHandle::Config& config)
        != HAL_OK)
         return I2CHandle::Result::ERR;
     if(HAL_I2CEx_ConfigDigitalFilter(&i2c_hal_handle_, 0) != HAL_OK)
+        return I2CHandle::Result::ERR;
+
+    return I2CHandle::Result::OK;
+}
+
+I2CHandle::Result I2CHandle::Impl::IsDeviceReady(uint16_t address,
+                                                  uint32_t trials,
+                                                  uint32_t timeout)
+{
+    // Only makes sense for master devices
+    if(config_.mode != I2CHandle::Config::Mode::I2C_MASTER)
+        return I2CHandle::Result::ERR;
+
+    HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&i2c_hal_handle_, address << 1, trials, timeout);
+
+    if(status != HAL_OK)
         return I2CHandle::Result::ERR;
 
     return I2CHandle::Result::OK;
@@ -811,6 +831,13 @@ I2CHandle::Result I2CHandle::Init(const I2CHandle::Config& config)
 const I2CHandle::Config& I2CHandle::GetConfig() const
 {
     return pimpl_->GetConfig();
+}
+
+I2CHandle::Result I2CHandle::IsDeviceReady(uint16_t address,
+                                            uint32_t trials,
+                                            uint32_t timeout)
+{
+    return pimpl_->IsDeviceReady(address, trials, timeout);
 }
 
 I2CHandle::Result I2CHandle::TransmitBlocking(uint16_t address,

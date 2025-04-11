@@ -90,6 +90,16 @@ class I2CHandle
     /** Returns the current config. */
     const Config& GetConfig() const;
 
+    /** Checks if target device is ready for communication.
+     *  This function will return an error if the I2C peripheral is in slave mode.
+     *  \param address      The slave device address. Unused in slave mode.
+     *  \param trials       Number of trials.
+     *  \param timeout      Timeout duration in milliseconds.
+     */
+    Result IsDeviceReady(uint16_t address,
+                         uint32_t trials,
+                         uint32_t timeout);
+
     /** Transmits data and blocks until the transmission is complete.
      *  Use this for smaller transmissions of a few bytes.
      * 
