@@ -1,9 +1,18 @@
 #include "uvos_brd.h"
+#include <cstring>
 
 using namespace uvos;
 
 UVOSboard   hw;
 UartHandler uart;
+
+// Function to print a message over uart
+void print_msg(const char* msg)
+{
+    char buf[128];
+    sprintf(buf, "%s\r\n", msg);
+    uart.BlockingTransmit((uint8_t*)buf, strlen(buf));
+}
 
 int main(void)
 {
@@ -19,6 +28,8 @@ int main(void)
 
     // Initialize the uart peripheral and start the DMA transmit
     uart.Init(uart_conf);
+
+    print_msg("Blocking transmit test...\r\n\r\n");
 
     uint8_t tx = 0;
     while(1) {
