@@ -70,14 +70,14 @@ int main(void)
     //   ITG3205  - 0x69 — Three axis gyroscope
     //   HMC5883L - 0x1E — Three axis magnetic field
 
-    // Scan thru valid I2C addresses
+    // Scan thru range of valid 7-bit slave addresses.
+    // Valid slave addresses are >= than 0x08 and <= than 0x77.
     for(uint8_t addr = 0x08; addr <= 0x77; addr++)
     {
         // ST HAL expects 7-bit address passed as left aligned (shift left 1 bit)
         uint16_t HAL_addr = ((uint16_t)addr) << 1;
 
         if (i2c_dev.IsDeviceReady(HAL_addr, 2, 5) == I2CHandle::Result::OK) {
-            // Found a device at 8-bit address = addr
             sprintf(prn_buf, "I2C device found >>> address: 0x%02X\r\n", addr);
             uart.BlockingTransmit((uint8_t*)prn_buf, strlen(prn_buf));
         } else {
