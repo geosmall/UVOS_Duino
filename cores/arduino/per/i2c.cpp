@@ -298,7 +298,7 @@ I2CHandle::Result I2CHandle::Impl::IsDeviceReady(uint16_t address,
     if(config_.mode != I2CHandle::Config::Mode::I2C_MASTER)
         return I2CHandle::Result::ERR;
 
-    HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&i2c_hal_handle_, address << 1, trials, timeout);
+    HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&i2c_hal_handle_, address, trials, timeout);
 
     if(status != HAL_OK)
         return I2CHandle::Result::ERR;

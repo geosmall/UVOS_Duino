@@ -71,23 +71,23 @@ int main(void)
     //   HMC5883L - 0x1E — Three axis magnetic field
 
     // Scan thru valid I2C addresses
-    for(uint8_t i=1; i<128; i++)
+    for(uint8_t addr = 0x08; addr <= 0x77; addr++)
     {
-        // I2C address shifted left by 1 for LSB read/write bit 
-        if(i2c_dev.IsDeviceReady((uint16_t)(i<<1), 2, 5) == I2CHandle::Result::OK) {
-            // Print the address of the device found
-            sprintf(prn_buf, "I2C device found at address: 0x%02X\r\n", (i<<1));
+        // ST HAL expects 7-bit address passed as left aligned (shift left 1 bit)
+        uint16_t HAL_addr = ((uint16_t)addr) << 1;
+
+        if (i2c_dev.IsDeviceReady(HAL_addr, 2, 5) == I2CHandle::Result::OK) {
+            // Found a device at 8-bit address = addr
+            sprintf(prn_buf, "I2C device found >>> address: 0x%02X\r\n", addr);
             uart.BlockingTransmit((uint8_t*)prn_buf, strlen(prn_buf));
         } else {
-            // Print the address of the device not found
-            sprintf(prn_buf, "No I2C device at address: 0x%02X\r\n", (i<<1));
+            sprintf(prn_buf, "No I2C device at address: 0x%02X\r\n", addr);
             uart.BlockingTransmit((uint8_t*)prn_buf, strlen(prn_buf));
         }
 
         // Toggle the LED state for the next time around.
         led0.Toggle();
 
-        // Wait 500ms
-        System::Delay(50);
+        System::Delay(10);
     }
 }
