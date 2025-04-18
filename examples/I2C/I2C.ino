@@ -84,10 +84,14 @@ int main(void)
             sprintf(prn_buf, "No I2C device at address: 0x%02X\r\n", addr);
             uart.BlockingTransmit((uint8_t*)prn_buf, strlen(prn_buf));
         }
+    }
 
+    // Scan complete, loop forever
+    while (true) {
         // Toggle the LED state for the next time around.
         led0.Toggle();
 
-        System::Delay(10);
+        // Delay for a bit
+        System::Delay(100);
     }
 }
