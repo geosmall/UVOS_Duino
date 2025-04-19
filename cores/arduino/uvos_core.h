@@ -15,6 +15,16 @@
 #error unknown compiler
 #endif
 
+#if defined(_MSC_VER) /* MSVC */
+#define WEAK __declspec(selectany)
+#elif defined(__clang__) /* Clang */
+#define WEAK __attribute__ ((weak))
+#elif defined(__GNUC__) /* GCC */
+#define WEAK __attribute__ ((weak))
+#else
+#error unknown compiler
+#endif
+
 /** @addtogroup utility
     @{
 */

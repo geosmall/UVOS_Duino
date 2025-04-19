@@ -18,12 +18,32 @@
 #include "wiring_time.h"
 
 #ifdef __cplusplus
+  #include <algorithm>
+  using std::min;
+  using std::max;
+#else // C
+  #include <stdlib.h>
+  #ifndef abs
+    #define abs(x) ((x)>0?(x):-(x))
+  #endif // abs
+
+  #ifndef min
+    #define min(a,b) ((a)<(b)?(a):(b))
+  #endif // min
+
+  #ifndef max
+    #define max(a,b) ((a)>(b)?(a):(b))
+  #endif // max
+
+#endif // __cplusplus
+
+#ifdef __cplusplus
   // #include "HardwareTimer.h"
   // #include "Tone.h"
   // #include "WCharacter.h"
   // #include "WInterrupts.h"
   // #include "WMath.h"
-  // #include "WSerial.h"
+  #include "WSerial.h"
   #include "WString.h"
 #endif // __cplusplus
 
