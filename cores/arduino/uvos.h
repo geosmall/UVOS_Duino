@@ -19,7 +19,7 @@
 #ifdef __cplusplus
 #include "per/i2c.h"
 // #include "per/adc.h"
-#include "per/uart.h"
+#include "stm32/uart.h"
 // #include "hid/midi.h"
 // #include "hid/encoder.h"
 // #include "hid/switch.h"
@@ -50,7 +50,7 @@
 // #include "dev/mcp23x17.h"
 // #include "dev/max11300.h"
 // #include "dev/internal_flash.h"
-#include "dev/serial_rx.h"
+// #include "dev/serial_rx.h" // gls
 // #include "dev/tlv493d.h"
 // #include "dev/dotstar.h"
 // #include "dev/neopixel.h"

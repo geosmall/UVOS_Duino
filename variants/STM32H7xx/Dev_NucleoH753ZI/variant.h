@@ -15,6 +15,9 @@
 /*----------------------------------------------------------------------------
  *        STM32 pins number
  *----------------------------------------------------------------------------*/
+
+#if 0 // gls
+
 #ifdef ARDUINO_NUCLEO_H743ZI2
   #define PB7                     0  // USART_A_RX
   #define PB6                     1  // USART_A_TX
@@ -322,21 +325,23 @@
 #define NUM_DUALPAD_PINS        2
 #define NUM_ANALOG_INPUTS       28
 
+#endif // gls
+
 // On-board LED pin number
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN           PB0  // LD1
+  #define LED_BUILTIN           PB_0  // LD1
 #endif
 #define LED_GREEN               LED_BUILTIN
 #ifdef ARDUINO_NUCLEO_H743ZI2
-  #define LED_YELLOW            PE1  // LD2
+  #define LED_YELLOW            PE_1  // LD2
 #else
-  #define LED_BLUE              PB7  // LD2
+  #define LED_BLUE              PB_7  // LD2
 #endif
-#define LED_RED                 PB14 // LD3
+#define LED_RED                 PB_14 // LD3
 
 // On-board user button
 #ifndef USER_BTN
-  #define USER_BTN              PC13
+  #define USER_BTN              PC_13
 #endif
 
 // Timer Definitions

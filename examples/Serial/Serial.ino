@@ -19,12 +19,31 @@ int main(void)
     hw.Configure();
     hw.Init();
 
-    HardwareSerial Serial1(PA_10, PA_9);
-    Serial1.begin(115200);
+    //Initialize serial and wait for port to open:
+    Serial.begin(115200);
+    while (!Serial) {
+        ; // wait for serial port to connect. Needed for native USB port only
+    }
+
+    // prints title with ending line break
+    Serial.println("Arduino HardwareSerial test...");
+
+    // HardwareSerial::HardwareSerial(PinName _rx, PinName _tx, PinName _rts, PinName _cts)
+    HardwareSerial Serial2(PA_3, PA_2);
+
+    //Initialize serial and wait for port to open:
+    Serial2.begin(115200);
+    while (!Serial2) {
+        ; // wait for serial port to connect. Needed for native USB port only
+    }
+
+    uint8_t i;
 
     // Loop forever
     for(;;)
     {
+        Serial.println(i++);
+
         // Set the onboard LED
         hw.SetLed(led_state);
 

@@ -225,7 +225,7 @@ void System::Init(const System::Config& config)
     uvs_dma_init();
     uvs_i2c_global_init();
     uvs_spi_global_init();
-    uvs_uart_global_init();
+    // uvs_uart_global_init();
 
     // Initialize Caches
     if(config.use_dcache)
