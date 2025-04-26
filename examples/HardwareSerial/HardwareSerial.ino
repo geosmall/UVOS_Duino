@@ -16,8 +16,8 @@ static constexpr size_t DMA_BUF_SIZE = 256;   // DMA rx buffer size
 static uint8_t DMA_BUFFER_MEM_SECTION HardwareSerial_rx_buf[DMA_BUF_SIZE] = {0};
 
 // Build full HardwareSerial::Config with nested lambda
-static const uvos_arduino::Config serial3_cfg = []{
-    uvos_arduino::Config c{};
+static const uvos::HardwareSerial::Config serial3_cfg = []{
+    uvos::HardwareSerial::Config c{};
     // UART settings
     c.uart_config.periph        = uvos::UartHandler::Config::Peripheral::USART_3;
     c.uart_config.mode          = uvos::UartHandler::Config::Mode::TX_RX;
@@ -30,7 +30,7 @@ static const uvos_arduino::Config serial3_cfg = []{
 }();
 
 // Wrapper instance
-uvos_arduino::HardwareSerial Serial3(serial3_cfg);
+uvos::HardwareSerial Serial3(serial3_cfg);
 
 int main(void)
 {

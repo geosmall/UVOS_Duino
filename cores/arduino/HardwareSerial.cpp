@@ -1,12 +1,11 @@
 #include "HardwareSerial.h"
 
-using namespace uvos_arduino;
+using namespace uvos;
 
 /* ----------------------------------------------------------------- */
 /*  Constructor: copies user‑supplied config                         */
 /* ----------------------------------------------------------------- */
-// change signature to take Config not UartHandler::Config
-HardwareSerial::HardwareSerial(const Config& cfg)
+HardwareSerial::HardwareSerial(const HardwareSerial::Config& cfg)
 : cfg_(cfg)
 {
 }

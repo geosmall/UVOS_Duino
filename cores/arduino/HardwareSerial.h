@@ -17,22 +17,22 @@
 #include "per/uart.h"
 #include "util/FIFO.h"
 
-namespace uvos_arduino
+namespace uvos
 {
-
-// New config struct: hold UART settings + DMA buffer pointer/size
-struct Config
-{
-    uvos::UartHandler::Config uart_config;
-    uint8_t*                  dma_buf;
-    size_t                    dma_buf_size;
-
-    Config() = default;
-};
 
 class HardwareSerial : public Stream
 {
 public:
+    // Nested Config: hold UART settings + DMA buffer pointer/size
+    struct Config
+    {
+        uvos::UartHandler::Config uart_config;
+        uint8_t*                  dma_buf;
+        size_t                    dma_buf_size;
+
+        Config() = default;
+    };
+
     /*  Constructor – cfg must be fully populated before call  */
     explicit HardwareSerial(const Config& cfg);
 
@@ -66,6 +66,7 @@ private:
 
     /* constants */
     static constexpr size_t kRxBufSize  = 512;   // software ring buffer
+    static constexpr size_t kTxBufSize  = 256;   // pretend Tx buffer (blocking)
 
     /* members */
     uvos::UartHandler                             uart_;
@@ -73,4 +74,4 @@ private:
     uvos::FIFO<uint8_t, kRxBufSize>               buffer_;  // FIFO ring buffer
 };
 
-} // namespace uvos_arduino
+} // namespace uvos
