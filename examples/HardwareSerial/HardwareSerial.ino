@@ -1,9 +1,8 @@
 /****************************************************************
- * serial_demo.cpp – Minimal test for HardwareSerial.hpp
- * Hardware: STM32H743  (USART1 on PA9/PA10, AF7)
+ * HardwareSerial.ino – Minimal test for HardwareSerial.h/.cpp
+ * Hardware: Nucleo-H753ZI  (USART3 on PD8/PD9)
  ****************************************************************/
 #include "uvos_brd.h"
-#include "HardwareSerial.h"
 
 // Use the uvos namespace to prevent having to type
 // uvos:: before all libuvos functions

@@ -1,3 +1,21 @@
+/*
+  Copyright (c) 2014 Arduino.  All right reserved.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -26,10 +44,10 @@ size_t Print::write(const uint8_t *buffer, size_t size)
   return n;
 }
 
-// size_t Print::print(const __FlashStringHelper *ifsh)
-// {
-//   return print(reinterpret_cast<const char *>(ifsh));
-// }
+size_t Print::print(const __FlashStringHelper *ifsh)
+{
+  return print(reinterpret_cast<const char *>(ifsh));
+}
 
 size_t Print::print(const String &s)
 {
@@ -116,12 +134,12 @@ size_t Print::print(double n, int digits)
   return printFloat(n, digits);
 }
 
-// size_t Print::println(const __FlashStringHelper *ifsh)
-// {
-//   size_t n = print(ifsh);
-//   n += println();
-//   return n;
-// }
+size_t Print::println(const __FlashStringHelper *ifsh)
+{
+  size_t n = print(ifsh);
+  n += println();
+  return n;
+}
 
 size_t Print::print(const Printable &x)
 {
@@ -250,24 +268,24 @@ int Print::printf(const char *format, ...)
   return retval;
 }
 
-// int Print::printf(const __FlashStringHelper *format, ...)
-// {
-//   va_list ap;
-//   va_start(ap, format);
-//   int retval = vdprintf((int)this, (const char *)format, ap);
-//   va_end(ap);
-//   return retval;
-// }
+int Print::printf(const __FlashStringHelper *format, ...)
+{
+  va_list ap;
+  va_start(ap, format);
+  int retval = vdprintf((int)this, (const char *)format, ap);
+  va_end(ap);
+  return retval;
+}
 
 int Print::vprintf(const char *format, va_list ap)
 {
   return vdprintf((int)this, format, ap);
 }
 
-// int Print::vprintf(const __FlashStringHelper *format, va_list ap)
-// {
-//   return vdprintf((int)this, (const char *)format, ap);
-// }
+int Print::vprintf(const __FlashStringHelper *format, va_list ap)
+{
+  return vdprintf((int)this, (const char *)format, ap);
+}
 
 
 // Private Methods /////////////////////////////////////////////////////////////

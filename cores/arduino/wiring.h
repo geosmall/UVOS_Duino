@@ -25,6 +25,7 @@
   // #include "WMath.h"
   // #include "WSerial.h"
   #include "WString.h"
+  #include "HardwareSerial.h"
 #endif // __cplusplus
 
 

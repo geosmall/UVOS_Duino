@@ -1,4 +1,23 @@
-#pragma once
+/*
+  Copyright (c) 2016 Arduino LLC.  All right reserved.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+#ifndef Print_h
+#define Print_h
 
 #include <inttypes.h>
 #include <stdio.h> // for size_t
@@ -56,7 +75,7 @@ class Print {
       return 0;
     }
 
-    // size_t print(const __FlashStringHelper *);
+    size_t print(const __FlashStringHelper *);
     size_t print(const String &);
     size_t print(const char[]);
     size_t print(char);
@@ -70,7 +89,7 @@ class Print {
     size_t print(double, int = 2);
     size_t print(const Printable &);
 
-    // size_t println(const __FlashStringHelper *);
+    size_t println(const __FlashStringHelper *);
     size_t println(const String &s);
     size_t println(const char[]);
     size_t println(char);
@@ -86,9 +105,11 @@ class Print {
     size_t println(void);
 
     int printf(const char *format, ...);
-    // int printf(const __FlashStringHelper *format, ...);
-    // int vprintf(const __FlashStringHelper *format, va_list ap);
+    int printf(const __FlashStringHelper *format, ...);
+    int vprintf(const __FlashStringHelper *format, va_list ap);
     int vprintf(const char *format, va_list ap);
 
     virtual void flush() { /* Empty implementation for backward compatibility */ }
 };
+
+#endif
