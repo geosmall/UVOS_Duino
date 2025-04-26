@@ -5,7 +5,8 @@ using namespace uvos_arduino;
 /* ----------------------------------------------------------------- */
 /*  Constructor: copies user‑supplied config                         */
 /* ----------------------------------------------------------------- */
-HardwareSerial::HardwareSerial(const uvos::UartHandler::Config& cfg)
+// change signature to take Config not UartHandler::Config
+HardwareSerial::HardwareSerial(const Config& cfg)
 : cfg_(cfg)
 {
 }
@@ -15,15 +16,19 @@ HardwareSerial::HardwareSerial(const uvos::UartHandler::Config& cfg)
 /* ----------------------------------------------------------------- */
 void HardwareSerial::begin(unsigned long baud)
 {
-    cfg_.baudrate = baud;
+    // update baud
+    cfg_.uart_config.baudrate = baud;
 
-    /* configure USART and GPIOs */
-    uart_.Init(cfg_);
+    // init UART with full config
+    uart_.Init(cfg_.uart_config);
 
-    /* start circular DMA ‘listen’ reception */
-    uart_.DmaListenStart(dma_rx_buf_, kDmaBufSize,
-                         &HardwareSerial::RxDmaCallback,
-                         this /* ctx */);
+    // start DMA‐listen on user buffer
+    uart_.DmaListenStart(
+        cfg_.dma_buf,
+        cfg_.dma_buf_size,
+        &HardwareSerial::RxDmaCallback,
+        this
+    );
 }
 
 /* ----------------------------------------------------------------- */
@@ -70,7 +75,7 @@ int HardwareSerial::available()
 
 int HardwareSerial::availableForWrite()
 {
-    return kTxReserve;   // TX is blocking, we always “have space”
+    return 64;  // blocking TX always has “space”
 }
 
 int HardwareSerial::peek()

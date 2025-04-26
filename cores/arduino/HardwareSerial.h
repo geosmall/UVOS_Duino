@@ -19,11 +19,21 @@
 namespace uvos_arduino
 {
 
+// New config struct: hold UART settings + DMA buffer pointer/size
+struct Config
+{
+    uvos::UartHandler::Config uart_config;
+    uint8_t*                  dma_buf;
+    size_t                    dma_buf_size;
+
+    Config() = default;
+};
+
 class HardwareSerial : public Stream
 {
 public:
     /*  Constructor – cfg must be fully populated before call  */
-    explicit HardwareSerial(const uvos::UartHandler::Config& cfg);
+    explicit HardwareSerial(const Config& cfg);
 
     /*  Non‑copyable (DMA callback points at 'this')            */
     HardwareSerial(const HardwareSerial&)            = delete;
@@ -55,15 +65,12 @@ private:
 
     /* constants */
     static constexpr size_t kRxBufSize  = 512;   // software ring buffer
-    static constexpr size_t kDmaBufSize = 256;   // DMA circular buffer
-    static constexpr int    kTxReserve  = 64;    // pretend space for write()
 
     /* members */
     uvos::UartHandler           uart_;
-    uvos::UartHandler::Config   cfg_;            // copy held privately
+    Config                      cfg_;            // hold user‐supplied config
 
     /* RX ring‑buffer management */
-    alignas(4) uint8_t  dma_rx_buf_[kDmaBufSize];
     volatile size_t     head_ = 0;
     volatile size_t     tail_ = 0;
     uint8_t             rx_buf_[kRxBufSize];

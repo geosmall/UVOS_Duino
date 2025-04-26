@@ -12,18 +12,25 @@ using namespace uvos;
 // Declare a UVOSboard object called hw
 UVOSboard hw;
 
-/* Fully initialise the config at static‑init time */
-static const uvos::UartHandler::Config uart_cfg = []{
-    uvos::UartHandler::Config c;
-    c.periph        = uvos::UartHandler::Config::Peripheral::USART_3;
-    c.mode          = uvos::UartHandler::Config::Mode::TX_RX;
-    c.pin_config.tx = Pin(PORTD, 8);
-    c.pin_config.rx = Pin(PORTD, 9);
+static constexpr size_t DMA_BUF_SIZE = 256;   // DMA rx buffer size
+static uint8_t DMA_BUFFER_MEM_SECTION HardwareSerial_rx_buf[DMA_BUF_SIZE] = {0};
+
+// Build full HardwareSerial::Config with nested lambda
+static const uvos_arduino::Config serial3_cfg = []{
+    uvos_arduino::Config c{};
+    // UART settings
+    c.uart_config.periph        = uvos::UartHandler::Config::Peripheral::USART_3;
+    c.uart_config.mode          = uvos::UartHandler::Config::Mode::TX_RX;
+    c.uart_config.pin_config.tx = Pin(PORTD, 8);
+    c.uart_config.pin_config.rx = Pin(PORTD, 9);
+    // DMA buffer
+    c.dma_buf      = HardwareSerial_rx_buf;
+    c.dma_buf_size = DMA_BUF_SIZE;
     return c;
 }();
 
-/* Wrapper instance – safe because cfg is already complete */
-uvos_arduino::HardwareSerial Serial3(uart_cfg);
+// Wrapper instance
+uvos_arduino::HardwareSerial Serial3(serial3_cfg);
 
 int main(void)
 {
@@ -34,8 +41,6 @@ int main(void)
     hw.Init();
 
     Serial3.begin(115200);
-
-
 
     Serial3.println("STM32H743 echo test - type away!");
 
