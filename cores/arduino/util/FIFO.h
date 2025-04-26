@@ -120,6 +120,17 @@ template <typename T> class FIFOBase
         }
     }
 
+    /** Retrieves next element without removing it */
+    bool Peek(T &el) const {
+        size_t t = tail_.load(std::memory_order_relaxed);
+        size_t h = head_.load(std::memory_order_acquire);
+        if (t == h) {
+            return false; // empty
+        }
+        el = buf_[t];
+        return true;
+    }
+
     /** Returns true if the buffer is empty */
     bool IsEmpty() const {
         return head_.load(std::memory_order_acquire) == tail_.load(std::memory_order_relaxed);

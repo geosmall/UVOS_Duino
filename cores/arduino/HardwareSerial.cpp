@@ -52,14 +52,10 @@ void HardwareSerial::RxDmaCallback(uint8_t *data,
         self->pushByte(data[i]);
 }
 
-/* push one byte into the software ring (drop if full) */
+// push one byte into the software ring (overwrite oldest on full)
 void HardwareSerial::pushByte(uint8_t byte)
 {
-    const size_t next = (head_ + 1U) % kRxBufSize;
-    if(next == tail_)                        // overflow → drop
-        return;
-    rx_buf_[head_] = byte;
-    head_ = next;
+    buffer_.PutWithOverwrite(byte);
 }
 
 /* ----------------------------------------------------------------- */
@@ -67,33 +63,29 @@ void HardwareSerial::pushByte(uint8_t byte)
 /* ----------------------------------------------------------------- */
 int HardwareSerial::available()
 {
-    int n = (head_ >= tail_)
-              ? static_cast<int>(head_ - tail_)
-              : static_cast<int>(kRxBufSize - tail_ + head_);
-    return n;
+    return static_cast<int>(buffer_.GetNumElements());
 }
 
 int HardwareSerial::availableForWrite()
 {
-    return 64;  // blocking TX always has “space”
+    return 256; // blocking TX always has space
 }
 
 int HardwareSerial::peek()
 {
-    return available() ? rx_buf_[tail_] : -1;
+    uint8_t b;
+    return buffer_.Peek(b) ? static_cast<int>(b) : -1;
 }
 
 int HardwareSerial::read()
 {
-    if(!available()) return -1;
-    uint8_t b = rx_buf_[tail_];
-    tail_ = (tail_ + 1U) % kRxBufSize;
-    return b;
+    uint8_t b;
+    return buffer_.Get(b) ? static_cast<int>(b) : -1;
 }
 
 void HardwareSerial::flush()
 {
-    /* nothing to do – BlockingTransmit is synchronous */
+    /* nothing to do – TX is synchronous */
 }
 
 size_t HardwareSerial::write(uint8_t byte)

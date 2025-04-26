@@ -13,8 +13,9 @@
 
 #include <cstdint>
 #include <cstddef>
-#include "Stream.h"           // from STM32duino core you ported
-#include "per/uart.h"             // <-- uvos::UartHandler declaration
+#include "Stream.h"
+#include "per/uart.h"
+#include "util/FIFO.h"
 
 namespace uvos_arduino
 {
@@ -67,13 +68,9 @@ private:
     static constexpr size_t kRxBufSize  = 512;   // software ring buffer
 
     /* members */
-    uvos::UartHandler           uart_;
-    Config                      cfg_;            // hold user‐supplied config
-
-    /* RX ring‑buffer management */
-    volatile size_t     head_ = 0;
-    volatile size_t     tail_ = 0;
-    uint8_t             rx_buf_[kRxBufSize];
+    uvos::UartHandler                             uart_;
+    Config                                        cfg_;            // hold user‐supplied config
+    uvos::FIFO<uint8_t, kRxBufSize>               buffer_;  // FIFO ring buffer
 };
 
 } // namespace uvos_arduino
