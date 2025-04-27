@@ -15,11 +15,11 @@ static constexpr size_t DMA_BUF_SIZE = 256;   // DMA rx buffer size
 static uint8_t DMA_BUFFER_MEM_SECTION HardwareSerial_rx_buf[DMA_BUF_SIZE] = {0};
 
 // Build full HardwareSerial::Config with nested lambda
-static const uvos::HardwareSerial::Config serial3_cfg = []{
-    uvos::HardwareSerial::Config c{};
+static const HardwareSerial::Config serial3_cfg = []{
+    HardwareSerial::Config c{};
     // UART settings
-    c.uart_config.periph        = uvos::UartHandler::Config::Peripheral::USART_3;
-    c.uart_config.mode          = uvos::UartHandler::Config::Mode::TX_RX;
+    c.uart_config.periph        = UartHandler::Config::Peripheral::USART_3;
+    c.uart_config.mode          = UartHandler::Config::Mode::TX_RX;
     c.uart_config.pin_config.tx = Pin(PORTD, 8);
     c.uart_config.pin_config.rx = Pin(PORTD, 9);
     // DMA buffer
@@ -29,7 +29,7 @@ static const uvos::HardwareSerial::Config serial3_cfg = []{
 }();
 
 // Wrapper instance
-uvos::HardwareSerial Serial3(serial3_cfg);
+HardwareSerial Serial3(serial3_cfg);
 
 int main(void)
 {

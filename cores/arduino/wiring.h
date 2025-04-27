@@ -11,7 +11,7 @@
 #include "itoa.h"
 
 // #include "wiring_analog.h"
-// #include "wiring_constants.h"
+#include "wiring_constants.h"
 // #include "wiring_digital.h"
 // #include "wiring_pulse.h"
 // #include "wiring_shift.h"
