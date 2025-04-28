@@ -21,19 +21,28 @@ void HardwareSerial::begin(unsigned long baud)
     // init UART with full config
     uart_.Init(cfg_.uart_config);
 
-    // start DMA‐listen on user buffer
-    uart_.DmaListenStart(
-        cfg_.dma_buf,
-        cfg_.dma_buf_size,
-        &HardwareSerial::RxDmaCallback,
-        this
-    );
+    // start DMA‐listen on user buffer if Mode::RX or Mode::TX_RX
+    if(cfg_.uart_config.mode == uvos::UartHandler::Config::Mode::RX ||
+       cfg_.uart_config.mode == uvos::UartHandler::Config::Mode::TX_RX)
+    {
+        uart_.DmaListenStart(
+            cfg_.dma_buf,
+            cfg_.dma_buf_size,
+            &HardwareSerial::RxDmaCallback,
+            this
+        );
+    }
 }
 
 /* ----------------------------------------------------------------- */
 void HardwareSerial::end()
 {
-    uart_.DmaListenStop();
+    // start DMA‐listen on user buffer if Mode::RX or Mode::TX_RX
+    if(cfg_.uart_config.mode == uvos::UartHandler::Config::Mode::RX ||
+        cfg_.uart_config.mode == uvos::UartHandler::Config::Mode::TX_RX)
+    {
+        uart_.DmaListenStop();
+    }
 }
 
 /* ----------------------------------------------------------------- */

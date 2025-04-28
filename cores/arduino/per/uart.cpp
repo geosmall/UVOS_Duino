@@ -701,10 +701,12 @@ pin_alt usart1_pins_rx[] = {{{UVS_GPIOB, 7}, GPIO_AF7_USART1},
                             {{UVS_GPIOB, 15}, GPIO_AF4_USART1},
                             {{UVS_GPIOA, 10}, GPIO_AF7_USART1}};
 
-pin_alt usart2_pins_tx[]
-    = {{{UVS_GPIOA, 2}, GPIO_AF7_USART2}, pins_none, pins_none};
-pin_alt usart2_pins_rx[]
-    = {{{UVS_GPIOA, 3}, GPIO_AF7_USART2}, pins_none, pins_none};
+pin_alt usart2_pins_tx[] = {{{UVS_GPIOA, 2}, GPIO_AF7_USART2},
+                            {{UVS_GPIOD, 5}, GPIO_AF7_USART2},
+                            pins_none};
+pin_alt usart2_pins_rx[] = {{{UVS_GPIOA, 3}, GPIO_AF7_USART2},
+                            {{UVS_GPIOD, 6}, GPIO_AF7_USART2},
+                            pins_none};
 
 pin_alt usart3_pins_tx[] = {{{UVS_GPIOC, 10}, GPIO_AF7_USART3},
                             {{UVS_GPIOD, 8}, GPIO_AF7_USART3},
@@ -720,29 +722,40 @@ pin_alt uart4_pins_rx[] = {{{UVS_GPIOB, 8}, GPIO_AF8_UART4},
                            {{UVS_GPIOC, 11}, GPIO_AF8_UART4},
                            {{UVS_GPIOA, 1}, GPIO_AF8_UART4}};
 
-pin_alt uart5_pins_tx[] = {{{UVS_GPIOC, 12}, GPIO_AF8_UART5},
-                           {{UVS_GPIOB, 6}, GPIO_AF14_UART5},
-                           pins_none};
+pin_alt uart5_pins_tx[] = {{{UVS_GPIOB, 13}, GPIO_AF14_UART5},
+                           {{UVS_GPIOC, 12}, GPIO_AF8_UART5},
+                           {{UVS_GPIOB, 6}, GPIO_AF14_UART5}};
 pin_alt uart5_pins_rx[] = {{{UVS_GPIOB, 12}, GPIO_AF14_UART5},
                            {{UVS_GPIOD, 2}, GPIO_AF8_UART5},
                            {{UVS_GPIOB, 5}, GPIO_AF14_UART5}};
 
-pin_alt usart6_pins_tx[]
-    = {{{UVS_GPIOC, 6}, GPIO_AF7_USART6}, pins_none, pins_none};
-pin_alt usart6_pins_rx[]
-    = {{{UVS_GPIOC, 7}, GPIO_AF7_USART6}, pins_none, pins_none};
+pin_alt usart6_pins_tx[] = {{{UVS_GPIOC, 6}, GPIO_AF7_USART6},
+                            pins_none,
+                            pins_none};
+pin_alt usart6_pins_rx[] = {{{UVS_GPIOC, 7}, GPIO_AF7_USART6},
+                            pins_none,
+                            pins_none};
 
-pin_alt uart7_pins_tx[]
-    = {{{UVS_GPIOB, 4}, GPIO_AF11_UART7}, pins_none, pins_none};
-pin_alt uart7_pins_rx[] = {pins_none, pins_none, pins_none};
+pin_alt uart7_pins_tx[] = {{{UVS_GPIOB, 4}, GPIO_AF11_UART7},
+                           {{UVS_GPIOE, 8}, GPIO_AF7_UART7},
+                           pins_none};
+pin_alt uart7_pins_rx[] = {{{UVS_GPIOB, 3}, GPIO_AF11_UART7},
+                           {{UVS_GPIOE, 7}, GPIO_AF7_UART7},
+                           pins_none};
 
-pin_alt uart8_pins_tx[] = {pins_none, pins_none, pins_none};
-pin_alt uart8_pins_rx[] = {pins_none, pins_none, pins_none};
+pin_alt uart8_pins_tx[] = {{{UVS_GPIOE, 1}, GPIO_AF8_UART8},
+                           pins_none,
+                           pins_none};
+pin_alt uart8_pins_rx[] = {{{UVS_GPIOE, 0}, GPIO_AF8_UART8},
+                           pins_none,
+                           pins_none};
 
-pin_alt lpuart1_pins_tx[]
-    = {{{UVS_GPIOB, 6}, GPIO_AF8_LPUART}, pins_none, pins_none};
-pin_alt lpuart1_pins_rx[]
-    = {{{UVS_GPIOB, 7}, GPIO_AF8_LPUART}, pins_none, pins_none};
+pin_alt lpuart1_pins_tx[] = {{{UVS_GPIOB, 6}, GPIO_AF8_LPUART},
+                             pins_none,
+                             pins_none};
+pin_alt lpuart1_pins_rx[] = {{{UVS_GPIOB, 7}, GPIO_AF8_LPUART},
+                             pins_none,
+                             pins_none};
 
 //an array to hold everything
 pin_alt* pins_periphs[] = {usart1_pins_tx,

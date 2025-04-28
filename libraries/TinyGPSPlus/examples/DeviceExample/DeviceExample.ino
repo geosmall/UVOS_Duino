@@ -18,7 +18,7 @@ static const HardwareSerial::Config serial_cfg = []{
     HardwareSerial::Config c{};
     // UART settings
     c.uart_config.periph        = UartHandler::Config::Peripheral::USART_3;
-    c.uart_config.mode          = UartHandler::Config::Mode::TX_RX;
+    c.uart_config.mode          = UartHandler::Config::Mode::TX;
     c.uart_config.pin_config.tx = Pin(PORTD, 8);
     c.uart_config.pin_config.rx = Pin(PORTD, 9);
     // DMA buffer
@@ -40,7 +40,7 @@ static const HardwareSerial::Config gps_ser_cfg = []{
     HardwareSerial::Config c{};
     // UART settings
     c.uart_config.periph        = UartHandler::Config::Peripheral::USART_2;
-    c.uart_config.mode          = UartHandler::Config::Mode::TX_RX;
+    c.uart_config.mode          = UartHandler::Config::Mode::RX;
     c.uart_config.pin_config.tx = Pin(PORTD, 5);
     c.uart_config.pin_config.rx = Pin(PORTD, 6);
     // DMA buffer
