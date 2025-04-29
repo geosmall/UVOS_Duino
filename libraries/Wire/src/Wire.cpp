@@ -59,7 +59,14 @@ bool TwoWire::begin(uint8_t selfAddr, uint32_t clockHz)
 
 void TwoWire::end() { /* No explicit de-init path needed */ }
 
-void TwoWire::setClock(uint32_t hz) { begin(hz); }
+void TwoWire::setClock(uint32_t hz) {
+    // if in master mode, just re‐init as master; otherwise re‑init as slave with the same address
+    if (cfg_.i2c_config.mode == I2CHandle::Config::Mode::I2C_MASTER) {
+        begin(hz);
+    } else {
+        begin(cfg_.i2c_config.address, hz);
+    }
+}
 
 /* ---------------- Master TX ---------------- */
 void TwoWire::beginTransmission(uint8_t address)
