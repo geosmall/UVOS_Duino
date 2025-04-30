@@ -58,7 +58,6 @@ class TwoWire : public Stream
     FIFO<uint8_t, kRxCapacity> rxFifo_;
 
     /* helpers */
-    bool     initHandle(I2CHandle::Config cfg);
     uint32_t toHalSpeed(uint32_t hz);
 };
 

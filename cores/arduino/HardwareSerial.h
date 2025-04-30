@@ -53,7 +53,12 @@ public:
     size_t  write(uint8_t byte)       override;
     size_t  write(const uint8_t *buf, size_t size) override;
 
-    /*  Expose readBytes for MF_SerialPtrWrapper               */
+    explicit operator bool() const
+    {
+        return true;
+    }
+
+    /*  Expose readBytes from Stream */
     using Stream::readBytes;
 
 private:
