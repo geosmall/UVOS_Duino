@@ -12,15 +12,15 @@ int16_t Dps310::getContResults(float *tempBuffer,
 }
 
 // #ifndef DPS_DISABLESPI
-// int16_t Dps310::setInterruptSources(uint8_t intr_source, uint8_t polarity)
-// {
-// 	//Interrupts are not supported with 4 Wire SPI
-// 	if (!m_SpiI2c & !m_threeWire)
-// 	{
-// 		return DPS__FAIL_UNKNOWN;
-// 	}
-// 	return writeByteBitfield(intr_source, registers[INT_SEL]) || writeByteBitfield(polarity, registers[INT_HL]);
-// }
+int16_t Dps310::setInterruptSources(uint8_t intr_source, uint8_t polarity)
+{
+	//Interrupts are not supported with 4 Wire SPI
+	// if (!m_SpiI2c & !m_threeWire)
+	// {
+	// 	return DPS__FAIL_UNKNOWN;
+	// }
+	return writeByteBitfield(intr_source, registers[INT_SEL]) || writeByteBitfield(polarity, registers[INT_HL]);
+}
 // #endif
 
 void Dps310::init(void)

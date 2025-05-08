@@ -34,36 +34,12 @@ class DpsClass
 	~DpsClass(void);
 
 	/**
-	 * I2C begin function with standard address
-	 */
-	void begin(TwoWire &bus);
-
-	/**
 	 * Standard I2C begin function
 	 *
 	 * @param &bus: 			I2CBus which connects MC to the sensor
 	 * @param slaveAddress: 	I2C address of the sensor (0x77 or 0x76)
 	 */
-	void begin(TwoWire &bus, uint8_t slaveAddress);
-
-// #ifndef DPS_DISABLESPI
-// 	/**
-// 	 * SPI begin function for Dps310 with 4-wire SPI
-// 	 */
-// 	void begin(SPIClass &bus, int32_t chipSelect);
-// #endif
-
-// #ifndef DPS_DISABLESPI
-// 	/**
-// 	 * Standard SPI begin function
-// 	 *
-// 	 * @param &bus: 			SPI bus which connects MC to Dps310
-// 	 * @param chipSelect: 		Number of the CS line for the Dps310
-// 	 * @param threeWire: 		1 if Dps310 is connected with 3-wire SPI
-// 	 * 					0 if Dps310 is connected with 4-wire SPI (standard)
-// 	 */
-// 	void begin(SPIClass &bus, int32_t chipSelect, uint8_t threeWire);
-// #endif
+	bool begin(TwoWire &bus, uint8_t slaveAddress);
 
 	/**
 	 * End function for Dps310
@@ -228,6 +204,27 @@ class DpsClass
 	 */
 	int16_t correctTemp(void);
 
+	/** start an async DMA read into buffer; returns DPS__SUCCEEDED or fail */
+	int16_t readBlockDMA(RegBlock_t regBlock, uint8_t *buffer);
+
+	/** true once the last readBlockDMA() has finished */
+	bool    isReadDone() const;
+
+  /** helper: true when MEAS_CFG.PRS_RDY == 1 */
+  bool  pressureReady()
+  {
+    return readByteBitfield(dps::config_registers[dps::PRS_RDY]) == 1;
+  }
+
+  /* public helper: convert raw 24‑bit value to Pascals */
+  float pressurePaFromRaw(int32_t raw) { return calcPressure(raw); }
+
+  /* public helper: convert raw 24‑bit value to Celsius */
+  float temperatureCFromRaw(int32_t raw) { return calcTemp(raw); }
+
+  /* helper: disable FIFO after the driver’s start*() turned it on */
+  int16_t fifoOff() { return disableFIFO(); }
+
   protected:
 	//scaling factor table
 	static const int32_t scaling_facts[DPS__NUM_OF_SCAL_FACTS];
@@ -258,19 +255,10 @@ class DpsClass
 	// last measured scaled temperature (necessary for pressure compensation)
 	float m_lastTempScal;
 
-	//bus specific
-	uint8_t m_SpiI2c; //0=SPI, 1=I2C
-
 	//used for I2C
 	TwoWire *m_i2cbus;
 	uint8_t m_slaveAddress;
 
-// #ifndef DPS_DISABLESPI
-// 	//used for SPI
-// 	SPIClass *m_spibus;
-// 	int32_t m_chipSelect;
-// 	uint8_t m_threeWire;
-// #endif
 	/**
 	 * Initializes the sensor.
 	 * This function has to be called from begin()
@@ -369,17 +357,6 @@ class DpsClass
 	 */
 	int16_t readByte(uint8_t regAddress);
 
-// #ifndef DPS_DISABLESPI
-// 	/**
-// 	 * reads a byte from the sensor via SPI
-// 	 * this function is automatically called by readByte
-// 	 * if the sensor is connected via SPI
-// 	 *
-// 	 * @param regAdress: 	Address that has to be read
-// 	 * @return 	register content or -1 on fail
-// 	 */
-// 	int16_t readByteSPI(uint8_t regAddress);
-// #endif
 	/**
 	 * reads a block from the sensor
 	 *
@@ -390,17 +367,6 @@ class DpsClass
 	 */
 	int16_t readBlock(RegBlock_t regBlock, uint8_t *buffer);
 
-// #ifndef DPS_DISABLESPI
-// 	/**
-// 	 * reads a block from the sensor via SPI
-// 	 *
-// 	 * @param regAdress: 	Address that has to be read
-// 	 * @param length: 		Length of data block
-// 	 * @param readbuffer: 	Buffer where data will be stored
-// 	 * @return 	number of bytes that have been read successfully, which might not always equal to length due to rx-Buffer overflow etc.
-// 	 */
-// 	int16_t readBlockSPI(RegBlock_t regBlock, uint8_t *readbuffer);
-// #endif
 	/**
 	 * writes a byte to a given register of the sensor without checking
 	 *
@@ -422,20 +388,6 @@ class DpsClass
 	 * 				or -1 on fail
 	 */
 	int16_t writeByte(uint8_t regAddress, uint8_t data, uint8_t check);
-
-// #ifndef DPS_DISABLESPI
-// 	/**
-// 	 * writes a byte to a register of the sensor via SPI
-// 	 *
-// 	 * @param regAdress: 	Address of the register that has to be updated
-// 	 * @param data:		Byte that will be written to the register
-// 	 * @param check: 		If this is true, register content will be read after writing
-// 	 * 				to check if update was successful
-// 	 * @return		0 if byte was written successfully
-// 	 * 				or -1 on fail
-// 	 */
-// 	int16_t writeByteSpi(uint8_t regAddress, uint8_t data, uint8_t check);
-// #endif
 
 	/**
 	 * updates a bit field of the sensor without checking

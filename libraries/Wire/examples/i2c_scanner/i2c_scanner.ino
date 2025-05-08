@@ -28,6 +28,18 @@ static const HardwareSerial::Config serial_cfg = [] {
 // Wrapper instance
 HardwareSerial Serial(serial_cfg);
 
+static TwoWire::Config defaultWireCfg = []{
+    TwoWire::Config cfg{};
+    // select I2C2 and default pins; set default speed to 400 kHz, Master mode
+    cfg.i2c_config.periph         = I2CHandle::Config::Peripheral::I2C_2;
+    cfg.i2c_config.pin_config.scl = Pin(PORTB, 10);
+    cfg.i2c_config.pin_config.sda = Pin(PORTB, 11);
+    cfg.i2c_config.speed          = I2CHandle::Config::Speed::I2C_400KHZ;
+    cfg.i2c_config.mode           = I2CHandle::Config::Mode::I2C_MASTER;
+    return cfg;
+}();
+TwoWire Wire(defaultWireCfg);
+
 // Create LED objects
 GPIO led0;
 Pin led0_pin = Pin(PORTE, 1);
