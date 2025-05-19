@@ -9,8 +9,7 @@
 #include "util/FIFO.h"       // uvos::FIFO
 #include <cstdint>
 
-namespace uvos
-{
+using namespace uvos;
 
 class TwoWire : public Stream
 {
@@ -86,5 +85,3 @@ private:
 
 /* Global “Wire” instance **********************************************/
 // extern TwoWire Wire;
-
-} // namespace uvos

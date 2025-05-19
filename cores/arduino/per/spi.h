@@ -118,8 +118,9 @@ class SpiHandle
     /** Return values for Spi functions. */
     enum class Result
     {
-        OK, /**< & */
-        ERR /**< & */
+        OK,          /**< & */
+        ERR_TIMEOUT, /**< & */
+        ERR          /**< & */
     };
 
     enum class DmaDirection

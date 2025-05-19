@@ -765,52 +765,72 @@ SpiHandle::Result SpiHandle::Impl::BlockingTransmitAndReceive(uint8_t* tx_buff,
     return SpiHandle::Result::OK;
 }
 
-SpiHandle::Result SpiHandle::Impl::BlockingTransferLL(uint8_t* tx_buff,
-                                                      uint8_t* rx_buff,
-                                                      size_t   size,
-                                                      uint32_t timeout)
+SpiHandle::Result SpiHandle::Impl::BlockingTransferLL(uint8_t* tx_buffer,
+                                                      uint8_t* rx_buffer,
+                                                      size_t   len,
+                                                      uint32_t Timeout)
 
-// int inv_spi_transfer(SPI_TypeDef *instance, uint8_t *rxData, const uint8_t *txData, int len)
 {
-    SPI_TypeDef* instance = hspi_.Instance;
+    /*------------------------------------------------------------------
+     * Guard-bytes used when the caller does “read-only” (tx == nullptr)
+     * or “write-only” (rx == nullptr).  They live in .bss so the address
+     * is always valid and 32-bit aligned.
+     *------------------------------------------------------------------*/
+    static uint8_t dummy_tx = 0xFF;   // clocks idle-high data
+    static uint8_t dummy_rx;
 
-    LL_SPI_SetTransferSize(instance, size);
-    LL_SPI_Enable(instance);
-    LL_SPI_StartMasterTransfer(instance);
-    while (size) {
-        uint32_t spiTimeout = timeout;
-        while (!LL_SPI_IsActiveFlag_TXP(instance)) {
-            if ((spiTimeout--) == 0) {
-                // spiTimeoutUserCallback(instance); gls
-                return SpiHandle::Result::ERR;
+    if ((len == 0U) || (Timeout == 0U))
+        return SpiHandle::Result::ERR;
+
+    if (tx_buffer == nullptr) tx_buffer = &dummy_tx; // protect against dereferenced nullptr
+    if (rx_buffer == nullptr) rx_buffer = &dummy_rx; // discard bytes safely
+
+    SPI_TypeDef *const _SPI = hspi_.Instance;
+    uint32_t tickstart      = HAL_GetTick();
+    SpiHandle::Result ret   = SpiHandle::Result::OK;
+
+    LL_SPI_SetTransferSize(_SPI, len);
+    LL_SPI_Enable(_SPI);
+    LL_SPI_StartMasterTransfer(_SPI);
+
+    while (len--)
+    {
+        while (!LL_SPI_IsActiveFlag_TXP(_SPI));
+
+        // LL_SPI_TransmitData8(_SPI, *tx_buffer++);    // safe: tx_buffer valid
+        uint8_t tx_byte = (tx_buffer == &dummy_tx) ? dummy_tx : *tx_buffer++;
+        LL_SPI_TransmitData8(_SPI, tx_byte);
+
+        while (!LL_SPI_IsActiveFlag_RXP(_SPI))
+        {
+            if ((Timeout != HAL_MAX_DELAY) && ((HAL_GetTick() - tickstart) >= Timeout))
+            {
+                ret = SpiHandle::Result::ERR_TIMEOUT;
+                goto transfer_exit;
             }
         }
-        uint8_t b = tx_buff ? *(tx_buff++) : 0xFF;
-        LL_SPI_TransmitData8(instance, b);
 
-        spiTimeout = timeout;
-        while (!LL_SPI_IsActiveFlag_RXP(instance)) {
-            if ((spiTimeout--) == 0) {
-                // spiTimeoutUserCallback(instance); gls
-                return SpiHandle::Result::ERR;
-            }
-        }
-        b = LL_SPI_ReceiveData8(instance);
-        if (rx_buff) {
-            *(rx_buff++) = b;
-        }
-        --size;
+        // *rx_buffer++ = LL_SPI_ReceiveData8(_SPI);    // safe: rx_buffer valid
+        uint8_t rx_byte = LL_SPI_ReceiveData8(_SPI);
+        if (rx_buffer != &dummy_rx) *rx_buffer++ = rx_byte;
     }
-    while (!LL_SPI_IsActiveFlag_EOT(instance));
+
+transfer_exit:
+
+    while (!LL_SPI_IsActiveFlag_EOT(_SPI));
     // Add a delay before disabling SPI otherwise last-bit/last-clock may be truncated
     // See https://github.com/stm32duino/Arduino_Core_STM32/issues/1294
     // Computed delay is half SPI clock
     System::DelayUs(config_.disable_delay_);
 
-    LL_SPI_ClearFlag_TXTF(instance);
-    LL_SPI_Disable(instance);
+    /* Close transfer */
+    /* Clear flags */
+    LL_SPI_ClearFlag_EOT(_SPI);
+    LL_SPI_ClearFlag_TXTF(_SPI);
+    /* Disable SPI peripheral */
+    LL_SPI_Disable(_SPI);
 
-    return SpiHandle::Result::OK;
+    return ret;
 }
 
 typedef struct

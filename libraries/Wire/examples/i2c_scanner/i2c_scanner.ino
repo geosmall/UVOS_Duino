@@ -1,5 +1,5 @@
 #include "uvos_brd.h"
-#include <Wire.h>
+#include "Wire.h"
 
 // Use the uvos namespace to prevent having to type
 // uvos:: before all libuvos functions

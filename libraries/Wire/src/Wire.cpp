@@ -5,17 +5,14 @@
 #include "Wire.h"
 #include <cstring>
 
-namespace uvos
-{
-
 /* ------------------------------------------------------------------ */
 /*          private helpers                                           */
 /* ------------------------------------------------------------------ */
 uint32_t TwoWire::toHalSpeed(uint32_t hz)
 {
-    if (hz >= 800'000) return 1'000'000;
-            if(hz >= 350'000) return 400'000;
-                                         return 100'000;
+    if (hz >= 800000UL) return 1000000UL;
+    if (hz >= 350000UL) return 400000UL;
+    return 100000UL;
 }
 
 /* ------------------------------------------------------------------ */
@@ -31,26 +28,26 @@ TwoWire::TwoWire(const TwoWire::Config& cfg)
 bool TwoWire::begin(uint32_t clockHz)
 {
     // update stored config
-    cfg_.i2c_config.speed = (toHalSpeed(clockHz) == 1'000'000)
+    cfg_.i2c_config.speed = (toHalSpeed(clockHz) == 1000000UL)
                             ? I2CHandle::Config::Speed::I2C_1MHZ
-                            : (toHalSpeed(clockHz) == 400'000)
-                               ? I2CHandle::Config::Speed::I2C_400KHZ
-                               : I2CHandle::Config::Speed::I2C_100KHZ;
-                               cfg_.i2c_config.mode  = I2CHandle::Config::Mode::I2C_MASTER;
-
-                               return (i2c_.Init(cfg_.i2c_config) == I2CHandle::Result::OK);
-                           }
-
-                               // Slave mode: init I2C peripheral
-                               // Note: selfAddr is 7-bit address (0x00-0x7F)
-                               bool TwoWire::begin(uint8_t selfAddr, uint32_t clockHz)
-                               {
-                               // update stored config
-                               cfg_.i2c_config.speed   = (toHalSpeed(clockHz) == 1'000'000)
-                               ? I2CHandle::Config::Speed::I2C_1MHZ
-                               : (toHalSpeed(clockHz) == 400'000)
+                            : (toHalSpeed(clockHz) == 400000UL)
                             ? I2CHandle::Config::Speed::I2C_400KHZ
                             : I2CHandle::Config::Speed::I2C_100KHZ;
+    cfg_.i2c_config.mode  = I2CHandle::Config::Mode::I2C_MASTER;
+
+    return (i2c_.Init(cfg_.i2c_config) == I2CHandle::Result::OK);
+}
+
+// Slave mode: init I2C peripheral
+// Note: selfAddr is 7-bit address (0x00-0x7F)
+bool TwoWire::begin(uint8_t selfAddr, uint32_t clockHz)
+{
+    // update stored config
+    cfg_.i2c_config.speed   = (toHalSpeed(clockHz) == 1000000UL)
+                              ? I2CHandle::Config::Speed::I2C_1MHZ
+                              : (toHalSpeed(clockHz) == 400000UL)
+                              ? I2CHandle::Config::Speed::I2C_400KHZ
+                              : I2CHandle::Config::Speed::I2C_100KHZ;
     cfg_.i2c_config.mode    = I2CHandle::Config::Mode::I2C_SLAVE;
     cfg_.i2c_config.address = selfAddr & 0x7F;
 
@@ -193,5 +190,3 @@ int TwoWire::read()
 //     return cfg;
 // }();
 // TwoWire Wire(defaultWireCfg);
-
-} // namespace uvos
