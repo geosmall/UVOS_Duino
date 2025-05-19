@@ -482,8 +482,9 @@ int IMU::spiReadRegs(struct inv_icm426xx_serif* serif,
     // First send the register address with high bit set (discard received byte)
     (void)obj->p_spi_->transfer(reg);
 
-    // Read 'len' bytes (nullptr = send dummy 0xFF bytes)
-    obj->p_spi_->transfer(nullptr, buf, len);
+    // Read 'len' bytes (sending dummy bytes)
+    uint8_t* dummy_tx = nullptr;
+    obj->p_spi_->transfer(dummy_tx, buf, len);
 
     obj->DeselectDevice();
 

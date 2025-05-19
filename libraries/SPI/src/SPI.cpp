@@ -71,23 +71,21 @@ void SPIClass::endTransaction()
 uint8_t SPIClass::transfer(uint8_t data)
 {
     uint8_t rx_byte = 0;
-    spi_.BlockingTransmitAndReceive(&data, &rx_byte, 1, 100);
+    spi_.BlockingTransferLL(&data, &rx_byte, 1);
     return rx_byte;
 }
 
 void SPIClass::transfer(void* tx, void* rx, size_t len)
 {
-    spi_.BlockingTransmitAndReceive(static_cast<uint8_t*>(tx),
-                                    static_cast<uint8_t*>(rx),
-                                    len,
-                                    100);
+    spi_.BlockingTransferLL(static_cast<uint8_t*>(tx),
+                            static_cast<uint8_t*>(rx),
+                            len);
 }
 
 void SPIClass::transfer(void* buf, size_t len)
 {
     // For in-place transfer, use the same buffer for TX and RX
-    spi_.BlockingTransmitAndReceive(static_cast<uint8_t*>(buf), 
-                                   static_cast<uint8_t*>(buf),
-                                   len,
-                                   100);
+    spi_.BlockingTransferLL(static_cast<uint8_t*>(buf), 
+                            static_cast<uint8_t*>(buf),
+                            len);
 }
