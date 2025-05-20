@@ -1,3 +1,21 @@
+/*
+ * ReadIMU6 - Example sketch for reading raw 6-axis IMU data (ICM426xx)
+ * 
+ * This sketch demonstrates how to configure and read raw accelerometer and gyroscope 
+ * data from an ICM426xx IMU sensor using SPI communication. It configures the IMU with 
+ * specific settings (±4g for accelerometer, ±2000°/s for gyroscope, 1kHz sample rate),
+ * uses interrupt-driven data acquisition, and outputs the raw sensor readings to Serial.
+ * 
+ * The example supports multiple board configurations (NUCLEO_H753ZI, FC_MatekH743, 
+ * and DevEBoxH743VI) with appropriate pin mappings for each.
+ * 
+ * Features demonstrated:
+ * - SPI communication with IMU sensor
+ * - Interrupt-based data acquisition 
+ * - Raw IMU data reading and processing
+ * - TDK Invensense messaging system integration
+ */
+
 #include "uvos_brd.h"
 #include "imu2.h"
 #include "SPI.h"
@@ -136,28 +154,21 @@ int main(void)
     // Initialize the UVOS board hardware
     hw.Init();
 
-    // Configure the Uart Peripheral to print out results
-    UartHandler::Config uart_conf;
-    uart_conf.periph        = UART_NUM;
-    uart_conf.mode          = UartHandler::Config::Mode::TX;
-    uart_conf.pin_config.tx = TX_PIN;
-    uart_conf.pin_config.rx = RX_PIN;
+    // Configure the Serial uart to print out results
+    Serial.begin(115200);
 
-    // Initialize the uart peripheral and start the DMA transmit
-    uart.Init(uart_conf);
-
-    /* Setup message facility to see internal traces from FW */
+    /* Setup TDK messaging facility to see internal traces from FW */
     INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
     INV_MSG(INV_MSG_LEVEL_INFO, "##################################");
     INV_MSG(INV_MSG_LEVEL_INFO, "#   Example Raw data registers   #");
     INV_MSG(INV_MSG_LEVEL_INFO, "##################################");
 
-    /* Give ICM-42688P some time to stabilize */
-    System::Delay(15);
-
     /* Start the SPI bus */
     SPIbus.begin();
+
+    /* Give IMU some time to stabilize */
+    System::Delay(15);
 
     if (imu.Init(SPIbus) != IMU::Result::OK) {
         INV_MSG(INV_MSG_LEVEL_INFO, "!!! ERROR : failed to initialize Icm426xx.");
@@ -247,8 +258,8 @@ void msg_printer(int level, const char *str, va_list ap)
     if (idx >= (sizeof(out_str)))
         return;
 
-    // inv_uart_mngr_puts(LOG_UART_ID, out_str, (unsigned short)idx);
-    uart.BlockingTransmit((uint8_t*)out_str, idx);
+    // uart.BlockingTransmit((uint8_t*)out_str, idx);
+    Serial.write((uint8_t*)out_str, idx);
 }
 
 /* Helper function to check RC value and block programm execution */
