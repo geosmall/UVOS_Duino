@@ -121,36 +121,8 @@ GPIO intGpio;
 // Global print buffer
 char buf[128];
 
-/* Buffer to keep track of the timestamp when icm426xx data ready interrupt fires. */
-RINGBUFFER(timestamp_buffer, 64, uint64_t);
-
-/*
- * Icm426xx interrupt handler.
- * Function is executed when an Icm426xx interrupt rises on MCU.
- * This function get a timestamp and store it in the timestamp buffer.
- * Note that this function is executed in an interrupt handler and thus no protection
- * are implemented for shared variable timestamp_buffer.
- */
-void ext_interrupt_cb(void *context)
-{
-    (void)context;
-
-    // Read timestamp from the System uSec timer
-    uint64_t timestamp = System::GetUs();
-
-    if (!RINGBUFFER_FULL(&timestamp_buffer))
-    {
-        RINGBUFFER_PUSH(&timestamp_buffer, &timestamp);
-    }
-
-    irq_from_device = true;
-}
-
 int main(void)
 {
-    int rc = 0;
-    uint64_t irq_timestamp = 0;
-
     // Initialize the UVOS board hardware
     hw.Init();
 
@@ -160,9 +132,9 @@ int main(void)
     /* Setup TDK messaging facility to see internal traces from FW */
     INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
-    INV_MSG(INV_MSG_LEVEL_INFO, "##################################");
-    INV_MSG(INV_MSG_LEVEL_INFO, "#   Example Raw data registers   #");
-    INV_MSG(INV_MSG_LEVEL_INFO, "##################################");
+    INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
+    INV_MSG(INV_MSG_LEVEL_INFO, "#   Example Self-Test   #");
+    INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
 
     /* Start the SPI bus */
     SPIbus.begin();
@@ -177,36 +149,41 @@ int main(void)
         INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx PASS");
     }
 
-    /* Configure IMU object */
-    /* /!\ In this example, the data output frequency will be the faster  between Accel and Gyro odr */
-    imu.ConfigureInvDevice(IMU::gpm4, IMU::dps2000, IMU::accel_odr1k, IMU::gyr_odr1k);
+    // Perform Self-Test
+    int rc = 0;
+    int st_result = 0;
+    std::array<int, 6> raw_bias = {0};
+    rc = imu.RunSelfTest(&st_result, &raw_bias);
 
-    RINGBUFFER_CLEAR(&timestamp_buffer);
-
-    intGpio.SetInterruptCallback(ext_interrupt_cb, nullptr);
-    intGpio.Init(INT1_PIN, GPIO::Mode::INPUT_IT_RISING, GPIO::Pull::NOPULL);
-
-    std::array<int16_t, 6> buffer;
-
-    do {
-        /* Poll device for data */
-        if (irq_from_device) {
-            // rc = imu.ReadDataFromRegisters();
-            rc = imu.ReadIMU6(buffer);
-
-            __disable_irq();
-            if (!RINGBUFFER_EMPTY(&timestamp_buffer)) {
-                RINGBUFFER_POP(&timestamp_buffer, &irq_timestamp);
-            }
-            irq_from_device = false;
-            __enable_irq();
-
-            INV_MSG(INV_MSG_LEVEL_INFO, "%u: %d, %d, %d, %d, %d, %d", (uint32_t)irq_timestamp,
-                    buffer[0], buffer[1], buffer[2],
-                    buffer[3], buffer[4], buffer[5]);
+    if (rc < 0) {
+        INV_MSG(INV_MSG_LEVEL_ERROR, "An error occured while running selftest");
+    } else {
+        /* Check for GYR success (1 << 0) and ACC success (1 << 1) */
+        if (st_result & 0x1) {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Gyro Selftest PASS");
+        } else {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Gyro Selftest FAIL");
         }
 
-    } while (1);
+        if (st_result & 0x2) {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Accel Selftest PASS");
+        } else {
+            INV_MSG(INV_MSG_LEVEL_INFO, "Accel Selftest FAIL");
+        }
+
+        INV_MSG(INV_MSG_LEVEL_INFO, "GYR LN bias (dps): x=%f, y=%f, z=%f",
+                (float)(raw_bias[0]) / (float)(1 << 16), (float)(raw_bias[1]) / (float)(1 << 16),
+                (float)(raw_bias[2]) / (float)(1 << 16));
+        INV_MSG(INV_MSG_LEVEL_INFO, "ACC LN bias (g): x=%f, y=%f, z=%f",
+                (float)(raw_bias[0 + 3] / (float)(1 << 16)),
+                (float)(raw_bias[1 + 3] / (float)(1 << 16)),
+                (float)(raw_bias[2 + 3] / (float)(1 << 16)));
+    }
+
+    // Infinite loop
+    while(1) {
+        // Do nothing
+    }
 }
 
 /* --------------------------------------------------------------------------------------
