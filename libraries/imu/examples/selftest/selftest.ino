@@ -1,8 +1,28 @@
+/*
+ * IMU Self-Test - Example sketch for running self-test on ICM426xx IMU sensor
+ * 
+ * This sketch demonstrates how to initialize an ICM426xx IMU sensor over SPI and
+ * run the internal self-test procedure. The self-test checks if the accelerometer
+ * and gyroscope sensors are functioning properly. Results from the self-test are
+ * displayed, including pass/fail status for both sensors and the calculated bias values.
+ * 
+ * The example supports multiple board configurations (NUCLEO_H753ZI, FC_MatekH743, 
+ * and DevEBoxH743VI) with appropriate pin mappings for each.
+ * 
+ * Features demonstrated:
+ * - SPI communication with IMU sensor
+ * - Running the built-in self-test procedure
+ * - Interpreting self-test results
+ * - TDK Invensense messaging system integration
+ */
+
 #include "uvos_brd.h"
 #include "imu.h"
+#include "SPI.h"
 
 extern "C" {
 #include "Invn/EmbUtils/Message.h"
+#include "Invn/EmbUtils/RingBuffer.h"
 #include "Invn/EmbUtils/ErrorHelper.h"
 }
 
@@ -23,6 +43,7 @@ using namespace uvos;
     constexpr Pin SCLK_PIN = Pin(PORTA, 5);
     constexpr Pin MISO_PIN = Pin(PORTA, 6);
     constexpr Pin MOSI_PIN = Pin(PORTD, 7);
+    constexpr Pin INT1_PIN = Pin(PORTB, 2);
     constexpr UartHandler::Config::Peripheral UART_NUM = UartHandler::Config::Peripheral::USART_3;
     constexpr Pin TX_PIN = Pin(PORTD, 8);
     constexpr Pin RX_PIN = Pin(PORTD, 9);
@@ -31,6 +52,7 @@ using namespace uvos;
     constexpr Pin SCLK_PIN = Pin(PORTA, 5);
     constexpr Pin MISO_PIN = Pin(PORTA, 6);
     constexpr Pin MOSI_PIN = Pin(PORTA, 7);
+    constexpr Pin INT1_PIN = Pin(PORTA, 0);
     constexpr UartHandler::Config::Peripheral UART_NUM = UartHandler::Config::Peripheral::USART_1;
     constexpr Pin TX_PIN = Pin(PORTA, 9);
     constexpr Pin RX_PIN = Pin(PORTA, 10);
@@ -41,13 +63,44 @@ constexpr bool on = 1;
 
 // Declare a UVOSboard object called hw
 UVOSboard hw;
-UartHandler uart;
 
-// Handle we'll use to interact with IMU SPI
-SpiHandle spi_handle;
+static constexpr size_t DMA_BUF_SIZE = 256;   // DMA rx buffer size
+static uint8_t DMA_BUFFER_MEM_SECTION HardwareSerial_rx_buf[DMA_BUF_SIZE] = {0};
 
-// Structure to configure the IMU SPI instance
-SpiHandle::Config spi_conf;
+// Build full HardwareSerial::Config with nested lambda
+static const HardwareSerial::Config serial_cfg = [] {
+    HardwareSerial::Config c{};
+    // UART settings
+    c.uart_config.periph        = UartHandler::Config::Peripheral::USART_3;
+    c.uart_config.mode          = UartHandler::Config::Mode::TX_RX;
+    c.uart_config.pin_config.tx = TX_PIN;
+    c.uart_config.pin_config.rx = RX_PIN;
+    // DMA buffer
+    c.dma_buf      = HardwareSerial_rx_buf;
+    c.dma_buf_size = DMA_BUF_SIZE;
+    return c;
+}();
+
+// Wrapper instance
+HardwareSerial Serial(serial_cfg);
+
+static SPIClass::Config spi_conf = [] {
+    SPIClass::Config cfg{};
+    cfg.spi_config.periph = SpiHandle::Config::Peripheral::SPI_1;
+    cfg.spi_config.mode = SpiHandle::Config::Mode::MASTER;
+    cfg.spi_config.direction = SpiHandle::Config::Direction::TWO_LINES;
+    cfg.spi_config.clock_polarity = SpiHandle::Config::ClockPolarity::HIGH;
+    cfg.spi_config.clock_phase = SpiHandle::Config::ClockPhase::TWO_EDGE;
+    cfg.spi_config.nss = SpiHandle::Config::NSS::SOFT;
+    cfg.spi_config.nss_pulse = SpiHandle::Config::NSSPulseMode::DISABLE;
+    cfg.spi_config.pin_config.nss = CS_PIN;
+    cfg.spi_config.pin_config.sclk = SCLK_PIN;
+    cfg.spi_config.pin_config.miso = MISO_PIN;
+    cfg.spi_config.pin_config.mosi = MOSI_PIN;
+    cfg.spi_config.baud_prescaler = SpiHandle::Config::BaudPrescaler::PS_64;
+    return cfg;
+}();
+SPIClass SPIbus(spi_conf);   // Handle we'll use to interact with IMU SPI bus
 
 // Create the IMU object
 IMU imu{};
@@ -60,20 +113,25 @@ int main(void)
     // Initialize the UVOS board hardware
     hw.Init();
 
-    hw_configure();
+    // Configure the Serial uart to print out results
+    Serial.begin(115200);
 
-    /* Setup message facility to see internal traces from FW */
+    /* Setup TDK messaging facility to see internal traces from FW */
     INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
     INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
     INV_MSG(INV_MSG_LEVEL_INFO, "#   Example Self-Test   #");
     INV_MSG(INV_MSG_LEVEL_INFO, "#########################");
 
-    // Give ICM-42688P some time to stabilize
-    System::Delay(5);
+    /* Start the SPI bus */
+    SPIbus.begin();
 
-    if (imu.Init(spi_handle) != IMU::Result::OK) {
-        INV_MSG(INV_MSG_LEVEL_INFO, "!!! ERROR : failed to initialize Icm426xx.");
+    /* Give IMU some time to stabilize */
+    System::Delay(15);
+
+    if (imu.Init(SPIbus) != IMU::Result::OK) {
+        INV_MSG(INV_MSG_LEVEL_ERROR, "!!! ERROR : failed to initialize Icm426xx.");
+        while(1);
     } else {
         INV_MSG(INV_MSG_LEVEL_INFO, "Initialize Icm426xx PASS");
     }
@@ -115,43 +173,6 @@ int main(void)
     }
 }
 
-void hw_configure()
-{
-    // Configure the Uart Peripheral to print out results
-    UartHandler::Config uart_conf;
-    uart_conf.periph        = UART_NUM;
-    uart_conf.mode          = UartHandler::Config::Mode::TX;
-    uart_conf.pin_config.tx = TX_PIN;
-    uart_conf.pin_config.rx = RX_PIN;
-
-    // Initialize the uart peripheral and start the DMA transmit
-    uart.Init(uart_conf);
-
-    SpiHandle::Config spi_conf;   // Structure to configure the IMU SPI instance
-
-    spi_conf.periph = SpiHandle::Config::Peripheral::SPI_1;
-    spi_conf.mode = SpiHandle::Config::Mode::MASTER;
-    spi_conf.direction = SpiHandle::Config::Direction::TWO_LINES;
-    spi_conf.clock_polarity = SpiHandle::Config::ClockPolarity::HIGH;
-    spi_conf.clock_phase = SpiHandle::Config::ClockPhase::TWO_EDGE;
-
-#ifdef USE_SOFT_NSS
-    spi_conf.nss = SpiHandle::Config::NSS::SOFT;
-#else
-    spi_conf.nss = SpiHandle::Config::NSS::HARD_OUTPUT;
-#endif /* USE_SOFT_NSS */
-
-    spi_conf.pin_config.nss = CS_PIN;
-    spi_conf.pin_config.sclk = SCLK_PIN;
-    spi_conf.pin_config.miso = MISO_PIN;
-    spi_conf.pin_config.mosi = MOSI_PIN;
-
-    spi_handle.GetBaudHz(spi_conf.periph, DESIRED_SPI_FREQ, spi_conf.baud_prescaler);
-
-    // Initialize the IMU SPI instance
-    spi_handle.Init(spi_conf);
-}
-
 /* --------------------------------------------------------------------------------------
  *  Extern functions definition - Invensense to UVOS adapters
  * -------------------------------------------------------------------------------------- */
@@ -183,8 +204,8 @@ void msg_printer(int level, const char *str, va_list ap)
     if (idx >= (sizeof(out_str)))
         return;
 
-    // inv_uart_mngr_puts(LOG_UART_ID, out_str, (unsigned short)idx);
-    uart.BlockingTransmit((uint8_t*)out_str, idx);
+    // uart.BlockingTransmit((uint8_t*)out_str, idx);
+    Serial.write((uint8_t*)out_str, idx);
 }
 
 /* Helper function to check RC value and block programm execution */

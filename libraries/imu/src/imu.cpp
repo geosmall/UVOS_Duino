@@ -1,9 +1,5 @@
 #include "imu.h"
-
-// CS->CLK delay, MPU6000 - 8ns
-// CS->CLK delay, ICM42688P - 39ns
-constexpr uint32_t SETUP_TIME_NS_LOCAL  = 39;   // For ICM42688P
-constexpr uint32_t HOLD_TIME_NS_LOCAL   = 18;   // For ICM42688P
+#include "SPI.h"
 
 using namespace uvos;
 
@@ -46,29 +42,30 @@ IMU::IMU() : p_spi_(nullptr) {}
 // set up the TDK transport structure and Initialize the sensor via
 // the TDK driver init function.
 //------------------------------------------------------------------------------
-IMU::Result IMU::Init(SpiHandle& spi)
+IMU::Result IMU::Init(SPIClass& spi)
 {
     int rc = 0;
     uint8_t who_am_i;
     struct inv_icm426xx_serif imu_serif;
 
-    // Save the handle to the spi object
+    // Save pointer to the SPI wrapper
     if (&spi != nullptr) {
         p_spi_ = &spi;
         initialized_ = true;
     } else {
         initialized_ = false;
-        return Result::ERR;
+        return Result::ERR_NOT_CONFIGURED;
     }
 
     // Retrieve the CS pin from the SPI config
-    uvs_gpio_pin nss_pin = p_spi_->GetConfig().pin_config.nss;
+    uvs_gpio_pin nss_pin = p_spi_->getHandle().GetConfig().pin_config.nss;
 
     // Convert to GPIO::Pin
     Pin initPin(static_cast<uvos::GPIOPort>(nss_pin.port), nss_pin.pin);
 
     // Configure CS pin for output w/ pullup
     GPIO::Config config;
+
     config.pin = initPin;
     config.mode = uvos::GPIO::Mode::OUTPUT;
     config.pull = uvos::GPIO::Pull::PULLUP;
@@ -80,7 +77,7 @@ IMU::Result IMU::Init(SpiHandle& spi)
     imu_serif.read_reg  = &IMU::spiReadRegs;
     imu_serif.write_reg = &IMU::spiWriteRegs;
 
-    // Set maximum read/write sizes (enforced by driver)
+    // Set maximum read/write sizes (enforced by TDK river)
     imu_serif.max_read  = IMU_MAX_READ;
     imu_serif.max_write = IMU_MAX_WRITE;
 
@@ -88,13 +85,15 @@ IMU::Result IMU::Init(SpiHandle& spi)
     imu_serif.serif_type = ICM426XX_UI_SPI4;
 
     // Give IMU some time to stabilize
-    System::Delay(5);
+    System::Delay(15);
 
     // Initialize device (exits with PWR_MGMT0 = 0)
     rc = inv_icm426xx_init(&driver_, &imu_serif, &IMU::DriverEventCb);
     if (rc != INV_ERROR_SUCCESS) {
-        return Result::ERR;
+        return Result::ERR_INIT;
     }
+
+    System::Delay(15);
 
     // Config INT_CONFIG1 as int pulse 8 µs, disable de-assert duration, leave async off (disabled)
     uint8_t int_config1_val;
@@ -102,11 +101,13 @@ IMU::Result IMU::Init(SpiHandle& spi)
     int_config1_val |= (ICM426XX_INT_TPULSE_DURATION_8_US | ICM426XX_INT_TDEASSERT_DISABLED | ICM426XX_INT_CONFIG1_ASY_RST_DISABLED);
     rc |= inv_icm426xx_write_reg(&driver_, MPUREG_INT_CONFIG1, 1, &int_config1_val);
 
+    System::Delay(15);
+
     // Disable all INT1 sources
     inv_icm426xx_interrupt_parameter_t config_int1 = {INV_ICM426XX_DISABLE};
     rc |= inv_icm426xx_set_config_int1(&driver_, &config_int1);
     if (rc != INV_ERROR_SUCCESS) {
-        return Result::ERR;
+        return Result::ERR_INT1_CONFIG;
     }
 
     System::Delay(15);
@@ -115,18 +116,22 @@ IMU::Result IMU::Init(SpiHandle& spi)
     // Int1 is configured for Data Ready by inv_icm426xx_configure_fifo()
     rc |= inv_icm426xx_configure_fifo(&driver_, INV_ICM426XX_FIFO_DISABLED);
     if (rc != INV_ERROR_SUCCESS) {
-        return Result::ERR;
+        return Result::ERR_FIFO_CONFIG;
     }
+
+    System::Delay(15);
 
     // Retrieve device ID
     rc = inv_icm426xx_get_who_am_i(&driver_, &who_am_i);
     if (rc != INV_ERROR_SUCCESS) {
-        return Result::ERR;
+        return Result::ERR_SPI;
+    } else {
+        who_am_i_ = who_am_i;
     }
 
     // Verify expected ID
     if (who_am_i != ICM_WHOAMI) {
-        return Result::ERR;
+        return Result::ERR_WRONG_ID;
     }
 
     return Result::OK;
@@ -474,15 +479,12 @@ int IMU::spiReadRegs(struct inv_icm426xx_serif* serif,
 
     obj->SelectDevice();
 
-    // First send the register address with high bit set
-    if (obj->p_spi_->BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK) {
-        return -1;
-    }
+    // First send the register address with high bit set (discard received byte)
+    (void)obj->p_spi_->transfer(reg);
 
-    // Read 'len' bytes
-    if (obj->p_spi_->BlockingTransferLL(nullptr, const_cast<uint8_t*>(buf), len) != SpiHandle::Result::OK) {
-        return -1;
-    }
+    // Read 'len' bytes (sending dummy bytes)
+    uint8_t* dummy_tx = nullptr;
+    obj->p_spi_->transfer(dummy_tx, buf, len);
 
     obj->DeselectDevice();
 
@@ -524,15 +526,11 @@ int IMU::spiWriteRegs(struct inv_icm426xx_serif * serif,
 
     obj->SelectDevice();
 
-    // First send the register address
-    if (obj->p_spi_->BlockingTransferLL(&reg, nullptr, 1) != SpiHandle::Result::OK) {
-        return -1;
-    }
+    // First send the register address (discard received byte)
+    (void)obj->p_spi_->transfer(reg);
 
-    // Write 'len' bytes
-    if (obj->p_spi_->BlockingTransferLL(const_cast<uint8_t*>(buf), nullptr, len)  != SpiHandle::Result::OK) {
-        return -1;
-    }
+    // Write 'len' bytes (no need to receive any data)
+    obj->p_spi_->transfer(const_cast<uint8_t*>(buf), nullptr, len);
 
     obj->DeselectDevice();
 

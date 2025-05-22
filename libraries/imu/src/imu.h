@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <array>
 #include "uvos.h"
+#include "SPI.h"
 
 // TDK high-level driver API (includes Icm426xxTransport.h references)
 extern "C" {
@@ -105,7 +106,14 @@ public:
     enum class Result
     {
         OK,
-        ERR,
+        ERR_NOT_CONFIGURED,
+        ERR_INIT,
+        ERR_INT1_CONFIG,
+        ERR_FIFO_CONFIG,
+        ERR_SPI,
+        ERR_WRONG_ID,
+        ERR_CONFIG,
+        ERR
     };
 
     /**
@@ -117,7 +125,13 @@ public:
      * @brief Initialize the IMU hardware and driver.
      * @return IMU::OK on success, IMU::ERR on failure.
      */
-    Result Init(SpiHandle& spi);
+    Result Init(SPIClass& spi);
+
+    /**
+     * @brief Retrieve the who_am_i_.
+     * @return The who_am_i_ byte value.
+     */
+    uint8_t GetWhoAmI() const { return who_am_i_; }
 
     /**
      * @brief Configure the device full scales and output frequencies.
@@ -268,12 +282,14 @@ private:
     struct inv_icm426xx driver_{};
 
     /**
-     * @brief Pointer to the SPI handle used for IMU SPI transactions.
+     * @brief Pointer to the SPIClass handle used for IMU SPI transactions.
      * Initialized to null, to be bound in Init()
      */
-    SpiHandle* p_spi_ = nullptr;
+    SPIClass*  p_spi_ = nullptr;
 
     bool initialized_ = false;
+
+    uint8_t who_am_i_ = 0;
 
     /**
      * @brief IMU chip select pin (using software driven CS).
@@ -283,10 +299,12 @@ private:
     float accel_sensitivity_{-1.0f};
     float gyro_sensitivity_{-1.0f};
 
-    // CS->CLK delay, MPU6000 - 8ns
-    // CS->CLK delay, ICM42688P - 39ns
-    static constexpr uint32_t SETUP_TIME_NS  = 39;   // For ICM42688P
-    static constexpr uint32_t HOLD_TIME_NS   = 18;   // For ICM42688P
+    // Setup CS->CLK delay, MPU6000 - 8ns
+    // Hold CLK->CS delay, MPU6000 - 500ns
+    // Setup CS->CLK delay, ICM42688P - 39ns
+    // Hold CS->CLK delay, ICM42688P - 18ns
+    static constexpr uint32_t SETUP_TIME_NS  = 39;
+    static constexpr uint32_t HOLD_TIME_NS   = 18;
 
     void SelectDevice();
 
