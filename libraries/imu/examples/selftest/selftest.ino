@@ -43,9 +43,6 @@ constexpr bool on = 1;
 UVOSboard hw;
 UartHandler uart;
 
-// Handle we'll use to interact with IMU SPI
-SpiHandle spi_handle;
-
 // Structure to configure the IMU SPI instance
 SpiHandle::Config spi_conf;
 
@@ -60,7 +57,8 @@ int main(void)
     // Initialize the UVOS board hardware
     hw.Init();
 
-    hw_configure();
+    // Get reference to SPI handle and configure it
+    SpiHandle& spi_handle = hw_configure();
 
     /* Setup message facility to see internal traces from FW */
     INV_MSG_SETUP(MSG_LEVEL, msg_printer);
@@ -115,7 +113,7 @@ int main(void)
     }
 }
 
-void hw_configure()
+SpiHandle& hw_configure()
 {
     // Configure the Uart Peripheral to print out results
     UartHandler::Config uart_conf;
@@ -146,10 +144,16 @@ void hw_configure()
     spi_conf.pin_config.miso = MISO_PIN;
     spi_conf.pin_config.mosi = MOSI_PIN;
 
+    // Get the singleton SPI handle instance as a reference
+    SpiHandle& spi_handle = SpiHandle::Instance(spi_conf.periph);
+    
     spi_handle.GetBaudHz(spi_conf.periph, DESIRED_SPI_FREQ, spi_conf.baud_prescaler);
 
     // Initialize the IMU SPI instance
     spi_handle.Init(spi_conf);
+    
+    // Return the reference for use in main()
+    return spi_handle;
 }
 
 /* --------------------------------------------------------------------------------------

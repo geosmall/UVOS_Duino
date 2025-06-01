@@ -89,6 +89,7 @@ class SpiHandle
             uvs_gpio_pin nss;  /**< & */
         } pin_config;
 
+        /* ---------- defaults ---------- */
         Config()
         {
             // user must specify periph, mode, direction, nss, and pin_config
@@ -99,6 +100,7 @@ class SpiHandle
             nss_pulse      = NSSPulseMode::DISABLE;
         }
 
+        /* ---------- user-supplied fields ---------- */
         Peripheral    periph;
         Mode          mode;
         Direction     direction;
@@ -108,18 +110,17 @@ class SpiHandle
         NSS           nss;
         NSSPulseMode  nss_pulse;
         BaudPrescaler baud_prescaler;
+
+        /* run-time computed – caller can read back but never sets */
         unsigned long disable_delay_;
     };
-
-    SpiHandle() : pimpl_(nullptr) {}
-    SpiHandle(const SpiHandle& other) = default;
-    SpiHandle& operator=(const SpiHandle& other) = default;
 
     /** Return values for Spi functions. */
     enum class Result
     {
-        OK, /**< & */
-        ERR /**< & */
+        OK,          /**< & */
+        ERR_TIMEOUT, /**< & */
+        ERR          /**< & */
     };
 
     enum class DmaDirection
@@ -129,11 +130,23 @@ class SpiHandle
         RX_TX, /**< & */
     };
 
+    /* =================================================================
+     * Construction / access
+     * ================================================================= */
+
+    /** Non-copyable: one canonical object per HW peripheral */
+    SpiHandle(const SpiHandle&)            = delete;
+    SpiHandle& operator=(const SpiHandle&) = delete;
+
+    /* =================================================================
+     * Public API
+     * ================================================================= */
+
     /** Initializes handler */
     Result Init(const Config& config);
 
     /** Returns the current config. */
-    const Config& GetConfig() const;
+    const Config& GetConfig() const { return config_; }
 
     static constexpr uint32_t PrescalerToHAL(Config::BaudPrescaler baud_prescale)
     {
@@ -296,10 +309,77 @@ class SpiHandle
     /** \return the result of HAL_SPI_GetError() to the user. */
     int CheckError();
 
-    class Impl; /**< SPI implementation */
+    /* =================================================================
+     * Public static interface
+     * ================================================================= */
+    /** Global initialization - called once at startup */
+    static void GlobalInit();
+
+    /** Obtain the unique handle for a given peripheral */
+    static SpiHandle& Instance(Config::Peripheral p);
+
+    /** Map SPI instance to handle - used by MSP callbacks */
+    static SpiHandle* MapInstanceToHandle(SPI_TypeDef* instance);
+
+    // User configuration
+    Config config_;
+
+    // Pin management for HAL MSP functions
+    Result InitPins();
+    Result DeInitPins();
+
+    // HAL handles for IRQ handlers - these need to be public for MSP callbacks
+    SPI_HandleTypeDef hspi_;
+    DMA_HandleTypeDef hdma_spi_rx_;
+    DMA_HandleTypeDef hdma_spi_tx_;
+
+    static SpiHandle spi_handles[6];               /* canonical objects */
+    static volatile int8_t dma_active_peripheral_;
+
+    static void DmaTransferFinished(SPI_HandleTypeDef*, Result);
 
   private:
-    Impl* pimpl_;
+    /* =================================================================
+     * Internal helpers
+     * ================================================================= */
+    SpiHandle() = default;                       /* only the static array can create */
+
+    /* DMA scheduler -------------------------------------------------- */
+    Result         SetDmaPeripheral();
+    Result         InitDma();
+    Result         StartDmaTx (uint8_t* tx, size_t len,
+                               StartCallbackFunctionPtr, EndCallbackFunctionPtr, void*);
+    Result         StartDmaRx (uint8_t* rx, size_t len,
+                               StartCallbackFunctionPtr, EndCallbackFunctionPtr, void*);
+    Result         StartDmaRxTx(uint8_t* tx, uint8_t* rx, size_t len,
+                               StartCallbackFunctionPtr, EndCallbackFunctionPtr, void*);
+
+    /* =================================================================
+     * Static scheduler data and internal functions
+     * ================================================================= */
+
+    struct SpiDmaJob
+    {
+        uint8_t* data_tx = nullptr;
+        uint8_t* data_rx = nullptr;
+        size_t size = 0;
+        DmaDirection direction;
+        StartCallbackFunctionPtr start_callback = nullptr;
+        EndCallbackFunctionPtr end_callback = nullptr;
+        void* callback_context = nullptr;
+
+        bool IsValidJob() const;
+        void Invalidate();
+    };
+
+    static constexpr uint8_t kNumSpiWithDma = 4;
+    static SpiDmaJob queued_dma_transfers_[kNumSpiWithDma];
+    static EndCallbackFunctionPtr next_end_callback_;
+    static void* next_callback_context_;
+
+    static bool IsDmaBusy();
+    static void QueueDmaTransfer(size_t spi_idx, const SpiDmaJob& job);
+    static bool IsDmaTransferQueuedFor(size_t spi_idx);
 };
 
 extern "C"
