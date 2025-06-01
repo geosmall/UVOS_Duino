@@ -363,7 +363,7 @@ class SpiHandle
         uint8_t* data_tx = nullptr;
         uint8_t* data_rx = nullptr;
         size_t size = 0;
-        DmaDirection direction;
+        DmaDirection direction = DmaDirection::TX;
         StartCallbackFunctionPtr start_callback = nullptr;
         EndCallbackFunctionPtr end_callback = nullptr;
         void* callback_context = nullptr;

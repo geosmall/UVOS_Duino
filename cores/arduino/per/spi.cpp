@@ -39,7 +39,7 @@ void* SpiHandle::next_callback_context_ = nullptr;
 /* ==================================================================== */
 bool SpiHandle::SpiDmaJob::IsValidJob() const
 {
-    return data_rx || data_tx;        /* either pointer non-null is good enough */
+    return data_rx != nullptr && data_tx != nullptr;
 }
 
 void SpiHandle::SpiDmaJob::Invalidate()
@@ -1130,11 +1130,6 @@ extern "C" void SPI4_IRQHandler(void)
 extern "C" void SPI5_IRQHandler(void)
 {
     HAL_SPI_IRQHandler(&SpiHandle::spi_handles[4].hspi_);
-}
-
-extern "C" void SPI6_IRQHandler(void)
-{
-    HAL_SPI_IRQHandler(&SpiHandle::spi_handles[5].hspi_);
 }
 
 void HalSpiDmaRxStreamCallback(void)
