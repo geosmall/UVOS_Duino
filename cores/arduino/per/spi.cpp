@@ -25,7 +25,6 @@ static void Error_Handler()
 /* ==================================================================== */
 /*  =====   STATIC STORAGE  =========================================== */
 /* ==================================================================== */
-using uvos::SpiHandle;
 
 SpiHandle SpiHandle::spi_handles[6];            /* canonical objects */
 
@@ -33,19 +32,6 @@ volatile int8_t SpiHandle::dma_active_peripheral_ = -1;
 SpiHandle::SpiDmaJob SpiHandle::queued_dma_transfers_[SpiHandle::kNumSpiWithDma];
 SpiHandle::EndCallbackFunctionPtr SpiHandle::next_end_callback_ = nullptr;
 void* SpiHandle::next_callback_context_ = nullptr;
-
-/* ==================================================================== */
-/*  =====   SpiDmaJob helpers  ======================================== */
-/* ==================================================================== */
-bool SpiHandle::SpiDmaJob::IsValidJob() const
-{
-    return data_rx != nullptr && data_tx != nullptr;
-}
-
-void SpiHandle::SpiDmaJob::Invalidate()
-{
-    data_rx = data_tx = nullptr;
-}
 
 /* ==================================================================== */
 /*  =====   Global initialiser  ======================================= */

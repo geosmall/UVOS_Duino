@@ -20,73 +20,20 @@ class SpiHandle
   public:
     struct Config
     {
-        enum class Peripheral
-        {
-            SPI_1,
-            SPI_2,
-            SPI_3,
-            SPI_4,
-            SPI_5,
-            SPI_6,
-        };
-
-        enum class Mode
-        {
-            MASTER,
-            SLAVE,
-        };
-
-        enum class Direction
-        {
-            TWO_LINES,
-            TWO_LINES_TX_ONLY,
-            TWO_LINES_RX_ONLY,
-            ONE_LINE,
-        };
-
-        enum class ClockPolarity
-        {
-            LOW,
-            HIGH,
-        };
-
-        enum class ClockPhase
-        {
-            ONE_EDGE,
-            TWO_EDGE,
-        };
-
-        enum class NSS
-        {
-            SOFT,
-            HARD_INPUT,
-            HARD_OUTPUT,
-        };
-
-        enum class NSSPulseMode
-        {
-            DISABLE,
-            ENABLE,
-        };
-
-        enum class BaudPrescaler
-        {
-            PS_2,
-            PS_4,
-            PS_8,
-            PS_16,
-            PS_32,
-            PS_64,
-            PS_128,
-            PS_256,
-        };
-
-        struct
-        {
-            uvs_gpio_pin sclk; /**< & */
-            uvs_gpio_pin miso; /**< & */
-            uvs_gpio_pin mosi; /**< & */
-            uvs_gpio_pin nss;  /**< & */
+        enum class Peripheral   { SPI_1, SPI_2, SPI_3, SPI_4, SPI_5, SPI_6 };
+        enum class Mode         { MASTER, SLAVE };
+        enum class Direction    { TWO_LINES, TWO_LINES_TX_ONLY,
+                                  TWO_LINES_RX_ONLY, ONE_LINE
+                                };
+        enum class ClockPolarity{ LOW, HIGH };
+        enum class ClockPhase   { ONE_EDGE, TWO_EDGE };
+        enum class NSS          { SOFT, HARD_INPUT, HARD_OUTPUT };
+        enum class NSSPulseMode { DISABLE, ENABLE };
+        enum class BaudPrescaler{ PS_2,  PS_4,  PS_8,   PS_16,
+                                  PS_32, PS_64, PS_128, PS_256
+                                };
+        struct {
+            uvs_gpio_pin sclk, miso, mosi, nss;
         } pin_config;
 
         /* ---------- defaults ---------- */
@@ -368,8 +315,8 @@ class SpiHandle
         EndCallbackFunctionPtr end_callback = nullptr;
         void* callback_context = nullptr;
 
-        bool IsValidJob() const;
-        void Invalidate();
+        bool IsValidJob() const { return data_rx != nullptr && data_tx != nullptr; }
+        void Invalidate() { data_rx = data_tx = nullptr; }
     };
 
     static constexpr uint8_t kNumSpiWithDma = 4;
